@@ -1,0 +1,31 @@
+# Adatbázis és környezeti fájlok
+db_data/
+*.sql
+*.sql.gz
+.env
+
+# Node modulok
+node_modules/
+**/node_modules/
+
+# OS és IDE fájlok
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# WordPress core fájlok kizárása
+/wordpress/*
+!/wordpress/wp-content/
+
+# wp-content mappán belül minden kizárása (uploads, cache, idegen bővítmények/témák)
+/wordpress/wp-content/*
+!/wordpress/wp-content/themes/
+!/wordpress/wp-content/plugins/
+
+# Csak a saját témánk és saját bővítményünk követése
+/wordpress/wp-content/themes/*
+!/wordpress/wp-content/themes/custom-shop/
+
+/wordpress/wp-content/plugins/*
+!/wordpress/wp-content/plugins/hu-webshop-core/

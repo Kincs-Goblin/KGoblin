@@ -1,0 +1,13 @@
+{
+  "name": "custom-shop-theme",
+  "version": "1.0.0",
+  "description": "Egyedi, modern Tailwind CSS alapú WooCommerce téma",
+  "private": true,
+  "scripts": {
+    "build": "tailwindcss -i ./src/input.css -o ./dist/output.css --minify",
+    "watch": "tailwindcss -i ./src/input.css -o ./dist/output.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}
