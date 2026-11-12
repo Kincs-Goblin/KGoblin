@@ -38,8 +38,8 @@ protection megkerülése.
 6. **Követés:** `kg-babysit-pr`. CI-hibát és jogos review-findingot javíts; minden javításra bizonyíték.
 7. **Átadás a kapunál** (lásd „Kapu”).
 
-Az 1-7. lépés alatt maradj aktív. Ha checkre vagy botra vársz, a watcherrel várj (T3 Code-ban
-`watch_pull_request`), ne sima üzenettel. Kérdés vagy átadás előtt `unwatch_pull_request`.
+Az 1-7. lépés alatt maradj aktív. Ha checkre vagy botra vársz, a watcherrel várj (`kg-babysit-pr`), ne sima
+üzenettel. Kérdés vagy átadás előtt állítsd le a watchert.
 
 ## Bizonyíték
 
@@ -70,8 +70,7 @@ merge nélkül maradt.
 
 ## Kérdezés
 
-Kérdést a kérdező eszközzel tegyél fel (`AskUserQuestion` Claude Code-ban, Antigravityben a saját
-kérdező eszközével), hogy a thread várakozó állapotot mutasson. Benne legyen a PR-link, mi blokkol, és az
+Kérdést az eszközöd kérdező funkciójával tegyél fel (`docs/process/agent-adapters.md`), hogy a thread várakozó állapotot mutasson. Benne legyen a PR-link, mi blokkol, és az
 opciók, a javasolt elöl. Csak akkor kérdezz, ha nem tudsz továbbmenni: nem bizonyítható a változás, a kapu
 nem teljesíthető, a következő lépés túlmegy az engedélyen, a cél kétértelmű, vagy stack-változás kellene.
 Minden másban dönts ésszerű alapértelmezéssel, és sorold fel a jelentésben.

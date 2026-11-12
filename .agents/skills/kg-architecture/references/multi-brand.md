@@ -11,7 +11,8 @@ van. Az első brand a gamer shop; egy új brand bevezetése **config + téma + W
 2. Az `app/[brand]/layout.tsx` a `brand` paraméterből tölti a configot, és a `src/app` providerein át adja
    tovább (téma, szövegek, analytics ID-k).
 3. Szerveroldali kód a brandet paraméterként kapja (`getProduct(brand, slug)`), nem globális állapotból.
-4. Lokálisan: `<brand>.localhost:3000` aldomainek (vagy `?brand=` csak development módban).
+4. Lokálisan: `<brand>.localhost:3000` aldomainek (a brand `domains` listájában szerepelnek). `?brand=` váltó
+   nincs; ha kell, csak development módban, külön döntéssel.
 
 ## Brand-config (`packages/brand-config`)
 
@@ -21,12 +22,12 @@ Brandenként egy típusos objektum (Zod-dal validálva build időben):
 |---|---|---|
 | `id` | `gamer` | stabil, kisbetűs, URL-ben és cache-tagben is szerepel |
 | `domains` | `["<gamer-domain>.hu", "www.<gamer-domain>.hu"]` | production és demo domainek |
-| `woo.baseUrl` | env-ből: `WOO_GAMER_URL` | a titkok (`WOO_GAMER_CONSUMER_KEY/SECRET`, `WOO_GAMER_WEBHOOK_SECRET`) csak env-ben |
+| `woo.baseUrlEnv` | `WOO_GAMER_URL` (az env-változó neve, nem az értéke) | a titkok (`WOO_GAMER_CONSUMER_KEY/SECRET`, `WOO_GAMER_WEBHOOK_SECRET`) csak env-ben |
 | `locale`, `currency` | `hu-HU`, `HUF` | |
 | `theme` | tokenek: szín, tipográfia, radius, árnyék | CSS-változókká alakul, a Tailwind ezekre hivatkozik |
 | `texts` | brandhang, SEO-alapszövegek | a slice-szövegek felülírhatók brandenként |
 | `payments` | `["stripe", "barion", "simplepay"]` | csak megjelenítési sorrend és engedélyezés; a forrás a Woo |
-| `analytics` | Meta pixel ID, PostHog projekt, GA/Merchant ID | publikus ID-k; a CAPI-token env-ben |
+| `analytics` | Meta pixel ID, PostHog projekt, GA/Merchant ID | publikus ID-k; a CAPI-token env-ben. Még nincs a sémában: a mérés bekötésekor kerül be |
 | `search` | Meilisearch index neve | `products_<brand>` |
 
 ## Elkülönítés (kockázatos terület)

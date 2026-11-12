@@ -75,7 +75,10 @@ Egy feladat akkor kész, ha:
    véletlenszerűen kilép.
 4. **Valódi próba a lokális stacken**, ha Woo, webhook vagy job érintett: valódi rendelés a Docker-Woo-n,
    és nézd meg, mi keletkezett (rendelés, megjegyzés, email, fake beszállítói hívás). Ami nincs kipróbálva,
-   azt rögzítsd a PR-ban.
+   azt rögzítsd a PR-ban. Lépésről lépésre: `references/local-stack.md` (Docker-Woo indítása, KG-4 tesztek,
+   storefront a Woo-val, ellenőrző táblázat, leállítás).
+5. **CI zöld** (GitHub Actions, ADR-0005): a quality gate és a Playwright e2e a PR-on. A CI nem indít Woo-t,
+   ezért a 4. pont helyben marad.
 
 A skipelt teszt nem sikeres teszt.
 
@@ -99,3 +102,12 @@ A skipelt teszt nem sikeres teszt.
 - **curl TLS-hiba (schannel revocation):** `Invoke-WebRequest -UseBasicParsing` működik helyette.
 - **8.3-as rövid útvonal** (`C:\Users\NEVE~1`): teljes útvonalat használj.
 - **Docker Desktop + WSL2:** a bind-mountolt WordPress lassú lehet; a `wp-content` legyen a mount, a core ne.
+  Ha a motor nem indul (a `docker-desktop` disztró `Stopped`): jóváhagyással `wsl --shutdown`, majd a Docker
+  Desktop újraindítása (`references/local-stack.md`).
+- **Node-verzió:** 22.12 alatt a Tailwind 4 build `require() of ES Module` hibával elbukik; a `.nvmrc` (26)
+  a mérvadó.
+- **Beragadt szerver a porton:** a háttérben indított `next start` leállítása után a Node-gyerekfolyamat
+  futva maradhat, és a régi buildet szolgálja ki (CSS 500). Port felszabadítása előtt nézd meg a
+  folyamat parancssorát.
+- **Playwright Windowson:** a headless Chromium párhuzamosan instabil volt (navigációs timeout), ezért a
+  konfig `workers: 1`. Agent-sandboxban a Chromium nem indul (0xC0000142); sandbox nélkül fut.

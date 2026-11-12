@@ -8,6 +8,19 @@ description: Egy KG Jira-ticket teljes végigvitele a KGoblin repóban - ticket 
 Szabályforrás: `AGENTS.md`. Branch és merge: `kg-git-workflow`. Kódhely: `kg-architecture`. Ha ezek
 mást mondanak, mint ez a skill, azok az irányadók; jelezd az eltérést.
 
+## Felelősség (nem alkuképes)
+
+- A ticketet a **felelőse** (a Jira-assignee, és az ő agent-sessionje) viszi végig PR-ig: terv,
+  implementáció, tesztek, bizonyíték, független review-ciklus, a findingok javítása, PR és CI-követés.
+  Menet közben a felelősség nem kerül át senkire; ha mégis más viszi tovább, az kifejezetten, a
+  Jira-assignee átírásával történik.
+- A **reviewer** (a másik fejlesztő vagy egy AI review-session) csak findingot ad. A javítás, az elvetés
+  indoklása és az újraellenőrzés a felelősé; a reviewer nem javít a PR-ágon, és nem nyit helyette PR-t.
+- **Részfeladat kiadható** (másik session, agent, kolléga segítsége), de nem kerül ki a felelős kezéből: az
+  eredményt ő építi be, ő ellenőrzi (teszt, bizonyíték), és a PR-ban az ő felelőssége alatt megy.
+- PR csak lefutott tesztekkel és lezárt review-ciklussal nyílik (4-5. lépés). „Majd a reviewer megnézi”
+  vagy „a CI majd kiszűri” nem helyettesíti őket.
+
 ## Jóváhagyási kapuk (nem alkuképes)
 
 - Felderítés, implementáció és helyi ellenőrzés szabadon mehet.
@@ -36,7 +49,8 @@ git status --short          # tiszta legyen
 git switch -c feat/KG-42-kosar-drawer origin/main
 ```
 
-T3 Code worktree esetén az átnevezés szabálya a `kg-git-workflow`-ban van. Nézd meg, melyik az aktív
+Ha az agent-eszköz ideiglenes ágon indított (pl. worktree-ág), az átnevezés szabálya a `kg-git-workflow`-ban
+van. Nézd meg, melyik az aktív
 release-ág (`git branch -r --list "origin/release/*"`); a PR oda megy. Ha nincs ilyen, kérdezz.
 
 ## 2. Felderítés és terv
@@ -58,14 +72,17 @@ release-ág (`git branch -r --list "origin/release/*"`); a PR oda megy. Ha nincs
 
 ## 4. Quality gate
 
-Fusson előbb célzott teszt, aztán a teljes ellenőrzés (amint a scaffold elkészül, a pontos parancsok az
-`AGENTS.md`-be kerülnek):
+Fusson előbb célzott teszt, aztán a teljes ellenőrzés (a parancsok az `AGENTS.md` „Parancsok” részében):
 
 ```bash
-pnpm turbo run typecheck lint test --filter=...[origin/main]
-pnpm --filter web lint:fsd      # Steiger
-pnpm turbo run build --filter=...[origin/main]
+pnpm turbo run typecheck lint test build --filter=...[origin/main]
+pnpm --filter @kg/web lint:fsd      # Steiger (a web lintje is futtatja)
+pnpm --filter @kg/web test:e2e      # Playwright smoke, UI-változásnál
 ```
+
+Woo-, kosár-, checkout- vagy redirect-változásnál a lokális Docker-Woo-val is próbáld ki:
+`kg-dev-practices` → `references/local-stack.md`. A PR-on ugyanezt a quality gate-et és az e2e-t a CI
+(GitHub Actions) is lefuttatja; a „zöld” csak mindkettő után igaz.
 
 UI-változásnál vizuális önellenőrzés: mobil, tablet és desktop töréspont, mindegyik érintett brand-téma,
 billentyűzetes navigáció, konzolhibák, „utána” screenshot ugyanarról a nézetről. Checkout- és
@@ -73,8 +90,10 @@ fizetési változásnál végigkattintás a teszt-gatewayjel a lokális vagy a p
 
 ## 5. Review-ciklus (PR előtt)
 
-Független review egy **friss sessionben**, amelyik nem látta a fejlesztést. Ha elérhető, **más modell**
-review-zzon, mint amelyik implementált (Claude ↔ Gemini/Antigravity). A review nem helyettesíti a tesztet.
+Független review egy **friss agent-sessionben**, amelyik nem látta a fejlesztést, csak a diffet és a
+szabályokat. Ajánlott, de nem feltétel, hogy **más modell** review-zzon, mint amelyik implementált; ha nincs
+ilyen, ugyanaz a modell friss sessionben is megfelel, és ezt a PR-ban jelzed. Hogy ezt az eszközödben hogyan
+indítod: `docs/process/agent-adapters.md`. A review nem helyettesíti a tesztet.
 
 ### Review-szint a diff alapján
 
@@ -89,15 +108,18 @@ Ha bizonytalan vagy, a magasabbat válaszd. A szint bekerül a PR „Ellenőrzé
 ### Menet
 
 1. Rögzítsd a review tárgyát: `git fetch origin`, base = `origin/release/<dátum>`, és a base/head SHA.
-2. Reviewer-prompt (Claude Code példa):
-   `claude -p "Review-zd a git diff ${BASE_SHA}...${HEAD_SHA} változásait a KGoblin AGENTS.md és a kg-architecture szerint. Csak valódi hibát jelezz (bug, biztonság, adatszivárgás brandek között, ár- vagy összegszámítás a kliensen, kihagyott hibaeset, FSD-sértés), fájl:sor és rövid indoklás. A nem futtatott teszt nem sikeres teszt. Add meg a review-zott SHA-kat és a verdiktet." --allowedTools "Bash(git diff:*),Bash(git log:*),Read,Grep,Glob"`
-   Antigravityben ugyanez a prompt egy új agent-sessionben, read-only módban.
+2. Reviewer-prompt, eszköztől függetlenül (read-only session, csak `git diff`/`git log` és fájlolvasás):
+   „Review-zd a `git diff ${BASE_SHA}...${HEAD_SHA}` változásait a KGoblin `AGENTS.md` és a `kg-architecture`
+   szerint. Csak valódi hibát jelezz (bug, biztonság, adatszivárgás brandek között, ár- vagy
+   összegszámítás a kliensen, kihagyott hibaeset, FSD-sértés), fájl:sor és rövid indoklás. A nem futtatott
+   teszt nem sikeres teszt. Add meg a review-zott SHA-kat és a verdiktet.”
 3. Minden findingot fogadj el, bizonyítékkal vess el, vagy jóváhagyással halassz el. A javítás után célzott
    teszt, majd új review-kör az új head SHA-n.
 4. Megállás: ha a keret elfogyott, vagy a reviewer nem elérhető, állítsd le a ciklust, és kérj emberi döntést.
    Új commit vagy sessionváltás nem nullázza a körszámlálót. Nincs automatikus jóváhagyás.
 
-Eredménysor a PR-ba: `Review: Gemini, normál - 2/3 kör, jóváhagyva; head <SHA>; 2 javítva, 1 elvetve (X)`.
+Eredménysor a PR-ba: `Review: <modell>, friss session, normál - 2/3 kör, jóváhagyva; head <SHA>; 2 javítva,
+1 elvetve (X)`.
 
 ## 6. PR (kérésre)
 
