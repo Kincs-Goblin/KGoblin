@@ -29,3 +29,7 @@ Thumbs.db
 
 /wordpress/wp-content/plugins/*
 !/wordpress/wp-content/plugins/hu-webshop-core/
+
+# Agent által készített review-képek és kimenetek (kg-ticket-to-pr)
+output/
+.env*.local
