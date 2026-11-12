@@ -13,7 +13,8 @@ brandeket; minden brand mögött saját WordPress + WooCommerce backend van.
   demót és hotfixet vihetnek. A szerep PR-onként dől el: aki nyitja, a **szerző**; a **másik fejlesztő** a
   reviewer, és az ő jóváhagyása kell a merge-hez.
 - Ticketek: Jira, `KG` projekt. Link: `https://<TODO-jira-site>.atlassian.net/browse/KG-123`.
-- Terv: `docs/project-plan.md` · Döntések: `docs/adr/` · Ticket-sablon: `docs/process/ticket-template.md`.
+- Terv: `docs/project-plan.md` · Döntések: `docs/adr/` · Ticket-sablon: `docs/process/ticket-template.md` ·
+  Első lépések: `docs/process/onboarding.md`.
 - Állapot: tervezési fázis. Alkalmazáskód még nincs, csak a mappastruktúra és a szabályok.
 
 ## Stack röviden
@@ -55,6 +56,7 @@ Stack-változást csendben, „mellékesen” bevezetni tilos. Részletek: `kg-s
 | `.agents/skills/` | a skillek forrása (Antigravity innen olvas) |
 | `.agents/workflows/` | Antigravity slash-workflow-k, a skillekre mutatnak |
 | `.claude/skills/` | Claude Code mutatók az `.agents/skills/` fájljaira |
+| `.gemini/settings.json` | Gemini CLI: az `AGENTS.md`-t tölti be kontextusként |
 
 A gyökérben lévő `wordpress/`, `docker-compose.yml`, `setup-webshop.ps1` és `README.md` a korábbi,
 klasszikus-témás prototípus. Új munka nem épít rá; az átalakítása vagy eltávolítása külön ticket.
