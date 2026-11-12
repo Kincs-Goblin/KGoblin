@@ -20,7 +20,7 @@ mást mondanak, mint ez a skill, azok az irányadók; jelezd az eltérést.
 
 1. Olvasd be a ticketet. Ha van Jira-eszköz a sessionben, azzal (csak olvasás); ha nincs, kérd meg a
    felhasználót, hogy illessze be a leírást és az elfogadási kritériumokat. Link:
-   `https://<TODO-jira-site>.atlassian.net/browse/KG-<n>`.
+   `https://kincsgoblin.atlassian.net/browse/KG-<n>`.
 2. Ellenőrizd a **Definition of Ready**-t (`docs/process/ticket-template.md`):
    cél egy mondatban · ellenőrizhető elfogadási kritériumok · scope és ami nem része · érintett terület ·
    elvárt bizonyíték · kockázat. Ami hiányzik vagy ellentmondásos: kérdezz, ne találj ki.

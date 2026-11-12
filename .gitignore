@@ -3,10 +3,15 @@ db_data/
 *.sql
 *.sql.gz
 .env
+.env*.local
 
-# Node modulok
+# Node és monorepo build könyvtárak
 node_modules/
 **/node_modules/
+.turbo/
+.next/
+dist/
+build/
 
 # OS és IDE fájlok
 .DS_Store
@@ -14,22 +19,13 @@ Thumbs.db
 .vscode/
 .idea/
 
-# WordPress core fájlok kizárása
+# WordPress: csak a saját plugins/, docker/ és seed/ mappákat követjük,
+# a futásidejű wp-content/<brand>/ (uploads, letöltött woocommerce, redis-cache, témák) kizárva
 /wordpress/*
-!/wordpress/wp-content/
+!/wordpress/plugins/
+!/wordpress/docker/
+!/wordpress/seed/
 
-# wp-content mappán belül minden kizárása (uploads, cache, idegen bővítmények/témák)
-/wordpress/wp-content/*
-!/wordpress/wp-content/themes/
-!/wordpress/wp-content/plugins/
-
-# Csak a saját témánk és saját bővítményünk követése
-/wordpress/wp-content/themes/*
-!/wordpress/wp-content/themes/custom-shop/
-
-/wordpress/wp-content/plugins/*
-!/wordpress/wp-content/plugins/hu-webshop-core/
-
-# Agent által készített review-képek és kimenetek (kg-ticket-to-pr)
+# Agent által készített review-képek, segédscriptek és kimenetek
 output/
-.env*.local
+.agents/scripts/

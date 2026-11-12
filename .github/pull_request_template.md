@@ -2,7 +2,7 @@
 <!-- 1-2 mondat: mit és miért, a vásárló vagy a shop-admin szemszögéből -->
 
 ## Ticketek
-- [KG-123](https://<TODO-jira-site>.atlassian.net/browse/KG-123) - ticket címe
+- [KG-123](https://kincsgoblin.atlassian.net/browse/KG-123) - ticket címe
 <!-- Ha nincs ticket: Ticket: nincs - <miért> -->
 
 ## Változások
