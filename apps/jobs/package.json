@@ -1,0 +1,27 @@
+{
+  "name": "@kg/jobs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "trigger dev",
+    "deploy": "trigger deploy",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@kg/brand-config": "workspace:*",
+    "@kg/woo-client": "workspace:*",
+    "@trigger.dev/sdk": "4.8.5",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@kg/config": "workspace:*",
+    "@types/node": "^22.0.0",
+    "eslint": "9.39.5",
+    "trigger.dev": "4.8.5",
+    "typescript": "6.0.3",
+    "vitest": "5.1.0"
+  }
+}

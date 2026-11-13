@@ -4,7 +4,14 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build", "typecheck"],
-      "env": ["KG_STORE_FIXTURES", "WOO_*_URL"],
+      "env": [
+        "KG_STORE_FIXTURES",
+        "NEXT_PUBLIC_APP_ENV",
+        "NEXT_PUBLIC_SENTRY_DSN",
+        "VERCEL_ENV",
+        "WOO_*_URL",
+        "TRIGGER_PROJECT_ID"
+      ],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
     "dev": {

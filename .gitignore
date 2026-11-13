@@ -33,6 +33,7 @@ output/
 
 # Monorepo build-kimenetek
 .turbo/
+.trigger/
 .next/
 dist/
 coverage/
