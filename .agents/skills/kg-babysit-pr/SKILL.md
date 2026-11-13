@@ -11,17 +11,18 @@ Forrás: a BILDR HUB agent-kit `babysit-pr` skillje (t3dotgg/tstack, MIT), a KGo
 
 Saját polling- vagy `sleep`-ciklust ne írj. PR-onként egy watcher legyen:
 
-- **T3 Code:** előbb kezeld a meglévő checkeket és kommenteket, aztán `watch_pull_request`, és zárd a turnt.
-  A T3 felébreszt, ha egy check elbukik, a kötelezők zöldek, komment vagy review jön, vagy ütközés van.
-  Csak az a thread watcholjon, amelyik a PR-t birtokolja; delegált gyerek-task soha. Átadás vagy kérdés
-  előtt `unwatch_pull_request`.
-- **Claude Code CLI:** a Monitor eszközzel futtasd: `gh pr checks <pr> --watch --fail-fast`.
-- **Antigravity:** a terminálban `gh pr checks <pr> --watch --fail-fast`, utána `gh pr view <pr> --comments`.
+- Előbb kezeld a meglévő checkeket és kommenteket, utána indítsd a watchert.
+- Ha az eszközödnek van PR-figyelője, azt használd; ha nincs, `gh pr checks <pr> --watch --fail-fast`, utána
+  `gh pr view <pr> --comments`. Eszközönként: `docs/process/agent-adapters.md`.
+- Csak az a session watcholjon, amelyik a PR-t birtokolja; delegált gyerek-task soha. Átadás vagy kérdés
+  előtt állítsd le a watchert.
 
 Ha egy esemény nem igényel teendőt, zárd a turnt üzenet nélkül; ne írj „még várok”-at.
 
 ## Review-k és CI
 
+- A PR-t a szerzője, vagyis a ticket felelőse követi és javítja; a review-findingok kezelése nem kerül át a
+  reviewerre (`kg-ticket-to-pr` → Felelősség).
 - Csak a legutóbbi push utáni checkekkel és kommentekkel foglalkozz.
 - Minden bot-findingot a forráskódon ellenőrizz, mielőtt módosítasz. A jogos hibát javítsd, a hamis
   pozitívra írj rövid, indokolt választ, és zárd le a szálat.
@@ -39,7 +40,7 @@ plusz kompatibilitás, apró teljesítményköltség) írásos indokkal utasíts
 
 - Figyeld a célág (`release/*` vagy hotfixnél `main`) változását. Ha a PR BEHIND vagy DIRTY, a
   `kg-git-workflow` szerint merge-eld be a célágat, oldd fel az ütközést, futtasd újra az ellenőrzéseket.
-  A T3 watcher csak az ütközést jelzi, a BEHIND állapotot neked kell megnézned.
+  A watcherek jellemzően csak az ütközést jelzik, a BEHIND állapotot neked kell megnézned.
 - Merge csak kifejezett kérésre, a másik fejlesztő jóváhagyása és zöld CI mellett, squash-sal. Merge előtt
   `git fetch`, és nézd meg újra a PR-t. Ha egy átfedő PR feleslegessé teszi ezt, állj meg, és kérdezz,
   mielőtt lezárnád.

@@ -3,6 +3,7 @@
 - Állapot: elfogadott
 - Dátum: 2026-11-12
 - Döntéshozók: SMark2256, ricsmond12
+- Kiegészítve: ADR-0006 (agent-független skillek)
 
 ## Kontextus
 

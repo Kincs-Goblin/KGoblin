@@ -1,6 +1,6 @@
 ---
 name: kg-knowledge
-description: Hogyan és hová rögzíts tudást a KGoblin projektben, hogy a következő session (bármelyik fejlesztőé, Claude Code-ban vagy Antigravityben) ott találja meg - repó (AGENTS.md, skillek, ADR, README) vagy személyes agent-memória. Használd, ha azt mondják, „jegyezd meg”, „emlékezz erre”, „vedd fel”, ha egy nagyobb feladat végén állapotot kell menteni, vagy el kell dönteni, hová kerüljön egy tény.
+description: Hogyan és hová rögzíts tudást a KGoblin projektben, hogy a következő session (bármelyik fejlesztőé, bármelyik agent-eszközben) ott találja meg - repó (AGENTS.md, skillek, ADR, README) vagy személyes agent-memória. Használd, ha azt mondják, „jegyezd meg”, „emlékezz erre”, „vedd fel”, ha egy nagyobb feladat végén állapotot kell menteni, vagy el kell dönteni, hová kerüljön egy tény.
 ---
 
 # kg-knowledge
@@ -9,14 +9,13 @@ A cél: a jövőbeli session **ott** találja meg a tényt, ahol szüksége lesz
 
 ## 1. Az alapprobléma
 
-Két fejlesztő, két agent, több gép. Az agent-memória **személyes és géphez kötött**:
+Két fejlesztő, akár különböző agent-eszközök, több gép. Az agent-memória **személyes, eszköz- és
+géphez kötött**:
 
-- **Claude Code** auto-memóriája az indító mappához kötődik
-  (`~/.claude/projects/<útvonal, ahol ':' '\' '/' '.' → '-'>/memory/`). Minden T3 Code worktree saját
-  útvonal, tehát saját pool; amit egy worktree-session ír, azt a fő checkoutból indított session nem látja.
-- **Antigravity** a saját tudáselemeit (knowledge items) és a globális `~/.gemini/GEMINI.md`-t használja;
-  ezeket a Claude nem látja, és fordítva.
-- A másik fejlesztő agentje **semmit** nem lát a te memóriádból.
+- minden eszköz a saját helyén tárol (helyek eszközönként: `docs/process/agent-adapters.md`); egy eszköz memóriáját a másik nem látja;
+- egyes eszközöknél a memória az indító mappához kötődik, így egy worktree-session mást lát, mint a fő
+  checkoutból indított;
+- a másik fejlesztő agentje **semmit** nem lát a te memóriádból.
 
 Következmény: **ami a csapatnak vagy a másik agentnek is kell, az a repóba megy.** A memória csak arra
 való, ami a te munkamódodról szól.
@@ -31,7 +30,7 @@ való, ami a te munkamódodról szól.
 | Külső rendszer furcsasága (Woo, gateway, Billingo, beszállító) | a kliens vagy adapter README-jének „Ismert furcsaságok” része |
 | Termékterv, mérföldkő, scope | `docs/project-plan.md` |
 | Egy ticket állapota, félkész munka | a Jira-ticket kommentje (kérésre) vagy a PR leírása |
-| A te személyes preferenciád (stílus, válaszhossz) | a saját globális agent-fájlod (`~/.claude/CLAUDE.md`, `~/.gemini/GEMINI.md`), csak kérésre |
+| A te személyes preferenciád (stílus, válaszhossz) | az eszközöd globális agent-fájlja (`docs/process/agent-adapters.md`), csak kérésre |
 | Neked szóló, nem csapatszintű tény erről a projektről | agent-memória a **fő checkout** poolja szerint |
 | Amit a kód, a git log vagy a repó doksija már elmond | **sehová**; ha kérik, kérdezd meg, mi volt benne a nem nyilvánvaló, és azt mentsd |
 
@@ -39,7 +38,7 @@ való, ami a te munkamódodról szól.
 
 Ha a repóba kerül, az is változtatás: a megfelelő ágon, PR-ral megy (`docs/KG-n-…` vagy a feladat PR-ja).
 
-## 3. Claude Code memóriafájl formája
+## 3. Memóriafájl formája (fájl-alapú agent-memóriánál)
 
 Egy fájl = egy téma; a fájlnév és a `name` ugyanaz a kebab-case slug.
 

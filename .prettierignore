@@ -1,0 +1,11 @@
+wordpress/
+docs/
+.agents/
+.claude/
+.gemini/
+*.md
+pnpm-lock.yaml
+.next/
+output/
+docker-compose.yml
+setup-webshop.ps1

@@ -48,7 +48,8 @@ hotfix/KG-20 → main (squash) → patch tag → main bemerge-elve az aktív rel
 - Példák: `feat/KG-42-kosar-drawer`, `fix/KG-57-barion-redirect`, `docs/KG-60-adr-auth-plugin`.
 - Ticket nélkül csak kivételesen, egyeztetve: `chore/<leírás>`, és a PR-ba `Ticket: nincs - <miért>`.
 - Az ág nevében nem szerepelhet `claude`, `gemini`, `ai` vagy más eszköznév.
-- **T3 Code worktree** (`t3/<id>` ág): ha még nincs rajta saját munka, `git switch -C <új-név> origin/main`;
+- **Agent által nyitott ideiglenes ág** (pl. worktree-ág; eszközönként: `docs/process/agent-adapters.md`): ha még nincs rajta saját
+  munka, `git switch -C <új-név> origin/main`;
   ha már van, `git branch -m <új-név>`, és ellenőrizd: `git merge-base --is-ancestor origin/main HEAD`.
 
 ## Commit

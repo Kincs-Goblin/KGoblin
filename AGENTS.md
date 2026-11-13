@@ -1,6 +1,6 @@
 # KGoblin - agent-szabályok
 
-Ez a fájl az egyetlen közös szabályforrás minden AI agentnek (Claude Code, Antigravity). A `CLAUDE.md`
+Ez a fájl az egyetlen közös szabályforrás minden AI agentnek, eszköztől függetlenül. A `CLAUDE.md`
 csak importálja. Ha egy skill ütközik ezzel a fájllal, ez az irányadó; jelezd, hogy a skillt frissíteni kell.
 
 ## A projekt
@@ -12,16 +12,19 @@ brandeket; minden brand mögött saját WordPress + WooCommerce backend van.
 - Csapat: **SMark2256** és **ricsmond12**, egyenrangú szerepben: mindketten bármilyen ticketet, release-t,
   demót és hotfixet vihetnek. A szerep PR-onként dől el: aki nyitja, a **szerző**; a **másik fejlesztő** a
   reviewer, és az ő jóváhagyása kell a merge-hez.
+- A ticketet a **felelőse** (Jira-assignee) viszi végig PR-ig, tesztekkel és review-ciklussal együtt; a
+  reviewer csak findingot ad, a munkát nem veszi át. Részletek: `kg-ticket-to-pr` → Felelősség.
 - Ticketek: Jira, `KG` projekt. Link: `https://<TODO-jira-site>.atlassian.net/browse/KG-123`.
 - Terv: `docs/project-plan.md` · Döntések: `docs/adr/` · Ticket-sablon: `docs/process/ticket-template.md` ·
   Első lépések: `docs/process/onboarding.md`.
-- Állapot: tervezési fázis. Alkalmazáskód még nincs, csak a mappastruktúra és a szabályok.
+- Állapot: 0. mérföldkő. Kész: monorepo-váz, `apps/web` váz és gamer téma, `packages/brand-config`, CI (KG-5).
 
 ## Stack röviden
 
 A teljes, státuszos döntésnapló a `kg-stack` skillben van; ütközésnél az az irányadó.
 
-- **Frontend:** Next.js (App Router) + TypeScript, Tailwind + shadcn/ui, FSD 3. szint (`apps/web`), Vercel.
+- **Frontend:** Next.js (App Router) + TypeScript, Tailwind + shadcn/ui Base UI-jal, Motion az animációkhoz,
+  FSD 3. szint (`apps/web`), Vercel.
 - **Commerce:** WooCommerce brandenként külön példányban. Store API a katalógushoz, kosárhoz és
   checkouthoz; REST v3 csak szerveroldalon. Minden Woo-válasz Zod-dal validálva.
 - **Háttérjobok:** Trigger.dev (`apps/jobs`): beszállítói feed-szinkron, rendelés-továbbítás, újrapróba.
@@ -64,7 +67,9 @@ klasszikus-témás prototípus. Új munka nem épít rá; az átalakítása vagy
 ## Skillek
 
 A forrás mindig `.agents/skills/<név>/SKILL.md`. A `.claude/skills/<név>/SKILL.md` csak mutató: új skillnél
-mindkettőt hozd létre, a név és a leírás egyezzen.
+mindkettőt hozd létre, a név és a leírás egyezzen. A skillek és a workflow-k eszköz- és modellfüggetlenek;
+eszközfüggő részlet (session indítása, PR-figyelés, memória helye) csak a `docs/process/agent-adapters.md`-be
+kerül (ADR-0006).
 
 | Skill | Mikor |
 |---|---|
@@ -91,6 +96,19 @@ mindkettőt hozd létre, a név és a leírás egyezzen.
 - Külső rendszerbe (Jira, Woo admin, Vercel, Trigger.dev, Billingo, éles adat) csak kifejezett kérésre írj.
 - Titok soha nem kerül a kódba, a logba, a memóriába vagy a frontendbe (`NEXT_PUBLIC_*` csak publikus érték).
 - A FSD-rétegszabály, a Woo-adatréteg és a brandkezelés szabályai a `kg-architecture` skillben vannak.
+
+## Parancsok
+
+Node a `.nvmrc` szerint (26; a 22.12 alatti Node-dal a Tailwind 4 build elbukik), pnpm a `packageManager` szerint.
+
+```bash
+pnpm install
+pnpm dev                                   # apps/web: http://gamer.localhost:3000 (a host választ brandet)
+pnpm turbo run typecheck lint test build   # quality gate; a web lintje a Steigert is futtatja
+pnpm --filter @kg/web test:e2e             # Playwright smoke (desktop + mobil)
+```
+
+A CI (GitHub Actions, `.github/workflows/ci.yml`) ugyanezt futtatja minden `main`/`release/**` PR-on.
 
 ## Git röviden
 

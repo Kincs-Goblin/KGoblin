@@ -15,6 +15,9 @@ gh auth login          # a PR- és CI-lépésekhez
 
 ## 2. Agent beállítása
 
+Bármelyik agent-eszköz használható; a skillek eszközfüggetlenek. Hogy egy skill lépését (friss review-session,
+PR-figyelés, kérdezés, memória) a te eszközödben hogyan csinálod: `docs/process/agent-adapters.md`.
+
 | Eszköz | Mit olvas | Teendő |
 |---|---|---|
 | **Claude Code** | `CLAUDE.md` (→ `AGENTS.md`), `.claude/skills/` | a repó gyökeréből indítsd |
@@ -37,7 +40,7 @@ Mind a 10 `kg-*` skillnek meg kell jelennie (`kg-stack`, `kg-architecture`, `kg-
 `kg-council`).
 
 - Antigravity: `/` leütésére látszanak a workflow-k (`ticket`, `release-cut`, `release-ship`, `demo-sync`,
-  `hotfix`, `stack-change`, `full-stop`).
+  `hotfix`, `stack-change`, `full-stop`, `local-test`).
 - Gemini CLI: `/skills list`. Workflow-k itt nincsenek; a skilleket név szerint vagy feladattal hívod
   („vidd végig a KG-42-t”).
 
