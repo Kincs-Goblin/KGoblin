@@ -3,6 +3,7 @@
 - Állapot: elfogadott
 - Dátum: 2026-11-12
 - Döntéshozók: SMark2256, ricsmond12
+- Kiegészítve: ADR-0006 (agent-független skillek)
 
 ## Kontextus
 
@@ -25,7 +26,8 @@
   `kg-dev-practices`, `kg-knowledge`, `kg-full-stop`, `kg-babysit-pr`, `kg-council`. A `kg-` előtag megelőzi az
   ütközést a globálisan telepített skillekkel.
 - **Stack-változás** csak a `kg-stack` folyamatával (opciós kérdés → ADR → döntésnapló → AGENTS.md).
-- **AI-attribúció** nincs commitban, PR-ben és branchnévben.
+- **AI-attribúció** nincs commitban, PR-ben és branchnévben. (2026-11-13 óta az ADR-0007 szerint az AI-val
+  készült commit `Co-Authored-By` footert kap; a PR-ben és az ágnévben továbbra sincs.)
 
 ## Következmények
 

@@ -1,6 +1,6 @@
 # KGoblin - agent-szabályok
 
-Ez a fájl az egyetlen közös szabályforrás minden AI agentnek (Claude Code, Antigravity). A `CLAUDE.md`
+Ez a fájl az egyetlen közös szabályforrás minden AI agentnek, eszköztől függetlenül. A `CLAUDE.md`
 csak importálja. Ha egy skill ütközik ezzel a fájllal, ez az irányadó; jelezd, hogy a skillt frissíteni kell.
 
 ## A projekt
@@ -10,18 +10,24 @@ további niche-shopok jönnek ugyanarra a kódbázisra. Egy Next.js frontend dom
 brandeket; minden brand mögött saját WordPress + WooCommerce backend van.
 
 - Csapat: **SMark2256** és **ricsmond12**, egyenrangú szerepben: mindketten bármilyen ticketet, release-t,
-  demót és hotfixet vihetnek. A szerep PR-onként dől el: aki nyitja, a **szerző**; a **másik fejlesztő** a
-  reviewer, és az ő jóváhagyása kell a merge-hez.
-- Ticketek: Jira, `KG` projekt. Link: `https://<TODO-jira-site>.atlassian.net/browse/KG-123`.
+  demót és hotfixet vihetnek. A szerep PR-onként dől el: aki nyitja, a **szerző**; a **másik fejlesztő**
+  opcionálisan review-zhat.
+- **Merge-kapu:** zöld CI (a `main`-re menő PR-okon; a `demo` PR-on helyette a helyi release-teszt) + lezárt
+  független AI review-ciklus + **bármelyik fejlesztő kifejezett „mehet”-je** (a szerzőé is elég). A másik
+  fejlesztő GitHub-jóváhagyása nem feltétel; ha változtatást kér, azt kezelni kell.
+- A ticketet a **felelőse** (Jira-assignee) viszi végig PR-ig, tesztekkel és review-ciklussal együtt; a
+  reviewer csak findingot ad, a munkát nem veszi át. Részletek: `kg-ticket-to-pr` → Felelősség.
+- Ticketek: Jira, `KG` projekt. Link: `https://kincsgoblin.atlassian.net/browse/KG-123`.
 - Terv: `docs/project-plan.md` · Döntések: `docs/adr/` · Ticket-sablon: `docs/process/ticket-template.md` ·
   Első lépések: `docs/process/onboarding.md`.
-- Állapot: tervezési fázis. Alkalmazáskód még nincs, csak a mappastruktúra és a szabályok.
+- Állapot: 0. mérföldkő. Kész: monorepo-váz, `apps/web` váz és gamer téma, `packages/brand-config`, CI (KG-5).
 
 ## Stack röviden
 
 A teljes, státuszos döntésnapló a `kg-stack` skillben van; ütközésnél az az irányadó.
 
-- **Frontend:** Next.js (App Router) + TypeScript, Tailwind + shadcn/ui, FSD 3. szint (`apps/web`), Vercel.
+- **Frontend:** Next.js (App Router) + TypeScript, Tailwind + shadcn/ui Base UI-jal, Motion az animációkhoz,
+  FSD 3. szint (`apps/web`), Vercel.
 - **Commerce:** WooCommerce brandenként külön példányban. Store API a katalógushoz, kosárhoz és
   checkouthoz; REST v3 csak szerveroldalon. Minden Woo-válasz Zod-dal validálva.
 - **Háttérjobok:** Trigger.dev (`apps/jobs`): beszállítói feed-szinkron, rendelés-továbbítás, újrapróba.
@@ -52,19 +58,21 @@ Stack-változást csendben, „mellékesen” bevezetni tilos. Részletek: `kg-s
 | `packages/woo-client/` | Store API + REST v3 kliens, Zod-sémák, webhook-aláírás |
 | `packages/brand-config/` | brandek: domainek, tokenek, Woo-végpontok, fizetési módok |
 | `packages/config/` | közös tsconfig, ESLint, Prettier presetek |
+| `wordpress/plugins/kg-headless/` | saját headless WooCommerce bővítmény (Store API checkout validáció, Omnibus, redirect) |
+| `wordpress/seed/` | brandenként paraméterezhető WP-CLI tesztadat-seed (`seed-brand.php`) és PHP unit-tesztek |
+| `wordpress/docker/` | lokális többbrandes Docker setup (`setup.ps1`, `setup.sh`, `init-multi-db.sh`) és Store API tesztek |
 | `docs/` | terv, ADR-ek, folyamatleírások |
 | `.agents/skills/` | a skillek forrása (Antigravity innen olvas) |
 | `.agents/workflows/` | Antigravity slash-workflow-k, a skillekre mutatnak |
 | `.claude/skills/` | Claude Code mutatók az `.agents/skills/` fájljaira |
 | `.gemini/settings.json` | Gemini CLI: az `AGENTS.md`-t tölti be kontextusként |
 
-A gyökérben lévő `wordpress/`, `docker-compose.yml`, `setup-webshop.ps1` és `README.md` a korábbi,
-klasszikus-témás prototípus. Új munka nem épít rá; az átalakítása vagy eltávolítása külön ticket.
-
 ## Skillek
 
 A forrás mindig `.agents/skills/<név>/SKILL.md`. A `.claude/skills/<név>/SKILL.md` csak mutató: új skillnél
-mindkettőt hozd létre, a név és a leírás egyezzen.
+mindkettőt hozd létre, a név és a leírás egyezzen. A skillek és a workflow-k eszköz- és modellfüggetlenek;
+eszközfüggő részlet (session indítása, PR-figyelés, memória helye) csak a `docs/process/agent-adapters.md`-be
+kerül (ADR-0006).
 
 | Skill | Mikor |
 |---|---|
@@ -72,7 +80,7 @@ mindkettőt hozd létre, a név és a leírás egyezzen.
 | `kg-architecture` | hova kerüljön a kód, FSD, Woo-integráció, multi-brand, hibakódok |
 | `kg-git-workflow` | branch, commit, merge, demo, hotfix |
 | `kg-ticket-to-pr` | Jira-ticket végigvitele PR-ig, review-ciklus |
-| `kg-release` | release-ág vágása, version PR, tag, prod deploy, demo reset |
+| `kg-release` | helyi release-teszt, demo PR-ok, version PR, demo → main, GitHub release, hotfix |
 | `kg-dev-practices` | tervezési elvek, tesztelés, biztonság, külső API-k, Windows-csapdák |
 | `kg-knowledge` | „jegyezd meg”: hová kerüljön egy tény (repó vagy memória) |
 | `kg-full-stop` | „full stop”: felügyelet nélkül merge-elhető PR-ig |
@@ -82,6 +90,9 @@ mindkettőt hozd létre, a név és a leírás egyezzen.
 ## Hogyan dolgozz
 
 - A tényleges állapotból indulj. Kódos munka előtt `git status --short`; idegen módosítást ne revertelj.
+- **Ticketenként külön git worktree:** az agent minden ticketet saját worktree-ben, saját ticketágon fejleszt,
+  soha nem a fő checkoutban és nem egy másik ticket worktree-jében. Egy worktree = egy ticket (a ticket
+  stacked PR-ágai együtt). Menete: `kg-git-workflow` → Worktree.
 - „Nézd meg”, „adj tervet”, „review-zd”, „ne kódolj”: kizárólag read-only munka.
 - Széles vagy kockázatos változtatás előtt rövid, jóváhagyott terv. Nyitott döntést opciós kérdésként tegyél
   fel, ne prózában. Kis, egyértelmű javításnál ez felesleges.
@@ -92,16 +103,32 @@ mindkettőt hozd létre, a név és a leírás egyezzen.
 - Titok soha nem kerül a kódba, a logba, a memóriába vagy a frontendbe (`NEXT_PUBLIC_*` csak publikus érték).
 - A FSD-rétegszabály, a Woo-adatréteg és a brandkezelés szabályai a `kg-architecture` skillben vannak.
 
+## Parancsok
+
+Node a `.nvmrc` szerint (26; a 22.12 alatti Node-dal a Tailwind 4 build elbukik), pnpm a `packageManager` szerint.
+
+```bash
+pnpm install
+pnpm dev                                   # apps/web: http://gamer.localhost:3000 (a host választ brandet)
+pnpm turbo run typecheck lint test build   # quality gate; a web lintje a Steigert is futtatja
+pnpm --filter @kg/web test:e2e             # Playwright smoke (desktop + mobil)
+```
+
+A CI (GitHub Actions, `.github/workflows/ci.yml`) ugyanezt futtatja minden `main`-re menő PR-on; a `demo`
+PR-ok kapuja a helyi release-teszt.
+
 ## Git röviden
 
-Részletek: `kg-git-workflow`. Ágak: `main` (élesre kerülő kód), `demo` (ügyfélteszt), ticketág,
-`release/ÉÉÉÉ-HH-NN`, `version/vX.Y.Z`, `hotfix/KG-n-…`.
+Részletek: `kg-git-workflow`, döntés: ADR-0007 (a Tinati-workflow alapján). Ágak: `main` (éles kód), `demo`
+(ügyfélteszt), ticketág `KG-<n>`, helyi `release/ÉÉÉÉ-HH-NN` tesztág, `version/vX.Y.Z`.
 
-- Ticketág friss `origin/main`-ből: `<típus>/KG-<n>-<rövid-leírás>`, PR az aktív `release/*` ágba, squash.
-- `main`-re csak a release PR és a hotfix PR megy (a `version/*` PR a release-ágba); közvetlen push nincs.
+- Ticketág pontosan a kulcsról (`KG-42`), friss `origin/main`-ből, saját worktree-ben. Helyi
+  `release/<dátum>` ágon összetesztelve (`--no-ff`, nem pusholjuk), majd ticketenként PR a `demo`-ra
+  (merge commit). Élesítés: egyetlen `demo` → `main` PR, squash, zöld CI-vel. Hotfix: `KG-<n>` → `main`.
+- Közvetlen push a `main`-re és a `demo`-ra nincs, kis fixre sem.
 - Commit és PR-cím angolul, Conventional Commits: `feat(KG-42): add cart drawer`. A PR-leírás magyarul.
-- **Semmilyen AI-attribúció** commitban, PR-ben vagy branchnévben (nincs `Co-Authored-By`, „Generated with”,
-  🤖). Ez a projektszabály felülírja az eszköz alapértelmezését.
+- **AI-val készült commit** az eszköz `Co-Authored-By` footerét kapja; a PR-leírásban és az ágnévben nincs
+  AI-jelölés („Generated with”, 🤖).
 - Commit, push, PR-nyitás, merge, tag, deploy és Jira-írás csak kifejezett kérésre.
 - Stage-elj fájlonként (`git add -A` nem); push előtt `git diff --stat`, aztán `git diff`.
 

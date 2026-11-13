@@ -1,55 +1,152 @@
 services:
   db:
     image: mariadb:10.11
-    container_name: webshop_db
+    container_name: kg_db
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: wordpress
-      MYSQL_USER: wpuser
-      MYSQL_PASSWORD: wppassword
-      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: ${WP_GAMER_DB_NAME:-wp_gamer}
+      MYSQL_USER: ${WP_DB_USER:-kg_wp_user}
+      MYSQL_PASSWORD: ${WP_DB_PASSWORD:-kg_wp_local_pass}
+      MYSQL_ROOT_PASSWORD: ${WP_DB_ROOT_PASSWORD:-kg_local_root_secret}
+      WP_GAMER_DB_NAME: ${WP_GAMER_DB_NAME:-wp_gamer}
+      WP_GAMER_DB_USER: ${WP_DB_USER:-kg_wp_user}
+      WP_GAMER_DB_PASSWORD: ${WP_DB_PASSWORD:-kg_wp_local_pass}
+      WP_BRAND2_DB_NAME: ${WP_BRAND2_DB_NAME:-wp_brand2}
+      WP_BRAND2_DB_USER: ${WP_BRAND2_DB_USER:-kg_wp_brand2_user}
+      WP_BRAND2_DB_PASSWORD: ${WP_BRAND2_DB_PASSWORD:-kg_wp_local_pass}
     volumes:
-      - db_data:/var/lib/mysql
+      - kg_db_data:/var/lib/mysql
+      - ./wordpress/docker/init-multi-db.sh:/docker-entrypoint-initdb.d/init-multi-db.sh:ro
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 5s
       timeout: 5s
+      retries: 15
+
+  redis:
+    image: redis:7-alpine
+    container_name: kg_redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
       retries: 10
 
-  wordpress:
+  # ============================================================================
+  # 1. BRAND: GAMER (Headless WordPress + WooCommerce)
+  # ============================================================================
+  wp-gamer:
     image: wordpress:php8.3-apache
-    container_name: webshop_wp
+    container_name: kg_wp_gamer
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     ports:
-      - "8080:80"
+      - "127.0.0.1:${WP_GAMER_PORT:-8080}:80"
     environment:
       WORDPRESS_DB_HOST: db:3306
-      WORDPRESS_DB_USER: wpuser
-      WORDPRESS_DB_PASSWORD: wppassword
-      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: ${WP_DB_USER:-kg_wp_user}
+      WORDPRESS_DB_PASSWORD: ${WP_DB_PASSWORD:-kg_wp_local_pass}
+      WORDPRESS_DB_NAME: ${WP_GAMER_DB_NAME:-wp_gamer}
+      KG_BRAND: gamer
+      KG_FRONTEND_URL: ${WP_GAMER_FRONTEND_URL:-http://localhost:3000}
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_REDIS_HOST', 'redis');
+        define('WP_REDIS_PORT', 6379);
+        define('WP_REDIS_DATABASE', 0);
+        define('WP_CACHE_KEY_SALT', 'kg_gamer_');
     volumes:
-      - ./wordpress:/var/www/html
+      # A WP core named volume-ban fut (gyors WSL2 IO), csak a wp-content + kg-headless + seed van csatolva
+      - kg_wp_gamer_core:/var/www/html
+      - ./wordpress/wp-content/gamer:/var/www/html/wp-content
+      - ./wordpress/plugins/kg-headless:/var/www/html/wp-content/plugins/kg-headless
+      - ./wordpress/seed:/var/www/seed:ro
 
-  wpcli:
+  wpcli-gamer:
     image: wordpress:cli-php8.3
-    container_name: webshop_cli
+    container_name: kg_wpcli_gamer
     depends_on:
       db:
         condition: service_healthy
-      wordpress:
+      wp-gamer:
         condition: service_started
     user: "33:33"
     environment:
       WORDPRESS_DB_HOST: db:3306
-      WORDPRESS_DB_USER: wpuser
-      WORDPRESS_DB_PASSWORD: wppassword
-      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: ${WP_DB_USER:-kg_wp_user}
+      WORDPRESS_DB_PASSWORD: ${WP_DB_PASSWORD:-kg_wp_local_pass}
+      WORDPRESS_DB_NAME: ${WP_GAMER_DB_NAME:-wp_gamer}
+      KG_BRAND: gamer
+      KG_FRONTEND_URL: ${WP_GAMER_FRONTEND_URL:-http://localhost:3000}
+      WP_CLI_CACHE_DIR: /tmp/.wp-cli/cache
     volumes:
-      - ./wordpress:/var/www/html
+      - kg_wp_gamer_core:/var/www/html
+      - ./wordpress/wp-content/gamer:/var/www/html/wp-content
+      - ./wordpress/plugins/kg-headless:/var/www/html/wp-content/plugins/kg-headless
+      - ./wordpress/seed:/var/www/seed:ro
     entrypoint: ["tail", "-f", "/dev/null"]
 
+  # ============================================================================
+  # 2. BRAND SABLON (Második brand indításához vedd ki a kommentből)
+  # ============================================================================
+  # wp-brand2:
+  #   image: wordpress:php8.3-apache
+  #   container_name: kg_wp_brand2
+  #   restart: unless-stopped
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   ports:
+  #     - "127.0.0.1:${WP_BRAND2_PORT:-8081}:80"
+  #   environment:
+  #     WORDPRESS_DB_HOST: db:3306
+  #     WORDPRESS_DB_USER: ${WP_BRAND2_DB_USER:-kg_wp_brand2_user}
+  #     WORDPRESS_DB_PASSWORD: ${WP_BRAND2_DB_PASSWORD:-kg_wp_local_pass}
+  #     WORDPRESS_DB_NAME: ${WP_BRAND2_DB_NAME:-wp_brand2}
+  #     KG_BRAND: brand2
+  #     KG_FRONTEND_URL: ${WP_BRAND2_FRONTEND_URL:-http://localhost:3001}
+  #     WORDPRESS_CONFIG_EXTRA: |
+  #       define('WP_REDIS_HOST', 'redis');
+  #       define('WP_REDIS_PORT', 6379);
+  #       define('WP_REDIS_DATABASE', 1);
+  #       define('WP_CACHE_KEY_SALT', 'kg_brand2_');
+  #   volumes:
+  #     - kg_wp_brand2_core:/var/www/html
+  #     - ./wordpress/wp-content/brand2:/var/www/html/wp-content
+  #     - ./wordpress/plugins/kg-headless:/var/www/html/wp-content/plugins/kg-headless
+  #     - ./wordpress/seed:/var/www/seed:ro
+  #
+  # wpcli-brand2:
+  #   image: wordpress:cli-php8.3
+  #   container_name: kg_wpcli_brand2
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #     wp-brand2:
+  #       condition: service_started
+  #   user: "33:33"
+  #   environment:
+  #     WORDPRESS_DB_HOST: db:3306
+  #     WORDPRESS_DB_USER: ${WP_BRAND2_DB_USER:-kg_wp_brand2_user}
+  #     WORDPRESS_DB_PASSWORD: ${WP_BRAND2_DB_PASSWORD:-kg_wp_local_pass}
+  #     WORDPRESS_DB_NAME: ${WP_BRAND2_DB_NAME:-wp_brand2}
+  #     KG_BRAND: brand2
+  #     KG_FRONTEND_URL: ${WP_BRAND2_FRONTEND_URL:-http://localhost:3001}
+  #     WP_CLI_CACHE_DIR: /tmp/.wp-cli/cache
+  #   volumes:
+  #     - kg_wp_brand2_core:/var/www/html
+  #     - ./wordpress/wp-content/brand2:/var/www/html/wp-content
+  #     - ./wordpress/plugins/kg-headless:/var/www/html/wp-content/plugins/kg-headless
+  #     - ./wordpress/seed:/var/www/seed:ro
+  #   entrypoint: ["tail", "-f", "/dev/null"]
+
 volumes:
-  db_data:
+  kg_db_data:
+  kg_wp_gamer_core:
+  # kg_wp_brand2_core:

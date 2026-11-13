@@ -34,6 +34,6 @@ a `kg-architecture` javasol)
 - A quality gate zöld (typecheck, lint, Steiger, teszt, build), helyben és a CI-ban.
 - UI-változásnál előtte-utána screenshot a PR-ban, minden érintett brandre.
 - Új hibakód a katalógusban.
-- Független AI review a kockázati szint szerint, és a másik fejlesztő jóváhagyása.
+- Független AI review a kockázati szint szerint, és egy fejlesztő kifejezett „mehet”-je a merge-hez.
 - Ha stack-változás volt: ADR + `kg-stack` + `AGENTS.md` frissítve.
 - „Done” csak kiadás (`vX.Y.Z`) és élő ellenőrzés után.

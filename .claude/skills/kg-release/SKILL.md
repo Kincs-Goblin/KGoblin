@@ -1,6 +1,6 @@
 ---
 name: kg-release
-description: A KGoblin kiadási folyamata (release train) - release/ÉÉÉÉ-HH-NN ág vágása, helyi összetesztelés, version/vX.Y.Z PR verzióval és CHANGELOG-gal, release → main PR, tag és GitHub release, prod deploy és élő ellenőrzés, demo reset, hotfix kiadás, SemVer-szabályok. Használd, ha release-t, kiadást, verzióemelést, taget, prod deployt, demo resetet vagy hotfixkiadást kérnek, vagy ha azt kérdezik, „mi megy ki a következő kiadásban”.
+description: A KGoblin kiadási folyamata - helyi release/ÉÉÉÉ-HH-NN tesztág, teljes ellenőrzés, kiadási commit version/vX.Y.Z PR-ral a demóra, ticket PR-ok a demóra, demo → main squash PR, gh release, élő ellenőrzés, revert, hotfix kiadás, SemVer-szabályok. Használd, ha release-t, kiadást, verzióemelést, demót, prod deployt vagy hotfixkiadást kérnek, vagy ha azt kérdezik, „mi megy ki a következő kiadásban”.
 ---
 
 # kg-release
