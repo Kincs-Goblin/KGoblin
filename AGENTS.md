@@ -90,6 +90,9 @@ kerül (ADR-0006).
 ## Hogyan dolgozz
 
 - A tényleges állapotból indulj. Kódos munka előtt `git status --short`; idegen módosítást ne revertelj.
+- **Ticketenként külön git worktree:** az agent minden ticketet saját worktree-ben, saját ticketágon fejleszt,
+  soha nem a fő checkoutban és nem egy másik ticket worktree-jében. Egy worktree = egy ticket. Menete:
+  `kg-git-workflow` → Worktree.
 - „Nézd meg”, „adj tervet”, „review-zd”, „ne kódolj”: kizárólag read-only munka.
 - Széles vagy kockázatos változtatás előtt rövid, jóváhagyott terv. Nyitott döntést opciós kérdésként tegyél
   fel, ne prózában. Kis, egyértelmű javításnál ez felesleges.

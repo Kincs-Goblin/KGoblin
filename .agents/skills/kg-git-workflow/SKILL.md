@@ -52,6 +52,27 @@ hotfix/KG-20 → main (squash) → patch tag → main bemerge-elve az aktív rel
   munka, `git switch -C <új-név> origin/main`;
   ha már van, `git branch -m <új-név>`, és ellenőrizd: `git merge-base --is-ancestor origin/main HEAD`.
 
+## Worktree (agentes ticketfejlesztés)
+
+Az agent minden ticketet **külön git worktree-ben** fejleszt (`AGENTS.md`). Így a párhuzamos ticketek és
+sessionök nem írják egymás fájljait, és a fő checkout tiszta marad. Ha az eszköz maga nyit worktree-t
+(`docs/process/agent-adapters.md`), azt használd, és az ágát nevezd át a fenti szabály szerint.
+
+```bash
+git fetch origin
+git worktree add ../KGoblin-KG-42 -b feat/KG-42-kosar-drawer origin/main
+cd ../KGoblin-KG-42
+pnpm install                       # a node_modules worktree-nként külön van
+```
+
+- Egy worktree = egy ticket(ág). Más ticketet ne kezdj benne; a stacked PR második ága mehet ugyanabba.
+- A `.env.local` nem jön át (git-ignored): másold át kézzel a fő checkoutból. Titkot ne commitolj.
+- A `git stash` közös minden worktree között: csupasz `git stash`/`git stash pop` helyett ideiglenes
+  WIP-commit, vagy egyedi címkés `git stash push -u -m "<címke>"` és `git stash apply <sha>`.
+- Egyszerre egy `pnpm dev` foglalja a 3000-es portot; párhuzamos worktree-nél állítsd le a másikat, vagy
+  indítsd más porton (`pnpm --filter @kg/web dev -- -p 3001`). A lokális Docker-Woo (`kgoblin-local`) közös.
+- Merge után: `git worktree remove ../KGoblin-KG-42` és `git branch -d feat/KG-42-kosar-drawer`.
+
 ## Commit
 
 - Angolul, Conventional Commits, kisbetűvel, felszólító módban: `feat(KG-42): add cart drawer`.

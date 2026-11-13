@@ -45,13 +45,14 @@ mást mondanak, mint ez a skill, azok az irányadók; jelezd az eltérést.
 
 ```bash
 git fetch origin
-git status --short          # tiszta legyen
-git switch -c feat/KG-42-kosar-drawer origin/main
+git worktree add ../KGoblin-KG-42 -b feat/KG-42-kosar-drawer origin/main
+cd ../KGoblin-KG-42 && pnpm install
 ```
 
-Ha az agent-eszköz ideiglenes ágon indított (pl. worktree-ág), az átnevezés szabálya a `kg-git-workflow`-ban
-van. Nézd meg, melyik az aktív
-release-ág (`git branch -r --list "origin/release/*"`); a PR oda megy. Ha nincs ilyen, kérdezz.
+Minden ticket külön worktree-ben készül (`AGENTS.md`; részletek: `kg-git-workflow` → Worktree). Ha az
+agent-eszköz már worktree-ben, ideiglenes ágon indított, azt használd, és az ágat nevezd át a
+`kg-git-workflow` szerint. Nézd meg, melyik az aktív release-ág
+(`git branch -r --list "origin/release/*"`); a PR oda megy. Ha nincs ilyen, kérdezz.
 
 ## 2. Felderítés és terv
 
