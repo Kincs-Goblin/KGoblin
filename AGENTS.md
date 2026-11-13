@@ -27,7 +27,7 @@ brandeket; minden brand mögött saját WordPress + WooCommerce backend van.
 A teljes, státuszos döntésnapló a `kg-stack` skillben van; ütközésnél az az irányadó.
 
 - **Frontend:** Next.js (App Router) + TypeScript, Tailwind + shadcn/ui Base UI-jal, Motion az animációkhoz,
-  FSD 3. szint (`apps/web`), Vercel.
+  FSD 3. szint (`apps/web`), Vercel; a cél Cloudflare Workers + OpenNext, spike után (ADR-0009, javasolt).
 - **Commerce:** WooCommerce brandenként külön példányban. Store API a katalógushoz, kosárhoz és
   checkouthoz; REST v3 csak szerveroldalon. Minden Woo-válasz Zod-dal validálva.
 - **Háttérjobok:** Trigger.dev (`apps/jobs`): beszállítói feed-szinkron, rendelés-továbbítás, újrapróba.
@@ -35,7 +35,8 @@ A teljes, státuszos döntésnapló a `kg-stack` skillben van; ütközésnél az
 - **Auth:** Woo customer + vendég checkout, token httpOnly cookie-ban.
 - **Keresés:** Meilisearch. **Email:** Resend + React Email.
 - **Mérés:** Sentry, PostHog, Meta Conversions API, Google Merchant Center feed.
-- **Monorepo:** pnpm + Turborepo. **WordPress hosting:** nyitott.
+- **Monorepo:** pnpm + Turborepo. **WordPress hosting:** saját VPS + Docker Compose, Cloudflare (DNS, WAF,
+  Tunnel) mögött (ADR-0008).
 
 ## Stack-változás (kötelező szabály)
 

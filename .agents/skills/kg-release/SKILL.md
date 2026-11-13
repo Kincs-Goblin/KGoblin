@@ -88,7 +88,7 @@ gh release create v0.3.0 --target main --generate-notes --notes "<rövid magyar 
 ```
 
 - Trigger.dev, WordPress-plugin és egyéb deploy a „Figyelni” lista szerint, pontosan ebből a commitból.
-  (A pontos parancsok a hosting-döntés után kerülnek ide.)
+  (A pontos parancsok az éles compose és a Cloudflare beállítása után kerülnek ide, ADR-0008.)
 - Élő ellenőrzés brandenként: főoldal, egy termékoldal, kosárba tétel, checkout-oldal betölt, Sentryben nincs
   új hiba, a webhook-endpoint 2xx-et ad. Valódi fizetést élesben csak kérésre teszünk.
 - Jira: a kiadott ticketek „Done” állapota a felhasználó kérésére; a verzió neve `v0.3.0`.
