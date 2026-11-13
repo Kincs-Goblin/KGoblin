@@ -45,7 +45,7 @@ mást mondanak, mint ez a skill, azok az irányadók; jelezd az eltérést.
 
 ```bash
 git fetch origin
-git worktree add ../KGoblin-KG-42 -b KG-42 origin/main
+git worktree add --no-track ../KGoblin-KG-42 -b KG-42 origin/main
 cd ../KGoblin-KG-42 && pnpm install
 ```
 
@@ -82,8 +82,9 @@ pnpm --filter @kg/web test:e2e      # Playwright smoke, UI-változásnál
 ```
 
 Woo-, kosár-, checkout- vagy redirect-változásnál a lokális Docker-Woo-val is próbáld ki:
-`kg-dev-practices` → `references/local-stack.md`. A PR-on ugyanezt a quality gate-et és az e2e-t a CI
-(GitHub Actions) is lefuttatja; a „zöld” csak mindkettő után igaz.
+`kg-dev-practices` → `references/local-stack.md`. A `main` PR-on ugyanezt a quality gate-et és az e2e-t a CI
+(GitHub Actions) is lefuttatja, és a „zöld” csak mindkettő után igaz; a `demo` PR kapuja a helyi
+release-teszt (`kg-release` 3.).
 
 UI-változásnál vizuális önellenőrzés: mobil, tablet és desktop töréspont, mindegyik érintett brand-téma,
 billentyűzetes navigáció, konzolhibák, „utána” screenshot ugyanarról a nézetről. Checkout- és

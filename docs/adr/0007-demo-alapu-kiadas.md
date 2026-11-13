@@ -27,14 +27,16 @@
 | `KG-<n>` hotfix | Sürgős élesjavítás | friss `origin/main` | `main` | squash |
 | `refactor/<terület>-…` | Futásidejű változás nélküli technikai refaktor, ticket nélkül | friss `origin/main` | `demo` | merge commit |
 
-- A `demo`-ra minden változás PR-ral megy: nincs közvetlen push, force push vagy reset. Ha a `demo`-ból
-  hiányzik a `main` friss állapota, előbb `main` → `demo` szinkron PR megy (merge commit).
+- A `demo`-ra minden változás PR-ral megy: nincs közvetlen push, force push vagy reset. Minden kiadás és
+  hotfix után `main` → `demo` szinkron PR megy (merge commit), mert a squash commit nincs a `demo`
+  történetében.
 - Élesítés: a demo teszt után egyetlen `demo` → `main` PR, squash. Utána `gh release create`.
 - CI csak a `main`-re menő PR-okon és a `main` pushán fut; a `demo` PR-ok kapuja a helyi ellenőrzés a
   release-tesztágon.
 - Visszavonás: a kiadás squash commitjának `git revert`-je külön ágon és PR-ral.
 - AI-val készült commit az eszköz által adott `Co-Authored-By` footert kapja; a PR-leírásban és az ágnévben
   nincs AI-jelölés.
+- Ticketkezelő továbbra is a Jira, `KG` projektkulccsal (az ADR-0002-ből átvéve).
 - A KGoblin a Tinatihoz képest megtartja: a hotfix-utat a `main`-re, a verziót a gyökér `package.json`-ban
   és a `CHANGELOG.md`-ben, a független AI review-ciklust és a merge-kaput.
 

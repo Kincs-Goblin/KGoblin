@@ -49,7 +49,7 @@ hotfix: KG-20 friss main-ből → PR main (squash) → patch release → main �
 - Az ág nevében nem szerepelhet `claude`, `gemini`, `ai` vagy más eszköznév.
 - A ticketágat csak a saját demo PR-jához (hotfixnél a `main` PR-hoz) pusholjuk.
 - **Agent által nyitott ideiglenes ág** (pl. worktree-ág; eszközönként: `docs/process/agent-adapters.md`):
-  ha még nincs rajta saját munka, `git switch -C KG-<n> origin/main`; ha már van, `git branch -m KG-<n>`,
+  ha még nincs rajta saját munka, `git switch --no-track -C KG-<n> origin/main`; ha már van, `git branch -m KG-<n>`,
   és ellenőrizd: `git merge-base --is-ancestor origin/main HEAD`.
 
 ## Worktree (agentes ticketfejlesztés)
@@ -61,9 +61,10 @@ sessionök nem írják egymás fájljait, és a fő checkout tiszta marad. Ha az
 ```bash
 # a fő checkoutból futtasd, hogy a worktree mellé kerüljön (ne egy másik worktree-be)
 git fetch origin
-git worktree add ../KGoblin-KG-42 -b KG-42 origin/main
+git worktree add --no-track ../KGoblin-KG-42 -b KG-42 origin/main
 cd ../KGoblin-KG-42
 pnpm install                       # a node_modules worktree-nként külön van
+# első push: git push -u origin KG-42
 ```
 
 - Egy worktree = egy ticket. Más ticketet ne kezdj benne.
@@ -72,8 +73,9 @@ pnpm install                       # a node_modules worktree-nként külön van
   WIP-commit, vagy egyedi címkés `git stash push -u -m "<címke>"` és `git stash apply <sha>`.
 - Egyszerre egy `pnpm dev` foglalja a 3000-es portot; párhuzamos worktree-nél állítsd le a másikat, vagy
   indítsd más porton (`pnpm --filter @kg/web dev -- -p 3001`). A lokális Docker-Woo (`kgoblin-local`) közös.
-- A kiadás után, a fő checkoutból: `git worktree remove ../KGoblin-KG-42`, majd `git branch -D KG-42` (a
-  `main`-re squash-sal kerül, ezért a `-d` „not fully merged” hibát adna).
+- A kiadás után, a fő checkoutból: `git worktree remove ../KGoblin-KG-42`. Ellenőrizd, hogy a ticket bent
+  van a demón (`git merge-base --is-ancestor KG-42 origin/demo`), majd `git branch -D KG-42` (a `main`-re
+  squash-sal kerül, ezért a `-d` „not fully merged” hibát adna).
 
 ## Commit
 
@@ -106,8 +108,9 @@ eredménye a PR „Ellenőrzés” részébe kerül.
 
 - Ha a `demo` PR ütközik: a ticketágba merge-eld be az `origin/main`-t vagy az alap ticket ágát, ne a
   `demo`-t. A `demo` soha nem megy ticketágba.
-- Ha a `demo`-ból hiányzik a `main` friss állapota (pl. hotfix után), előbb `main` → `demo` szinkron PR
-  (merge commit), utána a ticket PR-ok.
+- **Minden kiadás és hotfix után** `main` → `demo` szinkron PR (merge commit): a squash commit nincs a
+  `demo` történetében, és enélkül a következő `demo` → `main` PR ütközhet. Ha a `demo`-ból hiányzik a
+  `main` friss állapota, a ticket PR-ok előtt ez megy.
 - Saját, még senkivel meg nem osztott ágon a rebase megengedett; push után már `--force-with-lease` kell, és
   csak a saját ticketágadon.
 

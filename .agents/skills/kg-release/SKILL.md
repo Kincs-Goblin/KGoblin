@@ -59,11 +59,15 @@ git merge --no-ff origin/KG-15
 
 ```bash
 gh pr create --base demo --head KG-12 --title "feat(KG-12): ..."      # ticketenként, merge committal
-git switch -c version/v0.3.0 && git push -u origin version/v0.3.0   # a release-ág kiadási commitjával
+git switch -c version/v0.3.0 origin/demo --no-track                # a ticket PR-ok merge-e után
+git cherry-pick <a release-ág chore(release) commitja>
+git push -u origin version/v0.3.0
 gh pr create --base demo --head version/v0.3.0 --title "chore(release): v0.3.0"
 ```
 
-- Sorrend: az alap ticket a ráépülő előtt, a `version/*` PR utoljára. Mind **merge commit**.
+- Sorrend: az alap ticket a ráépülő előtt, a `version/*` PR utoljára. Mind **merge commit**. A `version/*`
+  ág csak a kiadási commitot viszi; a release-ágról közvetlenül ne ágaztasd el, mert minden helyi merge-et
+  magával vinne.
 - A `demo` PR-okon nincs CI; a kapu a 3. lépés helyi tesztje.
 - A merge után a demo környezet a `demo` ágról deployol; ott történik az ügyfélteszt. (A demo környezet
   beállítása külön ticket; amíg nincs, a demo teszt a helyi release-ágon fut.)
@@ -88,6 +92,8 @@ gh release create v0.3.0 --target main --generate-notes --notes "<rövid magyar 
 - Élő ellenőrzés brandenként: főoldal, egy termékoldal, kosárba tétel, checkout-oldal betölt, Sentryben nincs
   új hiba, a webhook-endpoint 2xx-et ad. Valódi fizetést élesben csak kérésre teszünk.
 - Jira: a kiadott ticketek „Done” állapota a felhasználó kérésére; a verzió neve `v0.3.0`.
+- **`main` → `demo` szinkron PR** (merge commit), mert a squash commit nincs a `demo` történetében; enélkül a
+  következő `demo` → `main` PR ütközhet.
 - A helyi release-ág és a kiadott ticketágak törölhetők.
 
 ## Visszavonás
