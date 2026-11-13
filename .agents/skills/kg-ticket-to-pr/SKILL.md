@@ -45,13 +45,14 @@ mást mondanak, mint ez a skill, azok az irányadók; jelezd az eltérést.
 
 ```bash
 git fetch origin
-git status --short          # tiszta legyen
-git switch -c feat/KG-42-kosar-drawer origin/main
+git worktree add ../KGoblin-KG-42 -b feat/KG-42-kosar-drawer origin/main
+cd ../KGoblin-KG-42 && pnpm install
 ```
 
-Ha az agent-eszköz ideiglenes ágon indított (pl. worktree-ág), az átnevezés szabálya a `kg-git-workflow`-ban
-van. Nézd meg, melyik az aktív
-release-ág (`git branch -r --list "origin/release/*"`); a PR oda megy. Ha nincs ilyen, kérdezz.
+Minden ticket külön worktree-ben készül (`AGENTS.md`; részletek: `kg-git-workflow` → Worktree). Ha az
+agent-eszköz már worktree-ben, ideiglenes ágon indított, azt használd, és az ágat nevezd át a
+`kg-git-workflow` szerint. Nézd meg, melyik az aktív release-ág
+(`git branch -r --list "origin/release/*"`); a PR oda megy. Ha nincs ilyen, kérdezz.
 
 ## 2. Felderítés és terv
 
@@ -131,13 +132,15 @@ Eredménysor a PR-ba: `Review: <modell>, friss session, normál - 2/3 kör, jóv
   Változások együtt legfeljebb kb. 10 sor. Az üres template-kommenteket töröld; a „Figyelni” rész csak
   akkor kell, ha van benne valami.
 - A **Stack-változás** jelölőnégyzetet pipáld, ha a PR ADR-t vagy `kg-stack` módosítást tartalmaz.
-- Reviewer: a másik fejlesztő (CODEOWNERS). WIP-limit: fejlesztőnként legfeljebb 2 nyitott PR.
+- Reviewer: a másik fejlesztő (CODEOWNERS), opcionálisan; a merge-hez nem kell a jóváhagyása. WIP-limit:
+  fejlesztőnként legfeljebb 2 nyitott PR.
 
 ## 7. PR után
 
 - Kövesd a CI-t a végéig (`kg-babysit-pr`). Piros CI-t javíts a PR-ágon; ha nem megy, írd le, mi blokkol.
-- A merge az emberé (a másik fejlesztő jóváhagyása után), squash-sal a release-ágba. Az agent csak
-  kifejezett kérésre merge-el, és csak zöld CI és jóváhagyás mellett.
+- A merge az emberé: bármelyik fejlesztő (a szerző is) kifejezett „mehet”-je után, squash-sal a
+  release-ágba. Az agent csak erre a kérésre merge-el, és csak zöld CI és lezárt review-ciklus mellett; ha a
+  másik fejlesztő változtatást kért, előbb azt kezeli.
 - 7 napnál régebbi PR nem maradhat nyitva: vagy merge, vagy lezárás indoklással.
 - Jira: a felhasználó kérésére „Review” állapot, ellenőrzési kommenttel. „Done” csak kiadás után.
 

@@ -52,6 +52,30 @@ hotfix/KG-20 → main (squash) → patch tag → main bemerge-elve az aktív rel
   munka, `git switch -C <új-név> origin/main`;
   ha már van, `git branch -m <új-név>`, és ellenőrizd: `git merge-base --is-ancestor origin/main HEAD`.
 
+## Worktree (agentes ticketfejlesztés)
+
+Az agent minden ticketet **külön git worktree-ben** fejleszt (`AGENTS.md`). Így a párhuzamos ticketek és
+sessionök nem írják egymás fájljait, és a fő checkout tiszta marad. Ha az eszköz maga nyit worktree-t
+(`docs/process/agent-adapters.md`), azt használd, és az ágát nevezd át a fenti szabály szerint.
+
+```bash
+# a fő checkoutból futtasd, hogy a worktree mellé kerüljön (ne egy másik worktree-be)
+git fetch origin
+git worktree add ../KGoblin-KG-42 -b feat/KG-42-kosar-drawer origin/main
+cd ../KGoblin-KG-42
+pnpm install                       # a node_modules worktree-nként külön van
+```
+
+- Egy worktree = egy ticket. Más ticketet ne kezdj benne; ugyanannak a ticketnek a stacked PR-ága
+  (pl. a KG-5 2. PR-ja) mehet ugyanabba.
+- A `.env.local` nem jön át (git-ignored): másold át kézzel a fő checkoutból. Titkot ne commitolj.
+- A `git stash` közös minden worktree között: csupasz `git stash`/`git stash pop` helyett ideiglenes
+  WIP-commit, vagy egyedi címkés `git stash push -u -m "<címke>"` és `git stash apply <sha>`.
+- Egyszerre egy `pnpm dev` foglalja a 3000-es portot; párhuzamos worktree-nél állítsd le a másikat, vagy
+  indítsd más porton (`pnpm --filter @kg/web dev -- -p 3001`). A lokális Docker-Woo (`kgoblin-local`) közös.
+- Az utolsó PR merge-e után, a fő checkoutból: `git worktree remove ../KGoblin-KG-42`, majd
+  `git branch -D feat/KG-42-kosar-drawer` (squash miatt a `-d` „not fully merged” hibát adna).
+
 ## Commit
 
 - Angolul, Conventional Commits, kisbetűvel, felszólító módban: `feat(KG-42): add cart drawer`.
@@ -104,7 +128,7 @@ hotfix/KG-20 → main (squash) → patch tag → main bemerge-elve az aktív rel
 ## hotfix
 
 1. `hotfix/KG-<n>-<leírás>` friss `origin/main`-ből; a legkisebb javítás, reprodukáló teszttel, ha lehet.
-2. PR → `main`, kockázatos review-szinttel (`kg-ticket-to-pr`), a másik fejlesztő jóváhagyásával.
+2. PR → `main`, kockázatos review-szinttel (`kg-ticket-to-pr`), bármelyik fejlesztő „mehet”-jével.
 3. Merge után patch tag (`kg-release` „Hotfix kiadás”).
 4. A friss `main`-t merge-eld az aktív `release/*` ágba és a `demo`-ba.
 
@@ -112,9 +136,12 @@ hotfix/KG-20 → main (squash) → patch tag → main bemerge-elve az aktív rel
 
 | Ág | Beállítás |
 |---|---|
-| `main` | PR kötelező, 1 jóváhagyás, CODEOWNERS-review, zöld CI, lineáris history kikapcsolva (merge commit kell), force push és törlés tiltva |
-| `release/*` | PR kötelező, 1 jóváhagyás, zöld CI, force push tiltva |
+| `main` | PR kötelező, jóváhagyás nem kötelező (0), zöld CI, lineáris history kikapcsolva (merge commit kell), force push és törlés tiltva |
+| `release/*` | PR kötelező, jóváhagyás nem kötelező (0), zöld CI, force push tiltva |
 | `demo` | Force push csak adminnak (a resethez), törlés tiltva |
+
+A jóváhagyás azért 0, mert a merge-kapu bármelyik fejlesztő „mehet”-je (`AGENTS.md`), a GitHub pedig a
+szerző saját jóváhagyását nem számolja.
 
 Engedélyezett merge-módok a repóban: squash és merge commit; a rebase merge kikapcsolva.
 

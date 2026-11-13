@@ -10,8 +10,11 @@ további niche-shopok jönnek ugyanarra a kódbázisra. Egy Next.js frontend dom
 brandeket; minden brand mögött saját WordPress + WooCommerce backend van.
 
 - Csapat: **SMark2256** és **ricsmond12**, egyenrangú szerepben: mindketten bármilyen ticketet, release-t,
-  demót és hotfixet vihetnek. A szerep PR-onként dől el: aki nyitja, a **szerző**; a **másik fejlesztő** a
-  reviewer, és az ő jóváhagyása kell a merge-hez.
+  demót és hotfixet vihetnek. A szerep PR-onként dől el: aki nyitja, a **szerző**; a **másik fejlesztő**
+  opcionálisan review-zhat.
+- **Merge-kapu:** zöld CI + lezárt független AI review-ciklus + **bármelyik fejlesztő kifejezett „mehet”-je**
+  (a szerzőé is elég). A másik fejlesztő GitHub-jóváhagyása nem feltétel; ha változtatást kér, azt kezelni
+  kell.
 - A ticketet a **felelőse** (Jira-assignee) viszi végig PR-ig, tesztekkel és review-ciklussal együtt; a
   reviewer csak findingot ad, a munkát nem veszi át. Részletek: `kg-ticket-to-pr` → Felelősség.
 - Ticketek: Jira, `KG` projekt. Link: `https://<TODO-jira-site>.atlassian.net/browse/KG-123`.
@@ -87,6 +90,9 @@ kerül (ADR-0006).
 ## Hogyan dolgozz
 
 - A tényleges állapotból indulj. Kódos munka előtt `git status --short`; idegen módosítást ne revertelj.
+- **Ticketenként külön git worktree:** az agent minden ticketet saját worktree-ben, saját ticketágon fejleszt,
+  soha nem a fő checkoutban és nem egy másik ticket worktree-jében. Egy worktree = egy ticket (a ticket
+  stacked PR-ágai együtt). Menete: `kg-git-workflow` → Worktree.
 - „Nézd meg”, „adj tervet”, „review-zd”, „ne kódolj”: kizárólag read-only munka.
 - Széles vagy kockázatos változtatás előtt rövid, jóváhagyott terv. Nyitott döntést opciós kérdésként tegyél
   fel, ne prózában. Kis, egyértelmű javításnál ez felesleges.

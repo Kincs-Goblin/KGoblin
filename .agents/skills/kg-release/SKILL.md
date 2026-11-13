@@ -9,7 +9,8 @@ Minden lépés **csak kifejezett kérésre** indul, és egy korábbi jóváhagy�
 Az ágak szabályai a `kg-git-workflow` skillben vannak.
 
 A kiadást bármelyik fejlesztő viheti, nincs kijelölt release-felelős. Aki vágja a release-ágat, az viszi
-végig a kiadást; a version PR-t és a release PR-t a másik fejlesztő hagyja jóvá.
+végig a kiadást; a version PR-re és a release PR-re is a merge-kapu érvényes (`AGENTS.md`: bármelyik
+fejlesztő kifejezett „mehet”-je).
 
 ## Verziózás (SemVer)
 
@@ -58,7 +59,7 @@ git switch -c version/v0.3.0 origin/release/2026-11-26
 
 - PR: `release/2026-11-26` → `main`, cím: `release: v0.3.0 (2026-11-26)`. A leírás a CHANGELOG szakasza,
   plusz „Figyelni”: env-változók, Woo plugin-frissítés, webhook-regisztráció, migráció, feature flag.
-- A másik fejlesztő jóváhagyása és zöld CI után **merge commit** (nem squash).
+- Bármelyik fejlesztő kifejezett „mehet”-je és zöld CI után **merge commit** (nem squash).
 - **Production:** a Vercel a `main`-ről automatikusan élesít, ezért ez a merge maga a frontend deploy.
   Az agent csak kifejezett kérésre merge-el.
 
@@ -84,7 +85,7 @@ gh release create v0.3.0 --target <main merge commit SHA> --title "v0.3.0" --not
 
 ## Hotfix kiadás
 
-1. `hotfix/KG-<n>-…` PR → `main` (squash), kockázatos review-szinttel, jóváhagyással.
+1. `hotfix/KG-<n>-…` PR → `main` (squash), kockázatos review-szinttel, egy fejlesztő „mehet”-jével.
 2. Patch-verzió: a version-módosítás a hotfix PR része (`package.json` + `CHANGELOG.md`), külön `version/*`
    ág nélkül.
 3. Tag és release, mint az 5. lépésben, majd a `main` merge-e az aktív `release/*`-ba és a `demo`-ba.

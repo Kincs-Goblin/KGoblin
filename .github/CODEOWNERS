@@ -1,2 +1,3 @@
-# Minden PR-hoz a másik fejlesztő jóváhagyása kell (a szerző saját jóváhagyása nem számít).
+# Review-kérés a két fejlesztőnek. A merge-hez nem kell GitHub-jóváhagyás: bármelyik fejlesztő
+# kifejezett „mehet”-je elég (AGENTS.md → Merge-kapu).
 * @SMark2256 @ricsmond12

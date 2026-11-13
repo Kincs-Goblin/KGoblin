@@ -63,7 +63,7 @@ A legutolsó commiton igaz minden:
 - nincs változtatást kérő emberi review;
 - az ág naprakész a célággal, és a GitHub mergeable-nek mutatja.
 
-Átadás: **Kész a merge-re** (a másik fejlesztő jóváhagyása még hiányzik, és ezt ki is mondod) · vagy
+Átadás: **Kész a merge-re** (a merge-hez még egy fejlesztő kifejezett „mehet”-je kell, és ezt ki is mondod) · vagy
 **Blokkolt** (mi akadályoz, mit próbáltál, mi kell). A jelentés tartalma: PR-link, head SHA, verdikt,
 bizonyíték, a review eredménye, a meghozott döntések, a megmaradt kockázatok, és hogy a PR nyitva,
 merge nélkül maradt.
