@@ -1,6 +1,6 @@
 ---
 name: kg-full-stop
-description: Használd, ha a felhasználó azt írja, „full stop” (akkor is, ha mondatzáró hangsúlynak tűnik) a KGoblin repóban. A feladatot felügyelet nélkül, végig viszi egy merge-elhető PR-ig az aktív release/* ágba (hotfixnél a main-be), bizonyítékkal, AI review-val és CI-követéssel, de soha nem merge-el.
+description: Használd, ha a felhasználó azt írja, „full stop” (akkor is, ha mondatzáró hangsúlynak tűnik) a KGoblin repóban. A feladatot felügyelet nélkül, végig viszi egy merge-elhető PR-ig a demo ágra (hotfixnél a main-re), bizonyítékkal, AI review-val és CI-követéssel, de soha nem merge-el.
 ---
 
 # kg-full-stop
@@ -19,7 +19,7 @@ jóval később olvassa. A munka a jelenlegi állapottól egy merge-elhető PR-i
 - A bizonyításhoz szükséges tesztmódszerek kérdés nélkül: dev szerver, böngésző-automatizálás, screenshot,
   lokális Docker-Woo, fake beszállítói adapter, gateway-sandbox.
 
-**Nem** ad engedélyt: merge, auto-merge, push a `main`-re, `release/*`-ra vagy `demo`-ra, tag, deploy,
+**Nem** ad engedélyt: merge, auto-merge, push a `main`-re vagy a `demo`-ra, tag, deploy,
 Jira-írás, éles rendszer vagy éles adat érintése, külső fiók beállítása, más PR lezárása, branch
 protection megkerülése.
 
@@ -32,9 +32,9 @@ protection megkerülése.
 3. **Bizonyítás:** minden változtatásra (lásd „Bizonyíték”).
 4. **Review:** a `kg-ticket-to-pr` 5. lépése, a kockázati szint szerint. A jogos findingot javítsd, a többit
    írásos indokkal vesd el.
-5. **PR:** cél az aktív `release/*` (hotfixnél `main`), cím és leírás a `kg-ticket-to-pr` szerint, egy
+5. **PR:** cél a `demo` (hotfixnél `main`), a helyi release-teszt után, cím és leírás a `kg-ticket-to-pr` szerint, egy
    sorral arról, hogyan bizonyítottad a változást. Előtte frissíts a célágról, és futtasd az
-   AI-attribúció-ellenőrzést.
+   attribúció-ellenőrzést (`kg-git-workflow` → Commit).
 6. **Követés:** `kg-babysit-pr`. CI-hibát és jogos review-findingot javíts; minden javításra bizonyíték.
 7. **Átadás a kapunál** (lásd „Kapu”).
 

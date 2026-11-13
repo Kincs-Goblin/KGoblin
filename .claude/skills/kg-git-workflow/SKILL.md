@@ -1,6 +1,6 @@
 ---
 name: kg-git-workflow
-description: A KGoblin branch-logikája és git-szabályai - main, demo, ticketág, release/ÉÉÉÉ-HH-NN, version/vX.Y.Z, hotfix, spike; branchnév, commit-formátum, merge-stratégiák, demo frissítése és resetje, branch protection. Használd minden branch-, commit-, merge-, rebase-, demo- vagy hotfix-lépés előtt, és ha azt kérdezik, „melyik ágra”, „hogyan merge-eljek”, „tedd ki demóra”.
+description: A KGoblin branch-logikája és git-szabályai - main, demo, KG-<n> ticketág, helyi release/ÉÉÉÉ-HH-NN tesztág, version/vX.Y.Z, hotfix, refactor; worktree ticketenként, commit-formátum, merge-stratégiák, demo PR-ok, branch protection. Használd minden branch-, commit-, merge-, rebase-, demo- vagy hotfix-lépés előtt, és ha azt kérdezik, „melyik ágra”, „hogyan merge-eljek”, „tedd ki demóra”.
 ---
 
 # kg-git-workflow

@@ -14,7 +14,7 @@ visszafordíthatatlanul) · **nyitott** (dönteni kell, mielőtt ráépül valam
 
 ## Döntésnapló
 
-Utolsó módosítás: 2026-11-12 (ADR-0004 Base UI és Motion, ADR-0005 CI, ADR-0006 agent-független skillek).
+Utolsó módosítás: 2026-11-13 (ADR-0007 Tinati-alapú demo-kiadás, CI csak a `main` PR-okon).
 
 ### Architektúra és frontend
 
@@ -73,10 +73,10 @@ Utolsó módosítás: 2026-11-12 (ADR-0004 Base UI és Motion, ADR-0005 CI, ADR-
 | Runtime | Node aktuális Active LTS (2026-11: Node 26), `.nvmrc`-ben | javasolt | 0001 |
 | Lint, formázás | ESLint flat config + Prettier; Steiger az FSD-szabályokra | javasolt | 0001 |
 | Tesztek | Vitest (unit, integráció), MSW a Woo-mockokhoz, Playwright (e2e) | javasolt | 0001 |
-| CI | GitHub Actions (`.github/workflows/ci.yml`): quality gate + Playwright e2e minden `main`/`release/**` PR-on; Woo nélkül, MSW-fixture-ökkel | elfogadva | 0005 |
+| CI | GitHub Actions (`.github/workflows/ci.yml`): quality gate + Playwright e2e minden `main`-re menő PR-on; Woo nélkül, MSW-fixture-ökkel | elfogadva | 0005 |
 | Hibakódok | `DOMAIN.REASON` formátumú, katalógusban tartott hibakódok | javasolt | 0001 |
-| Ticketek | Jira, `KG` kulcs | elfogadva | 0002 |
-| Branch-folyamat | Release train: ticket → `release/<dátum>` → `main`, version PR, tag | elfogadva | 0002 |
+| Ticketek | Jira, `KG` kulcs | elfogadva | 0002, 0007 |
+| Branch-folyamat | Tinati-alapú: `KG-<n>` → helyi release-teszt → PR a `demo`-ra → `demo` → `main` squash, `gh release` | elfogadva (2026-11-13, felváltja: 0002) | 0007 |
 | AI agentek | Agent-független: `AGENTS.md` és `.agents/skills/` a közös forrás, bármelyik eszköz használható; eszközfüggő részlet csak a `docs/process/agent-adapters.md`-ben | elfogadva | 0003, 0006 |
 
 ## Stack-változás folyamata (kötelező)

@@ -1,6 +1,6 @@
 # ADR-0002: Branch-stratégia - release train, demo ág, Jira KG
 
-- Állapot: elfogadott, módosítva 2026-11-13 (merge-kapu: egy fejlesztő „mehet”-je elég)
+- Állapot: felváltva (ADR-0007), előtte módosítva 2026-11-13 (merge-kapu: egy fejlesztő „mehet”-je elég)
 - Dátum: 2026-11-12
 - Döntéshozók: SMark2256, ricsmond12
 

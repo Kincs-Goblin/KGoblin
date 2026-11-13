@@ -1,6 +1,6 @@
 ---
 name: kg-babysit-pr
-description: Egy KGoblin pull request követése CI-n és review-n át - a hibák javítása, a review-botok findingjainak elbírálása, naprakészen tartás a célággal (release/* vagy main). Használd, ha azt kérik, „figyeld a PR-t”, „babysit”, „kövesd a CI-t”, vagy a kg-full-stop 6. lépésében.
+description: Egy KGoblin pull request követése CI-n és review-n át - a hibák javítása, a review-botok findingjainak elbírálása, naprakészen tartás a célággal (demo vagy main). Használd, ha azt kérik, „figyeld a PR-t”, „babysit”, „kövesd a CI-t”, vagy a kg-full-stop 6. lépésében.
 ---
 
 # kg-babysit-pr

@@ -1,6 +1,6 @@
 ---
 name: kg-full-stop
-description: Használd, ha a felhasználó azt írja, „full stop” (akkor is, ha mondatzáró hangsúlynak tűnik) a KGoblin repóban. A feladatot felügyelet nélkül, végig viszi egy merge-elhető PR-ig az aktív release/* ágba (hotfixnél a main-be), bizonyítékkal, AI review-val és CI-követéssel, de soha nem merge-el.
+description: Használd, ha a felhasználó azt írja, „full stop” (akkor is, ha mondatzáró hangsúlynak tűnik) a KGoblin repóban. A feladatot felügyelet nélkül, végig viszi egy merge-elhető PR-ig a demo ágra (hotfixnél a main-re), bizonyítékkal, AI review-val és CI-követéssel, de soha nem merge-el.
 ---
 
 # kg-full-stop

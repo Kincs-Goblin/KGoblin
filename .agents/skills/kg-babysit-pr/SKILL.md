@@ -1,6 +1,6 @@
 ---
 name: kg-babysit-pr
-description: Egy KGoblin pull request követése CI-n és review-n át - a hibák javítása, a review-botok findingjainak elbírálása, naprakészen tartás a célággal (release/* vagy main). Használd, ha azt kérik, „figyeld a PR-t”, „babysit”, „kövesd a CI-t”, vagy a kg-full-stop 6. lépésében.
+description: Egy KGoblin pull request követése CI-n és review-n át - a hibák javítása, a review-botok findingjainak elbírálása, naprakészen tartás a célággal (demo vagy main). Használd, ha azt kérik, „figyeld a PR-t”, „babysit”, „kövesd a CI-t”, vagy a kg-full-stop 6. lépésében.
 ---
 
 # kg-babysit-pr
@@ -38,11 +38,11 @@ plusz kompatibilitás, apró teljesítményköltség) írásos indokkal utasíts
 
 ## Célág és merge
 
-- Figyeld a célág (`release/*` vagy hotfixnél `main`) változását. Ha a PR BEHIND vagy DIRTY, a
-  `kg-git-workflow` szerint merge-eld be a célágat, oldd fel az ütközést, futtasd újra az ellenőrzéseket.
+- Figyeld a célág (`demo`, hotfixnél és kiadásnál `main`) változását. Ha a PR BEHIND vagy DIRTY, a
+  `kg-git-workflow` → Szinkronban tartás szerint frissíts (a ticketágba soha nem a `demo`-t merge-eled), oldd fel az ütközést, futtasd újra az ellenőrzéseket.
   A watcherek jellemzően csak az ütközést jelzik, a BEHIND állapotot neked kell megnézned.
-- Merge csak bármelyik fejlesztő kifejezett „mehet”-jére, zöld CI és lezárt review-ciklus mellett, squash-sal. Merge előtt
-  `git fetch`, és nézd meg újra a PR-t. Ha egy átfedő PR feleslegessé teszi ezt, állj meg, és kérdezz,
+- Merge csak bármelyik fejlesztő kifejezett „mehet”-jére, lezárt review-ciklussal; a `main` PR-on zöld CI-vel.
+  Stratégia: `demo` PR merge commit, `main` PR squash (`kg-git-workflow`). Merge előtt `git fetch`, és nézd meg újra a PR-t. Ha egy átfedő PR feleslegessé teszi ezt, állj meg, és kérdezz,
   mielőtt lezárnád.
 - Ha `gh` GraphQL-limitbe futsz: `gh api rate_limit --jq .resources.graphql`; REST-tel olvasd tovább
   (`gh api repos/Kincs-Goblin/KGoblin/pulls/<n>`).
