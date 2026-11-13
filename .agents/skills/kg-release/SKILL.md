@@ -94,7 +94,8 @@ gh release create v0.3.0 --target main --generate-notes --notes "<rövid magyar 
 - Jira: a kiadott ticketek „Done” állapota a felhasználó kérésére; a verzió neve `v0.3.0`.
 - **`main` → `demo` szinkron PR** (merge commit), mert a squash commit nincs a `demo` történetében; enélkül a
   következő `demo` → `main` PR ütközhet.
-- A helyi release-ág és a kiadott ticketágak törölhetők.
+- A helyi release-ág és a kiadott ticketágak törölhetők (a törlés előtti ellenőrzés: `kg-git-workflow` →
+  Worktree).
 
 ## Visszavonás
 

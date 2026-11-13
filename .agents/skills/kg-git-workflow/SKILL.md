@@ -73,8 +73,9 @@ pnpm install                       # a node_modules worktree-nként külön van
   WIP-commit, vagy egyedi címkés `git stash push -u -m "<címke>"` és `git stash apply <sha>`.
 - Egyszerre egy `pnpm dev` foglalja a 3000-es portot; párhuzamos worktree-nél állítsd le a másikat, vagy
   indítsd más porton (`pnpm --filter @kg/web dev -- -p 3001`). A lokális Docker-Woo (`kgoblin-local`) közös.
-- A kiadás után, a fő checkoutból: `git worktree remove ../KGoblin-KG-42`. Ellenőrizd, hogy a ticket bent
-  van a demón (`git merge-base --is-ancestor KG-42 origin/demo`), majd `git branch -D KG-42` (a `main`-re
+- A kiadás után, a fő checkoutból: `git worktree remove ../KGoblin-KG-42`. `git fetch origin`, és ellenőrizd,
+  hogy a ticket bent van a demón (`git merge-base --is-ancestor KG-42 origin/demo`; hotfixnél a `main` PR
+  merge-elt állapotát: `gh pr view KG-42 --json state`), majd `git branch -D KG-42` (a `main`-re
   squash-sal kerül, ezért a `-d` „not fully merged” hibát adna).
 
 ## Commit
