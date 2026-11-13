@@ -36,6 +36,7 @@ protection megkerülése.
    sorral arról, hogyan bizonyítottad a változást. Előtte frissíts a célágról, és futtasd az
    attribúció-ellenőrzést (`kg-git-workflow` → Commit).
 6. **Követés:** `kg-babysit-pr`. CI-hibát és jogos review-findingot javíts; minden javításra bizonyíték.
+   A „full stop” a PR-nál véget ér: a `version/*` PR és a `demo` → `main` élesítés nem része (`kg-release`).
 7. **Átadás a kapunál** (lásd „Kapu”).
 
 Az 1-7. lépés alatt maradj aktív. Ha checkre vagy botra vársz, a watcherrel várj (`kg-babysit-pr`), ne sima

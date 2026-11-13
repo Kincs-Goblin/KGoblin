@@ -1,5 +1,5 @@
 ---
-description: Helyi release/ÉÉÉÉ-HH-NN tesztág a main-ből, a kész ticketágak --no-ff merge-e és a kiadási commit
+description: Helyi release/ÉÉÉÉ-HH-NN tesztág a demo-ból, a kész ticketágak --no-ff merge-e és a kiadási commit
 ---
 
 1. Olvasd be: `.agents/skills/kg-release/SKILL.md`, és kövesd az 1-3. lépést.

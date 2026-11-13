@@ -7,7 +7,8 @@ description: A KGoblin branch-logikája és git-szabályai - main, demo, KG-<n> 
 
 A folyamat a Tinati-workflow-ra épül: minden ticket a saját ágán készül, helyben egy release-tesztágon
 összeteszteljük, egyenként PR-ral megy a `demo`-ra ügyféltesztre, végül egyetlen `demo` → `main` PR viszi
-élesre. A `main` mindig kiadott, élesen futó kód. Döntés és indoklás: `docs/adr/0007-demo-alapu-kiadas.md`.
+élesre. A `main` mindig kiadott, élesen futó kód. Döntés és indoklás: `docs/adr/0007-demo-alapu-kiadas.md`;
+a ticketág alapja: `docs/adr/0010-ticketag-a-demobol.md`.
 A kiadás lépései a `kg-release` skillben vannak.
 
 ## Ágak
@@ -16,17 +17,17 @@ A kiadás lépései a `kg-release` skillben vannak.
 |---|---|---|---|---|---|
 | `main` | Éles kód; minden merge kiadás | - | - | - | Tartós |
 | `demo` | Ügyfélteszt; a demo környezet deployol belőle | `main` | `main` | squash | Tartós |
-| `KG-<n>` | Egy ticket | friss `origin/main`, vagy az alap ticket ága | `demo` | merge commit | A kiadásig |
-| `release/ÉÉÉÉ-HH-NN` | **Csak helyi** tesztág, nem pusholjuk | `origin/main` | sehová | - | A kiadásig |
+| `KG-<n>` | Egy ticket | friss `origin/demo`, vagy az alap ticket ága | `demo` | merge commit | A kiadásig |
+| `release/ÉÉÉÉ-HH-NN` | **Csak helyi** tesztág, nem pusholjuk | `origin/demo` | sehová | - | A kiadásig |
 | `version/vX.Y.Z` | A kiadási commit | a helyi release-ág | `demo` | merge commit | A PR beolvasztásáig |
 | `KG-<n>` (hotfix) | Sürgős élesjavítás | friss `origin/main` | `main` | squash | A PR beolvasztásáig |
-| `refactor/<terület>-<leírás>` | Technikai refaktor, futásidejű változás nélkül | friss `origin/main` | `demo` | merge commit | A kiadásig |
+| `refactor/<terület>-<leírás>` | Technikai refaktor, futásidejű változás nélkül | friss `origin/demo` | `demo` | merge commit | A kiadásig |
 | `spike/KG-<n>` | Kísérlet, prototípus | bárhonnan | sehová | - | Eldobható |
 
 ## Folyamat egy pillantásra
 
 ```
-KG-12 ──●──●─┐          (friss origin/main-ből, saját worktree-ben)
+KG-12 ──●──●─┐          (friss origin/demo-ból, saját worktree-ben)
 KG-15 ──●────┤
              ▼
 release/2026-11-26 (helyi) ── --no-ff merge-ek + chore(release) commit → teljes ellenőrzés, kézi teszt
@@ -49,8 +50,8 @@ hotfix: KG-20 friss main-ből → PR main (squash) → patch release → main �
 - Az ág nevében nem szerepelhet `claude`, `gemini`, `ai` vagy más eszköznév.
 - A ticketágat csak a saját demo PR-jához (hotfixnél a `main` PR-hoz) pusholjuk.
 - **Agent által nyitott ideiglenes ág** (pl. worktree-ág; eszközönként: `docs/process/agent-adapters.md`):
-  ha még nincs rajta saját munka, `git switch --no-track -C KG-<n> origin/main`; ha már van, `git branch -m KG-<n>`,
-  és ellenőrizd: `git merge-base --is-ancestor origin/main HEAD`.
+  ha még nincs rajta saját munka, `git switch --no-track -C KG-<n> origin/demo`; ha már van, `git branch -m KG-<n>`,
+  és ellenőrizd: `git merge-base --is-ancestor origin/demo HEAD`. Hotfixnél mindkettőben `origin/main`.
 
 ## Worktree (agentes ticketfejlesztés)
 
@@ -61,7 +62,8 @@ sessionök nem írják egymás fájljait, és a fő checkout tiszta marad. Ha az
 ```bash
 # a fő checkoutból futtasd, hogy a worktree mellé kerüljön (ne egy másik worktree-be)
 git fetch origin
-git worktree add --no-track ../KGoblin-KG-42 -b KG-42 origin/main
+git merge-base --is-ancestor origin/main origin/demo   # ha nem igaz: előbb main → demo szinkron PR (hotfixnél nem kell)
+git worktree add --no-track ../KGoblin-KG-42 -b KG-42 origin/demo
 cd ../KGoblin-KG-42
 pnpm install                       # a node_modules worktree-nként külön van
 # első push: git push -u origin KG-42
@@ -107,11 +109,11 @@ eredménye a PR „Ellenőrzés” részébe kerül.
 
 ## Szinkronban tartás
 
-- Ha a `demo` PR ütközik: a ticketágba merge-eld be az `origin/main`-t vagy az alap ticket ágát, ne a
-  `demo`-t. A `demo` soha nem megy ticketágba.
+- Ha a `demo` PR ütközik: a ticketágba merge-eld be az `origin/demo`-t vagy az alap ticket ágát. Hotfixágba
+  a `demo` soha nem megy.
 - **Minden kiadás és hotfix után** `main` → `demo` szinkron PR (merge commit): a squash commit nincs a
   `demo` történetében, és enélkül a következő `demo` → `main` PR ütközhet. Ha a `demo`-ból hiányzik a
-  `main` friss állapota, a ticket PR-ok előtt ez megy.
+  `main` friss állapota, az új ticketág indítása és a ticket PR-ok előtt ez megy.
 - Saját, még senkivel meg nem osztott ágon a rebase megengedett; push után már `--force-with-lease` kell, és
   csak a saját ticketágadon.
 

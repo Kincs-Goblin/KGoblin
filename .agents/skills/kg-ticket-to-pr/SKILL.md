@@ -1,6 +1,6 @@
 ---
 name: kg-ticket-to-pr
-description: Egy KG Jira-ticket teljes végigvitele a KGoblin repóban - ticket beolvasása, Definition of Ready, KG-<n> ticketág friss mainből saját worktree-ben, terv, implementáció a kg-architecture szerint, quality gate, független AI review kockázati szinttel, PR a demo ágra (hotfixnél main), követés. Használd, ha azt kérik, „vidd végig a KG-42-t”, „csináld meg ezt a ticketet”, „javítsd ki ezt a hibát”, „nyiss PR-t erre”, „írd meg a PR-leírást”.
+description: Egy KG Jira-ticket teljes végigvitele a KGoblin repóban - ticket beolvasása, Definition of Ready, KG-<n> ticketág friss demóból saját worktree-ben, terv, implementáció a kg-architecture szerint, quality gate, független AI review kockázati szinttel, PR a demo ágra (hotfixnél main), követés. Használd, ha azt kérik, „vidd végig a KG-42-t”, „csináld meg ezt a ticketet”, „javítsd ki ezt a hibát”, „nyiss PR-t erre”, „írd meg a PR-leírást”.
 ---
 
 # kg-ticket-to-pr
@@ -45,14 +45,15 @@ mást mondanak, mint ez a skill, azok az irányadók; jelezd az eltérést.
 
 ```bash
 git fetch origin
-git worktree add --no-track ../KGoblin-KG-42 -b KG-42 origin/main
+git merge-base --is-ancestor origin/main origin/demo   # ha nem igaz: előbb main → demo szinkron PR (hotfixnél nem kell)
+git worktree add --no-track ../KGoblin-KG-42 -b KG-42 origin/demo
 cd ../KGoblin-KG-42 && pnpm install
 ```
 
 Minden ticket külön worktree-ben készül (`AGENTS.md`; részletek: `kg-git-workflow` → Worktree). Ha az
 agent-eszköz már worktree-ben, ideiglenes ágon indított, azt használd, és az ágat nevezd át a
-`kg-git-workflow` szerint. A PR célja a `demo` (hotfixnél a `main`); a helyi release-teszt a `kg-release`
-1-3. lépése.
+`kg-git-workflow` szerint. Hotfix friss `origin/main`-ből indul. A PR célja a `demo` (hotfixnél a `main`);
+a helyi release-teszt a `kg-release` 1-3. lépése.
 
 ## 2. Felderítés és terv
 
@@ -76,7 +77,7 @@ agent-eszköz már worktree-ben, ideiglenes ágon indított, azt használd, és 
 Fusson előbb célzott teszt, aztán a teljes ellenőrzés (a parancsok az `AGENTS.md` „Parancsok” részében):
 
 ```bash
-pnpm turbo run typecheck lint test build --filter=...[origin/main]
+pnpm turbo run typecheck lint test build --filter=...[origin/demo]   # hotfixnél [origin/main]
 pnpm --filter @kg/web lint:fsd      # Steiger (a web lintje is futtatja)
 pnpm --filter @kg/web test:e2e      # Playwright smoke, UI-változásnál
 ```
@@ -109,7 +110,7 @@ Ha bizonytalan vagy, a magasabbat válaszd. A szint bekerül a PR „Ellenőrzé
 
 ### Menet
 
-1. Rögzítsd a review tárgyát: `git fetch origin`, base = `origin/main` (vagy az alap ticket ága), és a base/head SHA.
+1. Rögzítsd a review tárgyát: `git fetch origin`, base = `origin/demo` (hotfixnél `origin/main`, ráépülő ticketnél az alap ticket ága), és a base/head SHA.
 2. Reviewer-prompt, eszköztől függetlenül (read-only session, csak `git diff`/`git log` és fájlolvasás):
    „Review-zd a `git diff ${BASE_SHA}...${HEAD_SHA}` változásait a KGoblin `AGENTS.md` és a `kg-architecture`
    szerint. Csak valódi hibát jelezz (bug, biztonság, adatszivárgás brandek között, ár- vagy
@@ -147,6 +148,8 @@ Eredménysor a PR-ba: `Review: <modell>, friss session, normál - 2/3 kör, jóv
   másik fejlesztő változtatást kért, előbb azt kezeli.
 - 7 napnál régebbi PR nem maradhat nyitva: vagy merge, vagy lezárás indoklással.
 - Jira: a felhasználó kérésére „Review” állapot, ellenőrzési kommenttel. „Done” csak a `demo` → `main` kiadás után.
+- A ticket-folyamat a `demo`-ra történő merge-nél véget ér. A `version/*` PR és a `demo` → `main` élesítés
+  nem ticketenként, hanem csak külön kérésre indul (`kg-release`).
 
 ## 8. Kész-jelentés
 
