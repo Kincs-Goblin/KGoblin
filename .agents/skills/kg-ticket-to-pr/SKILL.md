@@ -1,6 +1,6 @@
 ---
 name: kg-ticket-to-pr
-description: Egy KG Jira-ticket teljes végigvitele a KGoblin repóban - ticket beolvasása, Definition of Ready, ticketág friss mainből, terv, implementáció a kg-architecture szerint, quality gate, független AI review kockázati szinttel, PR az aktív release/* ágba, CI-követés. Használd, ha azt kérik, „vidd végig a KG-42-t”, „csináld meg ezt a ticketet”, „javítsd ki ezt a hibát”, „nyiss PR-t erre”, „írd meg a PR-leírást”.
+description: Egy KG Jira-ticket teljes végigvitele a KGoblin repóban - ticket beolvasása, Definition of Ready, KG-<n> ticketág friss mainből saját worktree-ben, terv, implementáció a kg-architecture szerint, quality gate, független AI review kockázati szinttel, PR a demo ágra (hotfixnél main), követés. Használd, ha azt kérik, „vidd végig a KG-42-t”, „csináld meg ezt a ticketet”, „javítsd ki ezt a hibát”, „nyiss PR-t erre”, „írd meg a PR-leírást”.
 ---
 
 # kg-ticket-to-pr
@@ -45,14 +45,14 @@ mást mondanak, mint ez a skill, azok az irányadók; jelezd az eltérést.
 
 ```bash
 git fetch origin
-git worktree add ../KGoblin-KG-42 -b feat/KG-42-kosar-drawer origin/main
+git worktree add ../KGoblin-KG-42 -b KG-42 origin/main
 cd ../KGoblin-KG-42 && pnpm install
 ```
 
 Minden ticket külön worktree-ben készül (`AGENTS.md`; részletek: `kg-git-workflow` → Worktree). Ha az
 agent-eszköz már worktree-ben, ideiglenes ágon indított, azt használd, és az ágat nevezd át a
-`kg-git-workflow` szerint. Nézd meg, melyik az aktív release-ág
-(`git branch -r --list "origin/release/*"`); a PR oda megy. Ha nincs ilyen, kérdezz.
+`kg-git-workflow` szerint. A PR célja a `demo` (hotfixnél a `main`); a helyi release-teszt a `kg-release`
+1-3. lépése.
 
 ## 2. Felderítés és terv
 
@@ -108,7 +108,7 @@ Ha bizonytalan vagy, a magasabbat válaszd. A szint bekerül a PR „Ellenőrzé
 
 ### Menet
 
-1. Rögzítsd a review tárgyát: `git fetch origin`, base = `origin/release/<dátum>`, és a base/head SHA.
+1. Rögzítsd a review tárgyát: `git fetch origin`, base = `origin/main` (vagy az alap ticket ága), és a base/head SHA.
 2. Reviewer-prompt, eszköztől függetlenül (read-only session, csak `git diff`/`git log` és fájlolvasás):
    „Review-zd a `git diff ${BASE_SHA}...${HEAD_SHA}` változásait a KGoblin `AGENTS.md` és a `kg-architecture`
    szerint. Csak valódi hibát jelezz (bug, biztonság, adatszivárgás brandek között, ár- vagy
@@ -124,8 +124,10 @@ Eredménysor a PR-ba: `Review: <modell>, friss session, normál - 2/3 kör, jóv
 
 ## 6. PR (kérésre)
 
-- Előtte: AI-attribúció-ellenőrzés (`kg-git-workflow` → Commit), `git diff --stat`, aztán `git diff`.
-- **Cél:** az aktív `release/<dátum>` ág (hotfixnél a `main`).
+- Előtte: attribúció-ellenőrzés (`kg-git-workflow` → Commit: footer a commitban, a PR-ben nincs),
+  `git diff --stat`, aztán `git diff`.
+- **Cél:** a `demo` (hotfixnél a `main`), a helyi release-teszt után (`kg-release` 1-3.). A `demo` PR-on nincs
+  CI, ezért a helyi teszt eredménye a leírás „Ellenőrzés” részébe kerül.
 - **Cím:** angolul, `típus(KG-<n>): mit csinál`, pl. `feat(KG-42): add cart drawer`. Több ticketnél az
   első a címben, a többi a leírásban.
 - **Leírás:** magyarul, a `.github/pull_request_template.md` szerint. Az Összefoglaló, a Ticketek és a
@@ -137,12 +139,13 @@ Eredménysor a PR-ba: `Review: <modell>, friss session, normál - 2/3 kör, jóv
 
 ## 7. PR után
 
-- Kövesd a CI-t a végéig (`kg-babysit-pr`). Piros CI-t javíts a PR-ágon; ha nem megy, írd le, mi blokkol.
-- A merge az emberé: bármelyik fejlesztő (a szerző is) kifejezett „mehet”-je után, squash-sal a
-  release-ágba. Az agent csak erre a kérésre merge-el, és csak zöld CI és lezárt review-ciklus mellett; ha a
+- Kövesd a PR-t (`kg-babysit-pr`): a `main` PR-on a CI-t a végéig, a `demo` PR-on a review-kat. Piros CI-t
+  javíts a PR-ágon; ha nem megy, írd le, mi blokkol.
+- A merge az emberé: bármelyik fejlesztő (a szerző is) kifejezett „mehet”-je után, merge committal a
+  `demo`-ra (hotfixnél squash a `main`-re). Az agent csak erre a kérésre merge-el, és csak zöld CI és lezárt review-ciklus mellett; ha a
   másik fejlesztő változtatást kért, előbb azt kezeli.
 - 7 napnál régebbi PR nem maradhat nyitva: vagy merge, vagy lezárás indoklással.
-- Jira: a felhasználó kérésére „Review” állapot, ellenőrzési kommenttel. „Done” csak kiadás után.
+- Jira: a felhasználó kérésére „Review” állapot, ellenőrzési kommenttel. „Done” csak a `demo` → `main` kiadás után.
 
 ## 8. Kész-jelentés
 

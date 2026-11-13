@@ -1,7 +1,7 @@
 ---
-description: Új release/ÉÉÉÉ-HH-NN ág vágása a main-ből, és a nyitott ticket-PR-ok átállítása rá
+description: Helyi release/ÉÉÉÉ-HH-NN tesztág a main-ből, a kész ticketágak --no-ff merge-e és a kiadási commit
 ---
 
-1. Olvasd be: `.agents/skills/kg-release/SKILL.md`, és kövesd az „1. Release-ág vágása” részt.
-2. Kérdezd meg a tervezett kiadás dátumát, ha nincs megadva.
-3. Push és PR-célág-módosítás csak kifejezett kérésre.
+1. Olvasd be: `.agents/skills/kg-release/SKILL.md`, és kövesd az 1-3. lépést.
+2. Kérdezd meg a tervezett kiadás dátumát és a beválogatott ticketeket, ha nincs megadva.
+3. A release-ág helyi marad: nem pusholjuk, és nem megy PR-ba.

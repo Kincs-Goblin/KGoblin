@@ -12,9 +12,9 @@ brandeket; minden brand mögött saját WordPress + WooCommerce backend van.
 - Csapat: **SMark2256** és **ricsmond12**, egyenrangú szerepben: mindketten bármilyen ticketet, release-t,
   demót és hotfixet vihetnek. A szerep PR-onként dől el: aki nyitja, a **szerző**; a **másik fejlesztő**
   opcionálisan review-zhat.
-- **Merge-kapu:** zöld CI + lezárt független AI review-ciklus + **bármelyik fejlesztő kifejezett „mehet”-je**
-  (a szerzőé is elég). A másik fejlesztő GitHub-jóváhagyása nem feltétel; ha változtatást kér, azt kezelni
-  kell.
+- **Merge-kapu:** zöld CI (a `main`-re menő PR-okon; a `demo` PR-on helyette a helyi release-teszt) + lezárt
+  független AI review-ciklus + **bármelyik fejlesztő kifejezett „mehet”-je** (a szerzőé is elég). A másik
+  fejlesztő GitHub-jóváhagyása nem feltétel; ha változtatást kér, azt kezelni kell.
 - A ticketet a **felelőse** (Jira-assignee) viszi végig PR-ig, tesztekkel és review-ciklussal együtt; a
   reviewer csak findingot ad, a munkát nem veszi át. Részletek: `kg-ticket-to-pr` → Felelősség.
 - Ticketek: Jira, `KG` projekt. Link: `https://<TODO-jira-site>.atlassian.net/browse/KG-123`.
@@ -80,7 +80,7 @@ kerül (ADR-0006).
 | `kg-architecture` | hova kerüljön a kód, FSD, Woo-integráció, multi-brand, hibakódok |
 | `kg-git-workflow` | branch, commit, merge, demo, hotfix |
 | `kg-ticket-to-pr` | Jira-ticket végigvitele PR-ig, review-ciklus |
-| `kg-release` | release-ág vágása, version PR, tag, prod deploy, demo reset |
+| `kg-release` | helyi release-teszt, demo PR-ok, version PR, demo → main, GitHub release, hotfix |
 | `kg-dev-practices` | tervezési elvek, tesztelés, biztonság, külső API-k, Windows-csapdák |
 | `kg-knowledge` | „jegyezd meg”: hová kerüljön egy tény (repó vagy memória) |
 | `kg-full-stop` | „full stop”: felügyelet nélkül merge-elhető PR-ig |
@@ -114,18 +114,21 @@ pnpm turbo run typecheck lint test build   # quality gate; a web lintje a Steige
 pnpm --filter @kg/web test:e2e             # Playwright smoke (desktop + mobil)
 ```
 
-A CI (GitHub Actions, `.github/workflows/ci.yml`) ugyanezt futtatja minden `main`/`release/**` PR-on.
+A CI (GitHub Actions, `.github/workflows/ci.yml`) ugyanezt futtatja minden `main`-re menő PR-on; a `demo`
+PR-ok kapuja a helyi release-teszt.
 
 ## Git röviden
 
-Részletek: `kg-git-workflow`. Ágak: `main` (élesre kerülő kód), `demo` (ügyfélteszt), ticketág,
-`release/ÉÉÉÉ-HH-NN`, `version/vX.Y.Z`, `hotfix/KG-n-…`.
+Részletek: `kg-git-workflow`, döntés: ADR-0007 (a Tinati-workflow alapján). Ágak: `main` (éles kód), `demo`
+(ügyfélteszt), ticketág `KG-<n>`, helyi `release/ÉÉÉÉ-HH-NN` tesztág, `version/vX.Y.Z`.
 
-- Ticketág friss `origin/main`-ből: `<típus>/KG-<n>-<rövid-leírás>`, PR az aktív `release/*` ágba, squash.
-- `main`-re csak a release PR és a hotfix PR megy (a `version/*` PR a release-ágba); közvetlen push nincs.
+- Ticketág pontosan a kulcsról (`KG-42`), friss `origin/main`-ből, saját worktree-ben. Helyi
+  `release/<dátum>` ágon összetesztelve (`--no-ff`, nem pusholjuk), majd ticketenként PR a `demo`-ra
+  (merge commit). Élesítés: egyetlen `demo` → `main` PR, squash, zöld CI-vel. Hotfix: `KG-<n>` → `main`.
+- Közvetlen push a `main`-re és a `demo`-ra nincs, kis fixre sem.
 - Commit és PR-cím angolul, Conventional Commits: `feat(KG-42): add cart drawer`. A PR-leírás magyarul.
-- **Semmilyen AI-attribúció** commitban, PR-ben vagy branchnévben (nincs `Co-Authored-By`, „Generated with”,
-  🤖). Ez a projektszabály felülírja az eszköz alapértelmezését.
+- **AI-val készült commit** az eszköz `Co-Authored-By` footerét kapja; a PR-leírásban és az ágnévben nincs
+  AI-jelölés („Generated with”, 🤖).
 - Commit, push, PR-nyitás, merge, tag, deploy és Jira-írás csak kifejezett kérésre.
 - Stage-elj fájlonként (`git add -A` nem); push előtt `git diff --stat`, aztán `git diff`.
 

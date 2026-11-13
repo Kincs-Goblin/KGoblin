@@ -17,7 +17,7 @@
 ## Döntés
 
 GitHub Actions a CI. Egy workflow (`.github/workflows/ci.yml`) minden `main` és `release/**` célú PR-on és
-pushon:
+pushon (2026-11-13 óta az ADR-0007 szerint csak a `main`-re menő PR-on és a `main` pushán):
 
 1. **Quality gate:** `pnpm install --frozen-lockfile`, Prettier-ellenőrzés, majd
    `pnpm turbo run typecheck lint test build` (a web lintje a Steigert is futtatja). A Node-verzió a
