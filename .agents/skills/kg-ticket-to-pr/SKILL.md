@@ -131,13 +131,15 @@ Eredménysor a PR-ba: `Review: <modell>, friss session, normál - 2/3 kör, jóv
   Változások együtt legfeljebb kb. 10 sor. Az üres template-kommenteket töröld; a „Figyelni” rész csak
   akkor kell, ha van benne valami.
 - A **Stack-változás** jelölőnégyzetet pipáld, ha a PR ADR-t vagy `kg-stack` módosítást tartalmaz.
-- Reviewer: a másik fejlesztő (CODEOWNERS). WIP-limit: fejlesztőnként legfeljebb 2 nyitott PR.
+- Reviewer: a másik fejlesztő (CODEOWNERS), opcionálisan; a merge-hez nem kell a jóváhagyása. WIP-limit:
+  fejlesztőnként legfeljebb 2 nyitott PR.
 
 ## 7. PR után
 
 - Kövesd a CI-t a végéig (`kg-babysit-pr`). Piros CI-t javíts a PR-ágon; ha nem megy, írd le, mi blokkol.
-- A merge az emberé (a másik fejlesztő jóváhagyása után), squash-sal a release-ágba. Az agent csak
-  kifejezett kérésre merge-el, és csak zöld CI és jóváhagyás mellett.
+- A merge az emberé: bármelyik fejlesztő (a szerző is) kifejezett „mehet”-je után, squash-sal a
+  release-ágba. Az agent csak erre a kérésre merge-el, és csak zöld CI és lezárt review-ciklus mellett; ha a
+  másik fejlesztő változtatást kért, előbb azt kezeli.
 - 7 napnál régebbi PR nem maradhat nyitva: vagy merge, vagy lezárás indoklással.
 - Jira: a felhasználó kérésére „Review” állapot, ellenőrzési kommenttel. „Done” csak kiadás után.
 

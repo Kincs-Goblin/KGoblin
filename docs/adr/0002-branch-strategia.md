@@ -1,6 +1,6 @@
 # ADR-0002: Branch-stratégia - release train, demo ág, Jira KG
 
-- Állapot: elfogadott
+- Állapot: elfogadott, módosítva 2026-11-13 (merge-kapu: egy fejlesztő „mehet”-je elég)
 - Dátum: 2026-11-12
 - Döntéshozók: SMark2256, ricsmond12
 
@@ -30,7 +30,9 @@
 - Hotfix: `main`-ből, PR a `main`-be, patch tag, majd a `main` merge-e a release-be és a demóba.
 - Commit és PR-cím angolul (Conventional Commits, scope = ticketkulcs), a PR-leírás magyarul, AI-attribúció
   nélkül.
-- Review: független AI review kockázati szint szerint + a másik fejlesztő jóváhagyása (CODEOWNERS).
+- Review: független AI review kockázati szint szerint. A merge-hez bármelyik fejlesztő kifejezett „mehet”-je
+  elég (2026-11-13 óta; korábban a másik fejlesztő jóváhagyása kellett). A másik fejlesztő review-ja
+  opcionális.
 - Szerepek: a két fejlesztő egyenrangú. A szerep PR-onként dől el (szerző és reviewer); ticketet, release-t,
   demót és hotfixet bárki vihet.
 

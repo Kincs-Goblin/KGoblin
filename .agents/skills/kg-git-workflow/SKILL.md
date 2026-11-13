@@ -104,7 +104,7 @@ hotfix/KG-20 → main (squash) → patch tag → main bemerge-elve az aktív rel
 ## hotfix
 
 1. `hotfix/KG-<n>-<leírás>` friss `origin/main`-ből; a legkisebb javítás, reprodukáló teszttel, ha lehet.
-2. PR → `main`, kockázatos review-szinttel (`kg-ticket-to-pr`), a másik fejlesztő jóváhagyásával.
+2. PR → `main`, kockázatos review-szinttel (`kg-ticket-to-pr`), bármelyik fejlesztő „mehet”-jével.
 3. Merge után patch tag (`kg-release` „Hotfix kiadás”).
 4. A friss `main`-t merge-eld az aktív `release/*` ágba és a `demo`-ba.
 
@@ -112,9 +112,12 @@ hotfix/KG-20 → main (squash) → patch tag → main bemerge-elve az aktív rel
 
 | Ág | Beállítás |
 |---|---|
-| `main` | PR kötelező, 1 jóváhagyás, CODEOWNERS-review, zöld CI, lineáris history kikapcsolva (merge commit kell), force push és törlés tiltva |
-| `release/*` | PR kötelező, 1 jóváhagyás, zöld CI, force push tiltva |
+| `main` | PR kötelező, jóváhagyás nem kötelező (0), zöld CI, lineáris history kikapcsolva (merge commit kell), force push és törlés tiltva |
+| `release/*` | PR kötelező, jóváhagyás nem kötelező (0), zöld CI, force push tiltva |
 | `demo` | Force push csak adminnak (a resethez), törlés tiltva |
+
+A jóváhagyás azért 0, mert a merge-kapu bármelyik fejlesztő „mehet”-je (`AGENTS.md`), a GitHub pedig a
+szerző saját jóváhagyását nem számolja.
 
 Engedélyezett merge-módok a repóban: squash és merge commit; a rebase merge kikapcsolva.
 
