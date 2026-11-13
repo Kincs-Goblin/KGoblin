@@ -18,7 +18,6 @@ A formátum a [Keep a Changelog](https://keepachangelog.com/hu/1.1.0/) mintájá
 
 - Headless WooCommerce backend (`kg-headless` plugin): Store API-kiterjesztés az Omnibus-árral, a pénztár
   szerveroldali magyar céges adószám- és ÁSZF-ellenőrzése a későbbi storefront-pénztárhoz (KG-4).
-
 - pnpm + Turborepo monorepo, `brand-config` és `woo-client` csomag, FSD-szerkezet, GitHub Actions CI (KG-5).
 - Többbrandes lokális Docker-környezet (MariaDB, Redis, HPOS) gamer tesztadatokkal (KG-4).
 - Fejlesztési folyamat: merge-kapu, ticketenkénti worktree, Tinati-alapú demo-kiadás (ADR-0007) (KG-5).
