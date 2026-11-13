@@ -1,1 +1,1 @@
-export { Header } from "./ui/header";
+export { Header, type HeaderNavItem } from "./ui/header";

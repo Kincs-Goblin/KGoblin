@@ -67,6 +67,10 @@ export const gamer = {
     footerNote: "A KincsGoblin független webshop, nem áll kapcsolatban egyetlen játékkiadóval sem.",
   },
   payments: ["stripe", "barion", "simplepay"],
+  merchandising: {
+    // HUF, minor unit = Ft.
+    rarityThresholds: { rare: 20000, epic: 35000, legendary: 50000 },
+  },
   search: {
     index: "products_gamer",
   },

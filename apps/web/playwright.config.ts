@@ -22,6 +22,8 @@ export default defineConfig({
   webServer: {
     command: `pnpm exec next start --port ${port}`,
     port,
+    // Determinisztikus katalógus: a mentett Store API-fixture-ök, Woo nélkül (ADR-0005).
+    env: { KG_STORE_FIXTURES: "1" },
     // Mindig friss szerver: egy régi build kiszolgálása hamis zöldet vagy hibát adna.
     reuseExistingServer: false,
     timeout: 120_000,
