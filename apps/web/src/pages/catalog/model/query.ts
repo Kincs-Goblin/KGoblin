@@ -17,7 +17,8 @@ const first = (value: string | string[] | undefined) => (Array.isArray(value) ? 
 
 export function parseCatalogQuery(searchParams: CatalogSearchParams) {
   const sortParam = first(searchParams.rendezes);
-  const sort: SortKey = sortParam && sortParam in sortOptions ? (sortParam as SortKey) : "ajanlott";
+  const sort: SortKey =
+    sortParam && Object.hasOwn(sortOptions, sortParam) ? (sortParam as SortKey) : "ajanlott";
   const onSale = first(searchParams.akcios) === "1";
   return { sort, onSale };
 }

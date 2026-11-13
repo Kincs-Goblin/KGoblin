@@ -6,6 +6,7 @@ describe("parseCatalogQuery", () => {
       sort: "ajanlott",
       onSale: false,
     });
+    expect(parseCatalogQuery({ rendezes: "constructor" }).sort).toBe("ajanlott");
   });
 
   it("a rendezést és az akciós szűrőt felismeri", () => {

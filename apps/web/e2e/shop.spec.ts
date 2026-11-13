@@ -57,9 +57,7 @@ test("főoldal → kategória → termék → kosárba → drawer", async ({ pag
   const drawer = page.getByRole("dialog", { name: "Zsákmányod" });
   await expect(drawer).toBeVisible();
   await expect(drawer.getByRole("link", { name: /ApexStrike Pro 75%/ })).toBeVisible();
-  await expect(
-    drawer.getByText("A végösszeget, a szállítást és a kedvezményeket a pénztárban számoljuk."),
-  ).toBeVisible();
+  await expect(drawer.getByText(/^Az árak tájékoztató jellegűek\. A végösszeget/)).toBeVisible();
 
   await drawer.getByRole("button", { name: /eggyel több/ }).click();
   // Nyitott modális drawer mellett a fejléc rejtett a kisegítő technológiák elől; a drawerben nézzük.

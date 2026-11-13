@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useReducer, useRef } from "react";
+import { createContext, useContext, useEffect, useMemo, useReducer } from "react";
 import { z } from "zod";
 
 import { cartReducer, countItems, type CartAction, type CartState } from "./cart-reducer";
@@ -26,6 +26,18 @@ const storedCartSchema = z.object({
 });
 
 /**
+ * A `hydrated` jelző a kosárral egy állapotban van: a mentés csak a visszatöltött kosárral renderelt
+ * körben indul, így a StrictMode dupla effect-futása sem írja felül a tárolt kosarat az üres
+ * kezdőállapottal.
+ */
+type ProviderState = { cart: CartState; hydrated: boolean };
+
+function providerReducer(state: ProviderState, action: CartAction): ProviderState {
+  if (action.type === "hydrate") return { cart: action.state, hydrated: true };
+  return { ...state, cart: cartReducer(state.cart, action) };
+}
+
+/**
  * A kliensoldali kosár a böngészőben marad (brandenként külön kulccsal). Csak termékazonosító,
  * név, megjelenített ár és darabszám - token vagy személyes adat nem.
  */
@@ -37,29 +49,32 @@ export function CartProvider({
   children: React.ReactNode;
 }) {
   const storageKey = `kg-cart:${brandId}`;
-  const [state, dispatch] = useReducer(cartReducer, { lines: [] });
-  const hydrated = useRef(false);
+  const [{ cart: state, hydrated }, dispatch] = useReducer(providerReducer, {
+    cart: { lines: [] },
+    hydrated: false,
+  });
 
   useEffect(() => {
+    let stored: CartState = { lines: [] };
     try {
       const parsed = storedCartSchema.safeParse(
         JSON.parse(localStorage.getItem(storageKey) ?? "null"),
       );
-      if (parsed.success) dispatch({ type: "hydrate", state: parsed.data });
+      if (parsed.success) stored = parsed.data;
     } catch {
       // Tiltott vagy sérült tároló: üres kosárral megyünk tovább.
     }
-    hydrated.current = true;
+    dispatch({ type: "hydrate", state: stored });
   }, [storageKey]);
 
   useEffect(() => {
-    if (!hydrated.current) return;
+    if (!hydrated) return;
     try {
       localStorage.setItem(storageKey, JSON.stringify(state));
     } catch {
       // A tároló nem kötelező; hibánál a kosár csak erre a lapra él.
     }
-  }, [state, storageKey]);
+  }, [hydrated, state, storageKey]);
 
   const value = useMemo(() => ({ state, itemCount: countItems(state), dispatch }), [state]);
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

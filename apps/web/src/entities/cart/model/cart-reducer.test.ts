@@ -37,4 +37,11 @@ describe("cartReducer", () => {
     const state = cartReducer(empty, { type: "add", line, quantity: 2 });
     expect(state.lines[0]?.unitPrice).toEqual(line.unitPrice);
   });
+
+  it("újbóli hozzáadáskor a tárolt árat a friss Woo-árra cseréli", () => {
+    const state = cartReducer(empty, { type: "add", line });
+    const repriced = { ...line, unitPrice: { ...line.unitPrice, amount: "24990" } };
+    const next = cartReducer(state, { type: "add", line: repriced });
+    expect(next.lines[0]).toMatchObject({ quantity: 2, unitPrice: repriced.unitPrice });
+  });
 });

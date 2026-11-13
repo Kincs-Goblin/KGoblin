@@ -8,7 +8,8 @@ export const cartDrawerTexts = {
   increase: (name: string) => `${name}: eggyel több`,
   remove: (name: string) => `${name} eltávolítása`,
   quantity: "Darab",
-  totalsNote: "A végösszeget, a szállítást és a kedvezményeket a pénztárban számoljuk.",
+  totalsNote:
+    "Az árak tájékoztató jellegűek. A végösszeget, a szállítást és a kedvezményeket a pénztárban számoljuk.",
   checkout: "Pénztár hamarosan",
   continue: "Vásárlás folytatása",
 } as const;

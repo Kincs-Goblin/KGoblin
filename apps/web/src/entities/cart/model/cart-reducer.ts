@@ -37,7 +37,12 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
         return {
           lines: state.lines.map((line) =>
             line.productId === action.line.productId
-              ? { ...line, quantity: clamp(line.quantity + amount) }
+              ? {
+                  ...line,
+                  // A friss Woo-ár felülírja a korábban tároltat; az ár így csak tájékoztató marad.
+                  unitPrice: action.line.unitPrice,
+                  quantity: clamp(line.quantity + amount),
+                }
               : line,
           ),
         };
