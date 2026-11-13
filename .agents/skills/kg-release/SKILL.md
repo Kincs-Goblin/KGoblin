@@ -28,7 +28,7 @@ Ritmus: 1-2 naponta, vagy amikor van kész ticket.
 
 ```bash
 git fetch origin
-git switch -c release/2026-11-26 origin/main            # csak helyben, nem pusholjuk
+git switch -c release/2026-11-26 origin/demo            # csak helyben, nem pusholjuk
 git merge --no-ff origin/KG-12                           # ticketenként, az alap ticket a ráépülő előtt
 git merge --no-ff origin/KG-15
 ```
@@ -38,8 +38,10 @@ git merge --no-ff origin/KG-15
 
 ## 2. Kiadási commit
 
-1. Válaszd ki a verziót a fenti szabályok szerint (`git log origin/main..HEAD --oneline`). Javasold, és
-   kérdezz rá.
+1. Válaszd ki a verziót a fenti szabályok szerint: a tartalmi különbség `git diff --stat origin/main HEAD`, a
+   ticketlista az utolsó kiadás óta a demóra merge-elt PR-okból (`gh pr list --base demo --state merged`) és a
+   release-ág `--no-ff` merge-eiből. A `git log origin/main..HEAD` a squash miatt a korábbi kiadások
+   commitjait is listázná. Javasold, és kérdezz rá.
 2. A release-ágon: a gyökér `package.json` `version` mezője, és a `CHANGELOG.md` új szakasza magyarul,
    felhasználói nyelven: `## [0.3.0] - 2026-11-26` → Új · Fejlesztés · Javítás · Belső (ticketkulccsal).
 3. Commit: `chore(release): v0.3.0`.

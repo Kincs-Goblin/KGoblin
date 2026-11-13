@@ -120,12 +120,14 @@ PR-ok kapuja a helyi release-teszt.
 
 ## Git röviden
 
-Részletek: `kg-git-workflow`, döntés: ADR-0007 (a Tinati-workflow alapján). Ágak: `main` (éles kód), `demo`
-(ügyfélteszt), ticketág `KG-<n>`, helyi `release/ÉÉÉÉ-HH-NN` tesztág, `version/vX.Y.Z`.
+Részletek: `kg-git-workflow`, döntés: ADR-0007 (a Tinati-workflow alapján) és ADR-0010 (ticketág a
+demóból). Ágak: `main` (éles kód), `demo` (ügyfélteszt), ticketág `KG-<n>`, helyi `release/ÉÉÉÉ-HH-NN`
+tesztág, `version/vX.Y.Z`.
 
-- Ticketág pontosan a kulcsról (`KG-42`), friss `origin/main`-ből, saját worktree-ben. Helyi
+- Ticketág pontosan a kulcsról (`KG-42`), friss `origin/demo`-ból, saját worktree-ben. Helyi
   `release/<dátum>` ágon összetesztelve (`--no-ff`, nem pusholjuk), majd ticketenként PR a `demo`-ra
-  (merge commit). Élesítés: egyetlen `demo` → `main` PR, squash, zöld CI-vel. Hotfix: `KG-<n>` → `main`.
+  (merge commit); a ticket itt véget ér. Élesítés csak külön kérésre: egyetlen `demo` → `main` PR, squash,
+  zöld CI-vel. Hotfix: `KG-<n>` friss `origin/main`-ből → `main`.
 - Közvetlen push a `main`-re és a `demo`-ra nincs, kis fixre sem.
 - Commit és PR-cím angolul, Conventional Commits: `feat(KG-42): add cart drawer`. A PR-leírás magyarul.
 - **AI-val készült commit** az eszköz `Co-Authored-By` footerét kapja; a PR-leírásban és az ágnévben nincs

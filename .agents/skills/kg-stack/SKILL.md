@@ -15,7 +15,7 @@ visszafordíthatatlanul) · **nyitott** (dönteni kell, mielőtt ráépül valam
 ## Döntésnapló
 
 Utolsó módosítás: 2026-11-13 (ADR-0008 WordPress hosting VPS + Docker Cloudflare mögött; ADR-0009
-frontend Cloudflare Workersre, spike után).
+frontend Cloudflare Workersre, spike után; ADR-0010 a ticketág a `demo`-ból indul).
 
 ### Architektúra és frontend
 
@@ -80,7 +80,7 @@ frontend Cloudflare Workersre, spike után).
 | CI | GitHub Actions (`.github/workflows/ci.yml`): quality gate + Playwright e2e minden `main`-re menő PR-on; Woo nélkül, MSW-fixture-ökkel | elfogadva | 0005 |
 | Hibakódok | `DOMAIN.REASON` formátumú, katalógusban tartott hibakódok | javasolt | 0001 |
 | Ticketek | Jira, `KG` kulcs | elfogadva | 0002, 0007 |
-| Branch-folyamat | Tinati-alapú: `KG-<n>` → helyi release-teszt → PR a `demo`-ra → `demo` → `main` squash, `gh release` | elfogadva (2026-11-13, felváltja: 0002) | 0007 |
+| Branch-folyamat | Tinati-alapú: `KG-<n>` friss `origin/demo`-ból → helyi release-teszt → PR a `demo`-ra; külön kérésre `demo` → `main` squash, `gh release`; hotfix a `main`-ből | elfogadva (2026-11-13, felváltja: 0002) | 0007, 0010 |
 | AI agentek | Agent-független: `AGENTS.md` és `.agents/skills/` a közös forrás, bármelyik eszköz használható; eszközfüggő részlet csak a `docs/process/agent-adapters.md`-ben | elfogadva | 0003, 0006 |
 
 ## Stack-változás folyamata (kötelező)
