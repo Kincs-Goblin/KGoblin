@@ -10,7 +10,7 @@ Ez a dokumentum a `KG-6` (0. mérföldkő) infrastruktúra-beállításait és a
 - **A `demo` PR-ok kapuja:** a helyi release-teszt (`kg-release` 1-3. lépés), amelynek eredményét a PR leírásának „Ellenőrzés” blokkjában rögzítjük.
 - **Jobok:**
   1. `Quality gate`: `pnpm install --frozen-lockfile` (pnpm store cache-sel), `pnpm format:check`, majd `pnpm turbo run typecheck lint test build` (benne az ESLint, a Steiger FSD-ellenőrzés és a Vitest unit-tesztek minden csomagra, beleértve a `@kg/web` és `@kg/jobs` alkalmazásokat).
-  2. `E2E (Playwright)`: a `Quality gate` által épített `.next` artifactból vagy a `PLAYWRIGHT_TEST_BASE_URL` preview URL ellen futtatja a Chromium smoke teszteket (desktop + mobil). Hibánál a `playwright-report` és `test-results` 7 napig artifactként elérhető.
+  2. `E2E (Playwright)`: a `Quality gate` által épített `.next` artifactból futtatja a Chromium smoke teszteket (desktop + mobil). Hibánál a `playwright-report` és `test-results` 7 napig artifactként elérhető.
 
 ---
 
@@ -32,13 +32,13 @@ Az ADR-0007 és a `kg-git-workflow` szerint a GitHubon beállítandó szabályok
 - **Konfiguráció a repóban:** `apps/web/vercel.json`
   - `installCommand`: `pnpm install --frozen-lockfile`
   - `buildCommand`: `pnpm turbo run build --filter=@kg/web...`
-  - `ignoreCommand`: `npx turbo-ignore @kg/web` (csak akkor épít, ha a `@kg/web` vagy a workspace-függőségei változtak)
+  - `ignoreCommand`: `npx turbo-ignore@2.11.11 @kg/web` (csak akkor épít, ha a `@kg/web` vagy a workspace-függőségei változtak)
 - **Git-ágak:**
   - **Production Branch:** `main`
   - **Demo környezet:** a `demo` ág branch-deploya (saját demo-domainnel brandenként, pl. `demo.<gamer-domain>.hu`)
   - **Preview deploy:** minden PR-hoz automatikus preview URL készül, amely megjelenik a PR kommentjében/checkjében.
 - **Keresőmotor-tiltás (`noindex`):**
-  - Ha `NEXT_PUBLIC_APP_ENV=preview`, `NEXT_PUBLIC_APP_ENV=demo` vagy `VERCEL_ENV=preview`, a `proxy.ts` és a `next.config.ts` automatikusan `X-Robots-Tag: noindex, nofollow` HTTP fejlécet ad minden válaszra.
+  - Ha `NEXT_PUBLIC_APP_ENV=preview`, `NEXT_PUBLIC_APP_ENV=demo` vagy `VERCEL_ENV=preview`, a `next.config.ts` `headers()` konfigurációja automatikusan `X-Robots-Tag: noindex, nofollow` HTTP fejlécet ad minden válaszra.
 
 ### Környezeti változók (Vercel)
 
@@ -57,16 +57,15 @@ Az ADR-0007 és a `kg-git-workflow` szerint a GitHubon beállítandó szabályok
 ## 4. Trigger.dev Projekt (`apps/jobs`)
 
 ### Konfiguráció
-- **Konfigurációs fájl:** `apps/jobs/trigger.config.ts`
-- **Taskok helye:** `apps/jobs/src/trigger/`
+- **Konfigurációs fájl:** `apps/jobs/trigger.config.ts` (`project: "proj_kgoblin"`)
+- **Taskok és életciklus-hookok helye:** `apps/jobs/src/trigger/`
 - **Minta task:** `brand-heartbeat` (`apps/jobs/src/trigger/brand-heartbeat.ts`), amely `brand-heartbeat:<brand>:<correlationId>` idempotencia-kulccsal és brand-validációval fut.
-- **Hibajelentés:** a `trigger.config.ts` `onFailure` hookja a `src/adapters/telemetry.ts` `reportTaskFailure` függvényét hívja, amely PII-mentesen (csak `taskId`, `runId`, `brandId`, `code`, `retryable`) naplóz, és előkészíti a Sentry-bekötést (KG-88).
+- **Hibajelentés:** a `src/trigger/init.ts` `tasks.onFailure` hookja a `src/adapters/telemetry.ts` `reportTaskFailure` függvényét hívja, amely PII-mentesen (csak `taskId`, `runId`, `brandId`, `code`, `retryable`) naplóz, és előkészíti a Sentry-bekötést (KG-88).
 
 ### Környezeti változók (Trigger.dev)
 
 | Változó | Típus | Dev | Staging / Demo | Production | Leírás |
 |---|---|---|---|---|---|
-| `TRIGGER_PROJECT_ID` | Konfig | `proj_...` | `proj_...` | `proj_...` | Trigger.dev projekt azonosító |
 | `TRIGGER_SECRET_KEY` | Secret | `tr_dev_...` | `tr_stg_...` | `tr_prod_...` | Trigger.dev API kulcs (lokális `.env.local` / CI) |
 | `SENTRY_DSN` | Konfig | Opcionális | Sentry DSN | Sentry DSN | Sentry DSN a háttérjobokhoz |
 | `WOO_GAMER_URL` | Konfig | `http://localhost:8080` | Demo Woo URL | Éles Woo URL | Gamer WooCommerce példány URL-je |

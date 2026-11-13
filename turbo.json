@@ -9,8 +9,7 @@
         "NEXT_PUBLIC_APP_ENV",
         "NEXT_PUBLIC_SENTRY_DSN",
         "VERCEL_ENV",
-        "WOO_*_URL",
-        "TRIGGER_PROJECT_ID"
+        "WOO_*_URL"
       ],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },

@@ -1,7 +1,6 @@
-import { AbortTaskRunError } from "@trigger.dev/sdk";
 import { describe, expect, it } from "vitest";
 
-import { handleTaskError } from "../adapters/telemetry";
+import { triggerBrandHeartbeat } from "../trigger/brand-heartbeat";
 import { getBrandWooCredentials, parseJobsEnv } from "./env";
 import { AppError, isAppError, jobErrorCatalog, type JobErrorCode } from "./errors";
 import { buildBrandIdempotencyKey, runBrandHeartbeat } from "./heartbeat";
@@ -36,24 +35,13 @@ describe("jobs domain: buildBrandIdempotencyKey & runBrandHeartbeat", () => {
     }
   });
 
-  it("handleTaskError nem újrapróbálható AppError esetén skipRetrying: true és AbortTaskRunError választ ad", () => {
-    const nonRetryable = new AppError("BRAND.UNKNOWN_ID");
-    const result = handleTaskError({
-      error: nonRetryable,
-      ctx: { task: { id: "brand-heartbeat" }, run: { id: "run_123" } },
-      payload: { brandId: "unknown" },
+  it("triggerBrandHeartbeat kulcsépítés előtt validálja a brandet, és nem engedi át az eltérő kis-/nagybetűs vagy ismeretlen brandet", async () => {
+    await expect(
+      triggerBrandHeartbeat({ brandId: "Gamer", correlationId: "evt_003" }),
+    ).rejects.toMatchObject({
+      code: "BRAND.UNKNOWN_ID",
+      retryable: false,
     });
-
-    expect(result?.skipRetrying).toBe(true);
-    expect(result?.error).toBeInstanceOf(AbortTaskRunError);
-
-    const retryable = new AppError("WOO.UNAVAILABLE");
-    expect(
-      handleTaskError({
-        error: retryable,
-        ctx: { task: { id: "brand-heartbeat" }, run: { id: "run_123" } },
-      }),
-    ).toBeUndefined();
   });
 
   it("üres idempotencia-kulcs komponens esetén JOB.INVALID_PAYLOAD hibát dob", () => {
@@ -71,19 +59,14 @@ describe("jobs domain: buildBrandIdempotencyKey & runBrandHeartbeat", () => {
 });
 
 describe("jobs domain: parseJobsEnv & getBrandWooCredentials", () => {
-  it("hiányzó TRIGGER_PROJECT_ID esetén érthető hibával áll meg", () => {
-    expect(() => parseJobsEnv({ NODE_ENV: "test" })).toThrow(/TRIGGER_PROJECT_ID/);
+  it("üres környezetben is érvényes opcionális konfigurációt ad vissza", () => {
+    const env = parseJobsEnv({ NODE_ENV: "test" });
+    expect(env.TRIGGER_SECRET_KEY).toBeUndefined();
+    expect(env.SENTRY_DSN).toBeUndefined();
   });
 
-  it("érvényes TRIGGER_PROJECT_ID esetén visszaadja a konfigurációt", () => {
-    const env = parseJobsEnv({ NODE_ENV: "test", TRIGGER_PROJECT_ID: "proj_kgoblin_test" });
-    expect(env.TRIGGER_PROJECT_ID).toBe("proj_kgoblin_test");
-  });
-
-  it("érvénytelen TRIGGER_PROJECT_ID formátumnál érthető hibát dob", () => {
-    expect(() => parseJobsEnv({ NODE_ENV: "test", TRIGGER_PROJECT_ID: "invalid_id" })).toThrow(
-      /TRIGGER_PROJECT_ID/,
-    );
+  it("érvénytelen SENTRY_DSN URL esetén érthető hibát dob", () => {
+    expect(() => parseJobsEnv({ NODE_ENV: "test", SENTRY_DSN: "not-a-url" })).toThrow(/SENTRY_DSN/);
   });
 
   it("feloldja a brand Woo REST v3 hitelesítő adatait, hiányzónál pedig a változó nevét jelzi", () => {

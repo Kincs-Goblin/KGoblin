@@ -1,7 +1,9 @@
+import { getBrandById } from "@kg/brand-config";
 import { AbortTaskRunError, idempotencyKeys, logger, task } from "@trigger.dev/sdk";
 
-import { isAppError } from "../domain/errors";
+import { AppError, isAppError } from "../domain/errors";
 import {
+  brandHeartbeatPayloadSchema,
   buildBrandIdempotencyKey,
   runBrandHeartbeat,
   type BrandHeartbeatPayload,
@@ -38,13 +40,21 @@ export const brandHeartbeatTask = task({
 
 /**
  * Segédfüggvény a `brand-heartbeat` task idempotens indításához (`scope: "global"`).
+ * A kulcsépítés előtt validálja a payloadot és a brand-azonosítót.
  */
 export async function triggerBrandHeartbeat(payload: BrandHeartbeatPayload) {
-  const rawKey = buildBrandIdempotencyKey(
-    "brand-heartbeat",
-    payload.brandId,
-    payload.correlationId,
-  );
+  const parsed = brandHeartbeatPayloadSchema.parse(payload);
+  const brand = getBrandById(parsed.brandId);
+  if (!brand) {
+    throw new AppError("BRAND.UNKNOWN_ID", {
+      internalReason: `Unknown brandId: ${parsed.brandId}`,
+    });
+  }
+
+  const rawKey = buildBrandIdempotencyKey("brand-heartbeat", brand.id, parsed.correlationId);
   const idempotencyKey = await idempotencyKeys.create(rawKey, { scope: "global" });
-  return brandHeartbeatTask.trigger(payload, { idempotencyKey });
+  return brandHeartbeatTask.trigger(
+    { brandId: brand.id, correlationId: parsed.correlationId },
+    { idempotencyKey },
+  );
 }

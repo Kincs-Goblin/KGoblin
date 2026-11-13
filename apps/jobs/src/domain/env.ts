@@ -2,11 +2,6 @@ import { getBrandById, type Brand } from "@kg/brand-config";
 import { z } from "zod";
 
 const jobsEnvSchema = z.object({
-  TRIGGER_PROJECT_ID: z
-    .string({
-      error: "Hiányzó kötelező környezeti változó: TRIGGER_PROJECT_ID (formátum: proj_<azonosító>)",
-    })
-    .regex(/^proj_[a-zA-Z0-9_-]+$/, "TRIGGER_PROJECT_ID formátuma: proj_<azonosító>"),
   TRIGGER_SECRET_KEY: z.string().min(1).optional(),
   SENTRY_DSN: z.string().url("SENTRY_DSN érvényes URL legyen").optional(),
 });
@@ -22,12 +17,10 @@ export type BrandWooCredentials = {
 
 /**
  * A háttérjobok globális környezeti változóinak validálása.
- * Hiányzó `TRIGGER_PROJECT_ID` esetén érthető hibával áll meg.
  * Értéket (titkot) soha nem ír ki a hibaüzenetbe, csak a változó nevét.
  */
 export function parseJobsEnv(raw: NodeJS.ProcessEnv = process.env): JobsEnv {
   const normalized = {
-    TRIGGER_PROJECT_ID: raw.TRIGGER_PROJECT_ID?.trim() || undefined,
     TRIGGER_SECRET_KEY: raw.TRIGGER_SECRET_KEY?.trim() || undefined,
     SENTRY_DSN: raw.SENTRY_DSN?.trim() || undefined,
   };

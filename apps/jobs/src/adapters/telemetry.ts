@@ -1,5 +1,3 @@
-import { AbortTaskRunError } from "@trigger.dev/sdk";
-
 import { isAppError, jobErrorCatalog, type JobErrorCode } from "../domain/errors";
 
 export type FailureContext = {
@@ -47,42 +45,4 @@ export function reportTaskFailure(error: unknown, context: FailureContext): void
       retryable,
     }),
   );
-}
-
-/**
- * Trigger.dev `catchError` / `handleError` hook:
- * Ha a dobott `AppError` `retryable: false` (pl. `JOB.INVALID_PAYLOAD`, `BRAND.UNKNOWN_ID`,
- * `SUPPLIER.ORDER_FORWARD_UNCERTAIN`), megszakítja az újrapróbálkozást (`AbortTaskRunError`),
- * hogy ne fusson le feleslegesen vagy veszélyesen újra.
- */
-export function handleTaskError({
-  error,
-  ctx,
-  payload,
-}: {
-  error: unknown;
-  ctx: { task: { id: string }; run: { id: string } };
-  payload?: unknown;
-}) {
-  const brandId =
-    payload &&
-    typeof payload === "object" &&
-    "brandId" in payload &&
-    typeof payload.brandId === "string"
-      ? payload.brandId
-      : undefined;
-
-  if (isAppError(error) && !error.retryable) {
-    reportTaskFailure(error, {
-      taskId: ctx.task.id,
-      runId: ctx.run.id,
-      brandId,
-    });
-    return {
-      skipRetrying: true,
-      error: new AbortTaskRunError(`[${error.code}] ${error.userMessage}`),
-    };
-  }
-
-  return undefined;
 }
