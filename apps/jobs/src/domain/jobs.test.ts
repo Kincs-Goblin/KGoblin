@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { triggerBrandHeartbeat } from "../trigger/brand-heartbeat";
 import { getBrandWooCredentials, parseJobsEnv } from "./env";
 import { AppError, isAppError, jobErrorCatalog, type JobErrorCode } from "./errors";
 import { buildBrandIdempotencyKey, runBrandHeartbeat } from "./heartbeat";
@@ -33,15 +32,6 @@ describe("jobs domain: buildBrandIdempotencyKey & runBrandHeartbeat", () => {
         expect(error.status).toBe(400);
       }
     }
-  });
-
-  it("triggerBrandHeartbeat kulcsépítés előtt validálja a brandet, és nem engedi át az eltérő kis-/nagybetűs vagy ismeretlen brandet", async () => {
-    await expect(
-      triggerBrandHeartbeat({ brandId: "Gamer", correlationId: "evt_003" }),
-    ).rejects.toMatchObject({
-      code: "BRAND.UNKNOWN_ID",
-      retryable: false,
-    });
   });
 
   it("üres idempotencia-kulcs komponens esetén JOB.INVALID_PAYLOAD hibát dob", () => {

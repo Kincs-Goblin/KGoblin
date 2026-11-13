@@ -57,7 +57,7 @@ Az ADR-0007 és a `kg-git-workflow` szerint a GitHubon beállítandó szabályok
 ## 4. Trigger.dev Projekt (`apps/jobs`)
 
 ### Konfiguráció
-- **Konfigurációs fájl:** `apps/jobs/trigger.config.ts` (`project: "proj_kgoblin"`)
+- **Konfigurációs fájl:** `apps/jobs/trigger.config.ts` (`project: "proj_kgoblin"` - az első `trigger dev` vagy `trigger deploy` előtt a Trigger.dev projekt valódi `proj_...` azonosítójára cserélendő; nem titok, a konfigurációban tároljuk)
 - **Taskok és életciklus-hookok helye:** `apps/jobs/src/trigger/`
 - **Minta task:** `brand-heartbeat` (`apps/jobs/src/trigger/brand-heartbeat.ts`), amely `brand-heartbeat:<brand>:<correlationId>` idempotencia-kulccsal és brand-validációval fut.
 - **Hibajelentés:** a `src/trigger/init.ts` `tasks.onFailure` hookja a `src/adapters/telemetry.ts` `reportTaskFailure` függvényét hívja, amely PII-mentesen (csak `taskId`, `runId`, `brandId`, `code`, `retryable`) naplóz, és előkészíti a Sentry-bekötést (KG-88).

@@ -43,18 +43,25 @@ export const brandHeartbeatTask = task({
  * A kulcsépítés előtt validálja a payloadot és a brand-azonosítót.
  */
 export async function triggerBrandHeartbeat(payload: BrandHeartbeatPayload) {
-  const parsed = brandHeartbeatPayloadSchema.parse(payload);
-  const brand = getBrandById(parsed.brandId);
-  if (!brand) {
-    throw new AppError("BRAND.UNKNOWN_ID", {
-      internalReason: `Unknown brandId: ${parsed.brandId}`,
+  const parsed = brandHeartbeatPayloadSchema.safeParse(payload);
+  if (!parsed.success) {
+    throw new AppError("JOB.INVALID_PAYLOAD", {
+      cause: parsed.error,
+      internalReason: parsed.error.message,
     });
   }
 
-  const rawKey = buildBrandIdempotencyKey("brand-heartbeat", brand.id, parsed.correlationId);
+  const brand = getBrandById(parsed.data.brandId);
+  if (!brand) {
+    throw new AppError("BRAND.UNKNOWN_ID", {
+      internalReason: `Unknown brandId: ${parsed.data.brandId}`,
+    });
+  }
+
+  const rawKey = buildBrandIdempotencyKey("brand-heartbeat", brand.id, parsed.data.correlationId);
   const idempotencyKey = await idempotencyKeys.create(rawKey, { scope: "global" });
   return brandHeartbeatTask.trigger(
-    { brandId: brand.id, correlationId: parsed.correlationId },
+    { brandId: brand.id, correlationId: parsed.data.correlationId },
     { idempotencyKey },
   );
 }

@@ -14,7 +14,7 @@ Tervezett taskok, idempotencia, újrapróba és beszállítói szabályok:
 
 ## Futtatás és deploy
 
-1. Másold le az `.env.example` fájlt `.env.local` néven, és állítsd be a `TRIGGER_SECRET_KEY` értéket.
+1. Az első `trigger dev` vagy `trigger deploy` előtt cseréld ki a `trigger.config.ts` fájlban a `project: "proj_kgoblin"` placeholder értéket a Trigger.dev Cloud projekt valódi `proj_...` azonosítójára (ez nem titok, a repóba commitolható), majd másold le az `.env.example` fájlt `.env.local` néven, és állítsd be a `TRIGGER_SECRET_KEY` értéket.
 2. Lokális fejlesztés (Trigger.dev dev CLI):
    ```bash
    pnpm --filter @kg/jobs dev
