@@ -14,7 +14,8 @@ visszafordíthatatlanul) · **nyitott** (dönteni kell, mielőtt ráépül valam
 
 ## Döntésnapló
 
-Utolsó módosítás: 2026-11-13 (ADR-0007 Tinati-alapú demo-kiadás, CI csak a `main` PR-okon).
+Utolsó módosítás: 2026-11-13 (ADR-0008 WordPress hosting VPS + Docker Cloudflare mögött; ADR-0009
+frontend Cloudflare Workersre, spike után).
 
 ### Architektúra és frontend
 
@@ -28,7 +29,9 @@ Utolsó módosítás: 2026-11-13 (ADR-0007 Tinati-alapú demo-kiadás, CI csak a
 | Fontok | `next/font/google`, build időben letöltve és saját domainről kiszolgálva; csak szabad licencű (OFL) font | elfogadva | 0004 |
 | Kódszerkezet | FSD 3. szint (teljes) az `apps/web/src`-ben; Next-routing a `apps/web/app`-ban | elfogadva | 0001 |
 | Multi-brand | Egy Next app; a domainből a proxy/middleware választ brandet (`[brand]` szegmens) | elfogadva | 0001 |
-| Frontend hosting | Vercel (preview deploy PR-onként, production a `main`-ről) | elfogadva | 0001 |
+| Frontend hosting | Vercel (preview deploy PR-onként, production a `main`-ről); a spike sikeréig ez érvényes | elfogadva | 0001 |
+| Frontend hosting (cél) | Cloudflare Workers + OpenNext (`@opennextjs/cloudflare`); spike (KG-118) után váltja a Vercelt | javasolt | 0009 |
+| Edge, DNS, WAF | Cloudflare: DNS, TLS, WAF a backend előtt, Cloudflare Tunnel a VPS felé | elfogadva | 0008 |
 | Szövegek, i18n | Elsőként magyar; szövegek slice-onként egy helyen, `next-intl` a 2. nyelvnél | javasolt | 0001 |
 | Képek | Woo médiatár + `next/image`; CDN (Cloudflare R2 / Cloudinary) | nyitott | - |
 
@@ -44,7 +47,8 @@ Utolsó módosítás: 2026-11-13 (ADR-0007 Tinati-alapú demo-kiadás, CI csak a
 | Cache | ISR + `revalidateTag`; Woo webhook (`product.updated` stb.) → aláírt Next endpoint | elfogadva | 0001 |
 | Auth | Woo customer az identitás + vendég checkout; token httpOnly, Secure, SameSite cookie-ban | elfogadva | 0001 |
 | Auth plugin | Melyik WP JWT/headless auth plugin | nyitott | - |
-| WordPress hosting | Menedzselt WP vagy saját VPS + Docker; lokálisan Docker Compose | nyitott | - |
+| WordPress hosting | Saját VPS + Docker Compose (a lokális compose éles változata), Cloudflare mögött; brandenként `api.<domain>` | elfogadva | 0008 |
+| VPS-szolgáltató | Melyik VPS-szolgáltató | nyitott | - |
 | Demo/staging Woo | Külön demo-Woo brandenként, vagy közös staging | nyitott | - |
 
 ### Üzlet és integrációk
@@ -110,7 +114,7 @@ shadcn-komponens hozzáadása), belső refaktor.
 
 ### Nyitott döntés lezárása
 
-Ha egy feladat nyitott döntésre épülne (pl. WordPress hosting), ne válassz a felhasználó helyett. Tedd fel
+Ha egy feladat nyitott döntésre épülne (pl. VPS-szolgáltató), ne válassz a felhasználó helyett. Tedd fel
 a kérdést; amíg nincs döntés, olyan megoldást válassz, amelyik nem zárja ki egyik opciót sem, és ezt mondd ki.
 
 ## Amit ne csinálj

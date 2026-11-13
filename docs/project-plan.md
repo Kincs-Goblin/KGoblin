@@ -29,6 +29,9 @@ kimegy, és a hirdetési tracking (Meta CAPI, Merchant feed) mérhetően működ
  Sentry + PostHog: web és jobs
 ```
 
+Hosting: a Woo-példányok saját VPS-en, Docker Compose-zal, Cloudflare (DNS, WAF, Tunnel) mögött futnak
+(ADR-0008). A frontend a spike sikeréig a Vercelen marad, utána Cloudflare Workersre költözik (ADR-0009).
+
 A részletes döntések a `kg-stack` skillben (`.agents/skills/kg-stack/SKILL.md`) és a `docs/adr/` alatt vannak.
 
 ## Mérföldkövek
@@ -51,14 +54,14 @@ A mérföldkövek sorrendje irányadó, a verziószámok a kiadáskor dőlnek el
 |---|---|---|
 | A gateway pluginek nem (teljesen) támogatják a Store API checkoutot | a 2. mérföldkő csúszik | spike-ticket az 1. mérföldkő alatt mindhárom gatewayre |
 | Beszállítói feed minősége, hiányzó EAN/SKU | hibás vagy duplikált termékek | Zod-validálás, futási riport, kézi jóváhagyás az első importnál |
-| Brandenként külön Woo = több üzemeltetés | frissítési és biztonsági teher | közös plugin-lista és -verzió, frissítési runbook, hosting-döntés a 0. mérföldkőnél |
+| Brandenként külön Woo = több üzemeltetés | frissítési és biztonsági teher | közös plugin-lista és -verzió, frissítési runbook, hosting: VPS + Docker (ADR-0008) |
 | Bizonytalan beszállítói rendelés-API (dupla rendelés) | pénzügyi kár | idempotencia-kulcs, nincs vak újrapróba (`jobs-and-suppliers.md`) |
 | Jogi megfelelés (ÁSZF, elállás, Omnibus-ár, adatkezelés, cookie-hozzájárulás) | bírság, hirdetési fiók tiltása | a Woo oldalon számolva, jogi oldalak az indulás előtt, cookie-banner a tracking előtt |
 | Szállítási idő dropshippingnél | vásárlói panasz | várható szállítási idő a termékoldalon, beszállítónként |
 
 ## Nyitott döntések
 
-A `kg-stack` „nyitott” státuszú sorai: WordPress hosting · demo/staging Woo · auth plugin · Billingo-bekötés
+A `kg-stack` „nyitott” státuszú sorai: VPS-szolgáltató · demo/staging Woo · auth plugin · Billingo-bekötés
 módja · Meilisearch hosting · kép-CDN. Ezen felül: az 1. beszállító(k) kiválasztása, a gamer brand neve és
 domainje (a Jira site URL-je lezárva: `https://kincsgoblin.atlassian.net`).
 
