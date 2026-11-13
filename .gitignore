@@ -29,3 +29,14 @@ Thumbs.db
 # Agent által készített review-képek, segédscriptek és kimenetek
 output/
 .agents/scripts/
+.env*.local
+
+# Monorepo build-kimenetek
+.turbo/
+.next/
+dist/
+coverage/
+next-env.d.ts
+*.tsbuildinfo
+apps/web/test-results/
+apps/web/playwright-report/

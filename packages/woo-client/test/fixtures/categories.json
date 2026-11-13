@@ -1,0 +1,35 @@
+[
+  {
+    "id": 18,
+    "name": "Ergon\u00f3mia \u00e9s Asztali Kieg\u00e9sz\u00edt\u0151k",
+    "slug": "ergonomia-es-kiegeszitok",
+    "description": "Pr\u00e9mium XXL eg\u00e9rpadok, monitor\u00e1llv\u00e1nyok, csukl\u00f3t\u00e1maszok \u00e9s RGB h\u00e1tt\u00e9rvil\u00e1g\u00edt\u00e1s.",
+    "parent": 0,
+    "count": 3,
+    "image": null,
+    "review_count": 0,
+    "permalink": "http:\/\/localhost:8080\/product-category\/ergonomia-es-kiegeszitok\/"
+  },
+  {
+    "id": 16,
+    "name": "Gamer Perif\u00e9ri\u00e1k",
+    "slug": "gamer-periferiak",
+    "description": "Mechanikus billenty\u0171zetek, ultrak\u00f6nny\u0171 esport egerek \u00e9s st\u00fadi\u00f3szint\u0171 gamer headsetek.",
+    "parent": 0,
+    "count": 3,
+    "image": null,
+    "review_count": 0,
+    "permalink": "http:\/\/localhost:8080\/product-category\/gamer-periferiak\/"
+  },
+  {
+    "id": 17,
+    "name": "Streaming \u00e9s Audio",
+    "slug": "streaming-es-audio",
+    "description": "USB\/XLR kondenz\u00e1tor mikrofonok, stream deck vez\u00e9rl\u0151k \u00e9s webkamer\u00e1k tartalomgy\u00e1rt\u00f3knak.",
+    "parent": 0,
+    "count": 2,
+    "image": null,
+    "review_count": 0,
+    "permalink": "http:\/\/localhost:8080\/product-category\/streaming-es-audio\/"
+  }
+]

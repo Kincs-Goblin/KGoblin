@@ -49,7 +49,9 @@ Szeletet akkor hozz létre, amikor az első valódi kód megjelenik; üres szele
 | Webhook | `app/api/webhooks/woo/[brand]/route.ts` (vékony) → `packages/woo-client` aláírás + séma |
 | Woo HTTP-kliens, Zod-sémák | `packages/woo-client` (nem az appban) |
 | Brand-config, tokenek | `packages/brand-config`; az appban csak a `shared/config` olvassa |
-| shadcn komponens | `shared/ui/` (`pnpm dlx shadcn add …`, utána tokenekre igazítva) |
+| shadcn komponens | `shared/ui/` (`pnpm dlx shadcn add …` az `apps/web`-ben; Base UI alapú, utána tokenekre igazítva) |
+| Animációs tokenek, közös Motion-elemek | `shared/ui/motion/` (időtartam, easing, rugó, `Reveal`, `MotionProvider`) |
+| Egy entitáshoz vagy featureshöz kötött animáció | a szelet `ui/`-jában, kliens-levélkomponensként, a `shared/ui/motion` tokenjeivel |
 | Pénzformázás, dátum | `shared/lib/format/` |
 | Env-változók sémája | `shared/config/env.ts` (Zod, külön server és client séma) |
 | Szövegek | a szelet `config/texts.ts`-e vagy a brand texts; JSX-be nem írunk szöveget |

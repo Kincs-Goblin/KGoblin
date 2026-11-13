@@ -14,7 +14,7 @@ visszafordíthatatlanul) · **nyitott** (dönteni kell, mielőtt ráépül valam
 
 ## Döntésnapló
 
-Utolsó módosítás: 2026-11-12 (ADR-0001, kezdő stack).
+Utolsó módosítás: 2026-11-13 (ADR-0007 Tinati-alapú demo-kiadás, CI csak a `main` PR-okon).
 
 ### Architektúra és frontend
 
@@ -23,6 +23,9 @@ Utolsó módosítás: 2026-11-12 (ADR-0001, kezdő stack).
 | Architektúra | Headless: Next.js storefront + WooCommerce backend | elfogadva | 0001 |
 | Frontend | Next.js (App Router), React Server Components, TypeScript strict | elfogadva | 0001 |
 | UI | Tailwind CSS + shadcn/ui, design tokenek CSS-változóként, brandenként | elfogadva | 0001 |
+| UI-primitívek | Base UI (`@base-ui/react`) a shadcn/ui alatt (`base-nova` stílus), Radix helyett | elfogadva | 0004 |
+| Animáció | Motion (`motion/react`) az egyetlen JS-animációs könyvtár; tokenek a `shared/ui/motion`-ben, `reducedMotion="user"`; egyszerű átmenet CSS-ből | elfogadva | 0004 |
+| Fontok | `next/font/google`, build időben letöltve és saját domainről kiszolgálva; csak szabad licencű (OFL) font | elfogadva | 0004 |
 | Kódszerkezet | FSD 3. szint (teljes) az `apps/web/src`-ben; Next-routing a `apps/web/app`-ban | elfogadva | 0001 |
 | Multi-brand | Egy Next app; a domainből a proxy/middleware választ brandet (`[brand]` szegmens) | elfogadva | 0001 |
 | Frontend hosting | Vercel (preview deploy PR-onként, production a `main`-ről) | elfogadva | 0001 |
@@ -70,10 +73,11 @@ Utolsó módosítás: 2026-11-12 (ADR-0001, kezdő stack).
 | Runtime | Node aktuális Active LTS (2026-11: Node 26), `.nvmrc`-ben | javasolt | 0001 |
 | Lint, formázás | ESLint flat config + Prettier; Steiger az FSD-szabályokra | javasolt | 0001 |
 | Tesztek | Vitest (unit, integráció), MSW a Woo-mockokhoz, Playwright (e2e) | javasolt | 0001 |
+| CI | GitHub Actions (`.github/workflows/ci.yml`): quality gate + Playwright e2e minden `main`-re menő PR-on; Woo nélkül, MSW-fixture-ökkel | elfogadva | 0005 |
 | Hibakódok | `DOMAIN.REASON` formátumú, katalógusban tartott hibakódok | javasolt | 0001 |
-| Ticketek | Jira, `KG` kulcs | elfogadva | 0002 |
-| Branch-folyamat | Release train: ticket → `release/<dátum>` → `main`, version PR, tag | elfogadva | 0002 |
-| AI agentek | Claude Code + Antigravity; `AGENTS.md` az egyetlen szabályforrás | elfogadva | 0003 |
+| Ticketek | Jira, `KG` kulcs | elfogadva | 0002, 0007 |
+| Branch-folyamat | Tinati-alapú: `KG-<n>` → helyi release-teszt → PR a `demo`-ra → `demo` → `main` squash, `gh release` | elfogadva (2026-11-13, felváltja: 0002) | 0007 |
+| AI agentek | Agent-független: `AGENTS.md` és `.agents/skills/` a közös forrás, bármelyik eszköz használható; eszközfüggő részlet csak a `docs/process/agent-adapters.md`-ben | elfogadva | 0003, 0006 |
 
 ## Stack-változás folyamata (kötelező)
 
@@ -101,8 +105,8 @@ shadcn-komponens hozzáadása), belső refaktor.
    - felváltott döntés: a régi ADR állapota `felváltva (ADR-NNNN)`, a tartalmát nem töröljük;
    - `AGENTS.md` „Stack röviden”, ha az érinti;
    - minden skill, amelyik a régi döntésre hivatkozik (`grep -ri "<régi név>" .agents AGENTS.md docs`).
-4. **PR**: a PR-leírás „Stack-változás” jelölőnégyzete legyen kipipálva, az ADR linkelve. A másik fejlesztő
-   jóváhagyása itt a döntés jóváhagyása is.
+4. **PR**: a PR-leírás „Stack-változás” jelölőnégyzete legyen kipipálva, az ADR linkelve. A merge-hez adott
+   „mehet” (bármelyik fejlesztőé) itt a döntés jóváhagyása is.
 
 ### Nyitott döntés lezárása
 
