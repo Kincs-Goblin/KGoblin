@@ -57,7 +57,24 @@ külön belépési pontban, a REST v3 `server-only`.
 
 ## Saját WP plugin (`kg-headless`)
 
-A WordPress oldali kiegészítések egy saját pluginban: Store API-kiterjesztések, webhook-beállítások,
-CORS lezárása (csak a Next szerver hívhatja a REST v3-at), headless-beállítások (a frontend URL-je a jelszó-
-visszaállító és email linkekben). Más pluginhez nem nyúlunk; a harmadik féltől származó pluginek listája és
-verziója a plugin README-jében van.
+A WordPress oldali kiegészítések egy saját pluginban (`wordpress/plugins/kg-headless/`): Store API-kiterjesztések,
+webhook-beállítások, CORS lezárása (csak a Next szerver hívhatja a REST v3-at), headless-beállítások (a nem-admin
+kérések `302` átirányítása a `KG_FRONTEND_URL` storefrontra, valamint a rendelés-visszaigazoló URL átírása).
+Más pluginhez nem nyúlunk; a harmadik féltől származó pluginek listája és verziója a plugin README-jében van.
+
+### `kg-headless` Store API mezők
+
+1. **Termék végpont (`/wp-json/wc/store/v1/products` → `extensions.kg_headless`):**
+   - `lowest_price_30_days` (`int | null`): Az akció kezdete előtti 30 nap legalacsonyabb ára minor unitban (HUF esetén egész Ft, float nélkül számolva; az aktuális akciós ár nem számít bele).
+   - `is_on_sale` (`boolean`): A termék jelenleg akciós-e.
+   - `currency_minor_unit` (`int`): A pénznem tizedesjegyeinek száma (`0` HUF esetén).
+
+2. **Checkout végpont (`POST /wp-json/wc/store/v1/checkout` → `extensions.kg_headless` vagy `additional_fields`):**
+   - `is_company` (`boolean`): Céges számla igénylése.
+   - `company_name` (`string`): Cégnév (`is_company: true` esetén kötelező).
+   - `tax_number` (`string`): Magyar adószám (`12345678-2-42` vagy 11 számjegy; `is_company: true` esetén kötelező és szerveroldalon validált).
+   - `accept_terms` (`boolean`, kötelezően `true`): ÁSZF és Adatkezelési tájékoztató elfogadása.
+   - `accept_payment_obligation` (`boolean`, kötelezően `true`): Fizetési kötelezettség tudomásulvétele.
+   - **Store API 400 hibakódok:** `kg_terms_not_accepted`, `kg_payment_obligation_not_accepted`, `kg_missing_company_name`, `kg_missing_tax_number`, `kg_invalid_tax_number`.
+   - **HPOS rendelés-metaadatok:** `_billing_is_company`, `_billing_company_name`, `_billing_tax_number`, `_hu_accepted_terms_privacy`, `_hu_accepted_payment_obligation`, `_hu_legal_accepted_at`.
+

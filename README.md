@@ -1,100 +1,69 @@
-# KGoblin
+# KGoblin – Multi-Brand Headless Webshop Platform
 
-Headless, több brandet kiszolgáló dropshipping webshop-platform. Egy Next.js storefront a domain alapján
-szolgálja ki a brandeket, minden brand mögött saját WordPress + WooCommerce backend áll. Az első brand gamer
-tematikájú, később további niche-shopok jönnek ugyanarra a kódbázisra, kódmásolás nélkül.
+Headless, több brandet kiszolgáló dropshipping e-commerce platform. Egyetlen közös Next.js (App Router + FSD) kódbázis szolgálja ki a tematikus shopokat (elsőként a **gamer** brandet), míg a háttérben brandenként külön **WordPress + WooCommerce** (HPOS + Redis + Store API) és **Trigger.dev** háttérjobok futnak.
 
-> **Állapot:** tervezési fázis. Alkalmazáskód még nincs, csak a mappastruktúra, a döntések és a
-> fejlesztési szabályok. A következő lépés a 0. mérföldkő (monorepo-scaffold).
+- **Agent szabályok és architektúra:** [`AGENTS.md`](./AGENTS.md)
+- **Projektterv és mérföldkövek:** [`docs/project-plan.md`](./docs/project-plan.md)
+- **Architekturális döntések (ADR):** [`docs/adr/`](./docs/adr/)
+- **Első lépések (Onboarding):** [`docs/process/onboarding.md`](./docs/process/onboarding.md)
 
-## Architektúra
+---
 
-```
- böngésző ──► Vercel: Next.js (apps/web, FSD) ──┬──► Woo #1 (gamer)   Store API / REST v3
-             domain → brand (proxy)             ├──► Woo #2 (brand 2)
-             ISR + revalidateTag                │
-                    ▲  webhook (HMAC)           └──► Meilisearch (index brandenként)
-                    │
-             Woo #n ─┘──► Trigger.dev (apps/jobs) ──► beszállítók (feed, rendelés)
-                                                 ├──► Billingo (számla)
-                                                 ├──► Resend (email)
-                                                 └──► Meta CAPI, Merchant feed
- Sentry + PostHog: web és jobs
-```
+## 📁 Monorepo felépítés
 
-- A WooCommerce a kereskedelmi logika forrása (ár, adó, kupon, készlet, rendelés); a frontend nem számol.
-- A böngésző nem hívja közvetlenül a WordPresst: a Next.js szerveroldala a BFF, minden Woo-válasz Zod-dal
-  validálva.
-- A beszállítói feed-szinkron és a rendelés-továbbítás háttérjobként fut, idempotens módon.
-
-## Stack
-
-| Terület | Választás |
+| Útvonal | Leírás |
 |---|---|
-| Frontend | Next.js (App Router) + TypeScript, Tailwind + shadcn/ui, FSD 3. szint, Vercel |
-| Commerce | WooCommerce brandenként külön példányban; Store API, REST v3 csak szerveroldalon |
-| Háttérjobok | Trigger.dev: feed-szinkron, rendelés-továbbítás, újrapróba |
-| Fizetés | Stripe, Barion, SimplePay (Woo gateway pluginek) |
-| Számlázás | Billingo |
-| Auth | Woo customer + vendég checkout, token httpOnly cookie-ban |
-| Keresés | Meilisearch, index brandenként |
-| Email | Resend + React Email |
-| Mérés | Sentry, PostHog, Meta Conversions API, Google Merchant Center feed |
-| Monorepo | pnpm + Turborepo |
-| Nyitott | WordPress hosting, demo/staging Woo, auth plugin, Billingo-bekötés módja, Meilisearch hosting, kép-CDN |
+| `apps/web/` | Next.js App Router storefront (`app/` routing, `src/` FSD 3. szintű rétegek) |
+| `apps/jobs/` | Trigger.dev háttérjobok (beszállítói feed-szinkron, rendelés-továbbítás, számlázás) |
+| `packages/woo-client/` | WooCommerce Store API és REST v3 kliens, Zod-sémák, webhook HMAC-validáció |
+| `packages/brand-config/` | Brand-konfigurációk (domainek, téma tokenek, végpontok, fizetési módok) |
+| `packages/config/` | Közös TypeScript, ESLint és Prettier presetek |
+| `wordpress/plugins/kg-headless/` | Saját headless WooCommerce bővítmény (Store API checkout validáció, EU Omnibus, redirect) |
+| `wordpress/seed/` | Brandenként paraméterezhető, idempotens WP-CLI tesztadat-generáló (`seed-brand.php`) |
+| `wordpress/docker/` | Keresztplatformos lokális telepítő (`setup.ps1`, `setup.sh`) és Store API tesztek |
 
-A teljes, státuszos döntésnapló: [`.agents/skills/kg-stack/SKILL.md`](.agents/skills/kg-stack/SKILL.md),
-az indoklások: [`docs/adr/`](docs/adr/).
+---
 
-## Repó-térkép
+## 🚀 Lokális Headless WooCommerce Backend indítása (1 parancs)
 
-| Hely | Mi |
-|---|---|
-| [`apps/web/`](apps/web/) | Next.js storefront. Next-routing: `app/`; FSD-rétegek: `src/` |
-| [`apps/jobs/`](apps/jobs/) | Trigger.dev taskok (`trigger/`, `domain/`, `adapters/`) |
-| [`packages/woo-client/`](packages/woo-client/) | Store API + REST v3 kliens, Zod-sémák, webhook-aláírás |
-| [`packages/brand-config/`](packages/brand-config/) | brandek: domainek, tokenek, Woo-végpontok, fizetési módok |
-| [`packages/config/`](packages/config/) | közös tsconfig, ESLint, Prettier presetek |
-| [`docs/`](docs/) | projektterv, ADR-ek, folyamatleírások |
-| `.agents/`, `.claude/`, `.gemini/` | AI agent-szabályok, skillek és workflow-k |
+A lokális fejlesztői környezet Dockerrel indítja a MariaDB-t, a Redist és a brandenkénti WordPress + WooCommerce (HPOS) példányt, majd automatikusan telepíti a magyar nyelvet, a `woocommerce`, `redis-cache` és `kg-headless` bővítményeket, végül betölti a gamer tesztadatokat (kategóriák, 8 termék, akciós ártörténet, jogi oldalak).
 
-## Mérföldkövek
-
-| # | Mérföldkő | Tartalom |
-|---|---|---|
-| 0 | Alapok | monorepo-scaffold, lint, tesztek, CI, Vercel-projekt, lokális Woo, brand-config az 1. brandre |
-| 1 | Katalógus | főoldal, kategória, termékoldal, keresés, ISR + webhook-revalidálás, SEO, brand-téma |
-| 2 | Kosár és checkout | Store API kosár, kupon, szállítás, Stripe + Barion + SimplePay, vendég checkout |
-| 3 | Dropshipping | beszállítói adapter, feed-szinkron, árazási szabályok, rendelés-továbbítás |
-| 4 | Fiók, számla, email | Woo-fiók, Billingo, Resend + React Email sablonok |
-| 5 | Mérés és indulás | Sentry, PostHog, Meta CAPI, Merchant feed, jogi oldalak, éles hosting - **1.0.0** |
-| 6 | 2. brand | új brand a multi-brand checklist szerint, kódmásolás nélkül |
-
-Részletek, kockázatok és nyitott döntések: [`docs/project-plan.md`](docs/project-plan.md).
-
-## Fejlesztés
-
-- **Első lépések** (klónozás, agent beállítása, ellenőrzés): [`docs/process/onboarding.md`](docs/process/onboarding.md)
-- **Közös szabályok** minden fejlesztőnek és AI agentnek (Claude Code, Antigravity, Gemini CLI):
-  [`AGENTS.md`](AGENTS.md)
-- **Ticketek:** Jira, `KG` projekt; sablon: [`docs/process/ticket-template.md`](docs/process/ticket-template.md)
-- **Git:** ticketág friss `origin/main`-ből (`feat/KG-42-cart-drawer`), PR az aktív `release/ÉÉÉÉ-HH-NN`
-  ágba, squash merge, Conventional Commits angolul. Részletek: `kg-git-workflow` skill.
-- **Stack-változás** csak új ADR-rel és a `kg-stack` döntésnapló frissítésével, ugyanabban a PR-ban.
-
-## Korábbi prototípus
-
-A gyökérben lévő `wordpress/`, `docker-compose.yml` és `setup-webshop.ps1` a korábbi, klasszikus WP-témás
-prototípus (`custom-shop` téma, `hu-webshop-core` plugin: magyar pénztármezők, jogi nyilatkozatok,
-Omnibus 30 napos legalacsonyabb ár). Új munka nem épít rá; az átalakítása vagy eltávolítása külön ticket.
-Lokális indítása (Docker Desktop szükséges):
+### Windows (PowerShell)
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\setup-webshop.ps1
-# http://localhost:8080 (admin: http://localhost:8080/wp-admin)
+powershell -ExecutionPolicy Bypass -File .\wordpress\docker\setup.ps1
 ```
 
-## Csapat
+### Linux / macOS
 
-[SMark2256](https://github.com/SMark2256) és [ricsmond12](https://github.com/ricsmond12), egyenrangú
-szerepben: aki a PR-t nyitja, a szerző, a másik fejlesztő a reviewer.
+```bash
+chmod +x ./wordpress/docker/setup.sh
+./wordpress/docker/setup.sh
+```
+
+*(Opcionális: másold le a `.env.example` fájlt `.env` néven, ha egyedi portokat vagy jelszavakat szeretnél beállítani.)*
+
+### Elérhetőségek lokális indítás után (1. brand: `gamer`)
+
+- **WP Admin:** `http://localhost:8080/wp-admin` (`admin` / `admin123`)
+- **Store API (Termékek):** `http://localhost:8080/wp-json/wc/store/v1/products`
+- **Store API (Kosár / Checkout):** `http://localhost:8080/wp-json/wc/store/v1/checkout`
+- **Nem-admin frontend kérések (`http://localhost:8080/`):** automatikus `302` átirányítás a Next.js storefrontra (`http://localhost:3000`).
+
+---
+
+## 🧪 Tesztelés (Omnibus + Store API Checkout + HPOS)
+
+A `kg-headless` plugin egyaránt tartalmazza az EU Omnibus 30 napos legalacsonyabb ár (float-mentes integer) számítását és a Store API `/checkout` magyar jogi validációját (céges adószám + ÁSZF és fizetési kötelezettség elfogadása).
+
+A teljes automatizált tesztcsomag futtatása:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\wordpress\docker\test-store-api.ps1
+```
+
+Csak az Omnibus és adószám PHP unit-tesztek futtatása:
+
+```bash
+docker compose exec -T wpcli-gamer php /var/www/seed/test-omnibus.php
+```
