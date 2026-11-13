@@ -105,8 +105,8 @@ shadcn-komponens hozzáadása), belső refaktor.
    - felváltott döntés: a régi ADR állapota `felváltva (ADR-NNNN)`, a tartalmát nem töröljük;
    - `AGENTS.md` „Stack röviden”, ha az érinti;
    - minden skill, amelyik a régi döntésre hivatkozik (`grep -ri "<régi név>" .agents AGENTS.md docs`).
-4. **PR**: a PR-leírás „Stack-változás” jelölőnégyzete legyen kipipálva, az ADR linkelve. A másik fejlesztő
-   jóváhagyása itt a döntés jóváhagyása is.
+4. **PR**: a PR-leírás „Stack-változás” jelölőnégyzete legyen kipipálva, az ADR linkelve. A merge-hez adott
+   „mehet” (bármelyik fejlesztőé) itt a döntés jóváhagyása is.
 
 ### Nyitott döntés lezárása
 

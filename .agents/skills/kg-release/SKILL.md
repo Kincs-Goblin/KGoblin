@@ -9,7 +9,8 @@ Minden lépés **csak kifejezett kérésre** indul, és egy korábbi jóváhagy�
 Az ágak szabályai a `kg-git-workflow` skillben vannak.
 
 A kiadást bármelyik fejlesztő viheti, nincs kijelölt release-felelős. Aki vágja a release-ágat, az viszi
-végig a kiadást; a version PR-t és a release PR-t a másik fejlesztő hagyja jóvá.
+végig a kiadást; a version PR-re és a release PR-re is a merge-kapu érvényes (`AGENTS.md`: bármelyik
+fejlesztő kifejezett „mehet”-je).
 
 ## Verziózás (SemVer)
 
