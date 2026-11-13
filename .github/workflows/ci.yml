@@ -14,6 +14,10 @@ concurrency:
 permissions:
   contents: read
 
+# A CI nem indít Woo-t: a katalógus a mentett Store API-fixture-ökből épül és fut (ADR-0005).
+env:
+  KG_STORE_FIXTURES: "1"
+
 jobs:
   quality:
     name: Quality gate

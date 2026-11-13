@@ -1,11 +1,17 @@
+import type { Rarity } from "@/entities/product";
+
 export const homeTexts = {
+  featuredHeading: "Friss zsákmány",
+  featuredMore: "Mind a kincstárban",
+  categoriesHeading: "Kincseskamrák",
+  errorTitle: "A kincstár ajtaja most zárva",
   rarityHeading: "Minden zsákmánynak megvan a ritkasága",
   rarityIntro:
     "A termékeken jelöljük, mennyire különleges egy darab - a mindennapi kellékektől a legendás ritkaságokig.",
-  rarities: [
-    { variant: "common", label: "Gyakori", description: "Alapfelszerelés minden kalandhoz." },
-    { variant: "rare", label: "Ritka", description: "Ezekért már megéri lehajolni." },
-    { variant: "epic", label: "Epikus", description: "Gyűjtők szeme ilyenkor felcsillan." },
-    { variant: "legendary", label: "Legendás", description: "Kevés készül belőle, gyorsan elkel." },
-  ],
+  rarityDescriptions: {
+    common: "Alapfelszerelés minden kalandhoz.",
+    rare: "Ezekért már megéri lehajolni.",
+    epic: "Gyűjtők szeme ilyenkor felcsillan.",
+    legendary: "Kevés készül belőle, gyorsan elkel.",
+  } satisfies Record<Rarity, string>,
 } as const;

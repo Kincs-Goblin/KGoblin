@@ -8,6 +8,16 @@ export const errorCatalog = {
     retryable: false,
     message: "Ez a cím nem tartozik egyik boltunkhoz sem.",
   },
+  "WOO.UNAVAILABLE": {
+    status: 503,
+    retryable: true,
+    message: "A kincstár most nem elérhető. Próbáld újra pár perc múlva.",
+  },
+  "WOO.CONTRACT_MISMATCH": {
+    status: 502,
+    retryable: true,
+    message: "A termékadatok most nem tölthetők be. Már dolgozunk rajta.",
+  },
   "APP.UNEXPECTED": {
     status: 500,
     retryable: true,

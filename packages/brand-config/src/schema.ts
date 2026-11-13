@@ -89,6 +89,22 @@ export const brandSchema = z.object({
     footerNote: z.string().min(1),
   }),
   payments: z.array(z.enum(["stripe", "barion", "simplepay"])),
+  /**
+   * Megjelenítési szabályok. A ritkaság elsősorban Woo-tagből jön (`ritkasag-<szint>`); ha nincs ilyen tag,
+   * a normál ár (minor unit) sávjai döntenek. Csak megjelenítés, nem árszámítás.
+   */
+  merchandising: z.object({
+    rarityThresholds: z
+      .object({
+        rare: z.number().int().positive(),
+        epic: z.number().int().positive(),
+        legendary: z.number().int().positive(),
+      })
+      .refine(
+        (t) => t.rare < t.epic && t.epic < t.legendary,
+        "A ritkasági sávok növekvő sorrendűek",
+      ),
+  }),
   search: z.object({
     index: z.string().min(1),
   }),

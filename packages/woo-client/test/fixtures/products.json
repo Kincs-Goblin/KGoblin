@@ -1,0 +1,670 @@
+[
+  {
+    "id": 24,
+    "name": "LumiBar Pro Aszimmetrikus Monitor L\u00e1mpa Vezet\u00e9k N\u00e9lk\u00fcli Vez\u00e9rl\u0151koronggal",
+    "slug": "lumibar-pro-aszimmetrikus-monitor-lampa-vezetek-nelkuli-vezerlokoronggal",
+    "parent": 0,
+    "type": "simple",
+    "variation": "",
+    "permalink": "http:\/\/localhost:8080\/product\/lumibar-pro-aszimmetrikus-monitor-lampa-vezetek-nelkuli-vezerlokoronggal\/",
+    "sku": "KG-GMR-LT-008",
+    "short_description": "<p>T\u00fckr\u00f6z\u0151d\u00e9smentes asztali megvil\u00e1g\u00edt\u00e1s (CRI &gt; 95) \u00e1ll\u00edthat\u00f3 sz\u00ednh\u0151m\u00e9rs\u00e9klettel (2700K\u20136500K).<\/p>",
+    "description": "<p>Az aszimmetrikus optikai kialak\u00edt\u00e1s csak az \u00edr\u00f3asztalt vil\u00e1g\u00edtja meg, a monitor k\u00e9perny\u0151j\u00e9n nem okoz becsillan\u00e1st. \u00c9jszakai j\u00e1t\u00e9khoz \u00e9s munk\u00e1hoz elengedhetetlen.<\/p>",
+    "on_sale": true,
+    "prices": {
+      "price": "16990",
+      "regular_price": "21990",
+      "sale_price": "16990",
+      "price_range": null,
+      "currency_code": "HUF",
+      "currency_symbol": "Ft",
+      "currency_minor_unit": 0,
+      "currency_decimal_separator": ",",
+      "currency_thousand_separator": " ",
+      "currency_prefix": "",
+      "currency_suffix": " Ft"
+    },
+    "price_html": "<del aria-hidden=\"true\"><span class=\"woocommerce-Price-amount amount\">21 990&nbsp;<span class=\"woocommerce-Price-currencySymbol\" dir=\"auto\">&#070;&#116;<\/span><\/span><\/del> <span class=\"screen-reader-text\">Original price was: 21 990&nbsp;&#070;&#116;.<\/span><ins aria-hidden=\"true\"><span class=\"woocommerce-Price-amount amount\">16 990&nbsp;<span class=\"woocommerce-Price-currencySymbol\" dir=\"auto\">&#070;&#116;<\/span><\/span><\/ins><span class=\"screen-reader-text\">Current price is: 16 990&nbsp;&#070;&#116;.<\/span>",
+    "average_rating": "0",
+    "review_count": 0,
+    "images": [],
+    "categories": [
+      {
+        "id": 18,
+        "name": "Ergon\u00f3mia \u00e9s Asztali Kieg\u00e9sz\u00edt\u0151k",
+        "slug": "ergonomia-es-kiegeszitok",
+        "link": "http:\/\/localhost:8080\/product-category\/ergonomia-es-kiegeszitok\/"
+      }
+    ],
+    "tags": [],
+    "brands": [],
+    "attributes": [],
+    "variations": [],
+    "grouped_products": [],
+    "has_options": false,
+    "is_purchasable": true,
+    "is_in_stock": true,
+    "is_on_backorder": false,
+    "low_stock_remaining": null,
+    "stock_availability": { "text": "30 in stock", "class": "in-stock" },
+    "sold_individually": false,
+    "weight": "",
+    "dimensions": { "length": "", "width": "", "height": "" },
+    "formatted_weight": "N\/A",
+    "formatted_dimensions": "N\/A",
+    "add_to_cart": {
+      "text": "Add to cart",
+      "description": "Add to cart: &ldquo;LumiBar Pro Aszimmetrikus Monitor L\u00e1mpa Vezet\u00e9k N\u00e9lk\u00fcli Vez\u00e9rl\u0151koronggal&rdquo;",
+      "url": "\/wp-json\/wc\/store\/v1\/products?per_page=100&#038;add-to-cart=24",
+      "single_text": "Add to cart",
+      "minimum": 1,
+      "maximum": 30,
+      "multiple_of": 1
+    },
+    "is_password_protected": false,
+    "extensions": {
+      "kg_headless": { "lowest_price_30_days": 15990, "is_on_sale": true, "currency_minor_unit": 0 }
+    },
+    "_links": {
+      "self": [
+        {
+          "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products\/24",
+          "targetHints": { "allow": ["GET"] }
+        }
+      ],
+      "collection": [{ "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products" }],
+      "related": [
+        {
+          "embeddable": true,
+          "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products?related=24&per_page=10"
+        }
+      ]
+    }
+  },
+  {
+    "id": 23,
+    "name": "AeroLift G\u00e1zrug\u00f3s Alum\u00ednium Monitortart\u00f3 Kar (17&#8243;\u201334&#8243; Ultrawide, 12 kg-ig)",
+    "slug": "aerolift-gazrugos-aluminium-monitortarto-kar-17-34-ultrawide-12-kg-ig",
+    "parent": 0,
+    "type": "simple",
+    "variation": "",
+    "permalink": "http:\/\/localhost:8080\/product\/aerolift-gazrugos-aluminium-monitortarto-kar-17-34-ultrawide-12-kg-ig\/",
+    "sku": "KG-GMR-AR-007",
+    "short_description": "<p>Teljes 360\u00b0-os forgathat\u00f3s\u00e1g, rejtett k\u00e1belvezet\u0151 csatorna \u00e9s VESA 75\u00d775 \/ 100\u00d7100 gyorscsatlakoz\u00f3.<\/p>",
+    "description": "<p>Szabad\u00edtsd fel az asztalodat \u00e9s \u00e1ll\u00edtsd szemmagass\u00e1gba a monitorodat! Bilincses \u00e9s \u00e1tmen\u0151 furatos r\u00f6gz\u00edt\u0151elemekkel a csomagban.<\/p>",
+    "on_sale": false,
+    "prices": {
+      "price": "26990",
+      "regular_price": "26990",
+      "sale_price": "26990",
+      "price_range": null,
+      "currency_code": "HUF",
+      "currency_symbol": "Ft",
+      "currency_minor_unit": 0,
+      "currency_decimal_separator": ",",
+      "currency_thousand_separator": " ",
+      "currency_prefix": "",
+      "currency_suffix": " Ft"
+    },
+    "price_html": "<span class=\"woocommerce-Price-amount amount\">26 990&nbsp;<span class=\"woocommerce-Price-currencySymbol\" dir=\"auto\">&#070;&#116;<\/span><\/span>",
+    "average_rating": "0",
+    "review_count": 0,
+    "images": [],
+    "categories": [
+      {
+        "id": 18,
+        "name": "Ergon\u00f3mia \u00e9s Asztali Kieg\u00e9sz\u00edt\u0151k",
+        "slug": "ergonomia-es-kiegeszitok",
+        "link": "http:\/\/localhost:8080\/product-category\/ergonomia-es-kiegeszitok\/"
+      }
+    ],
+    "tags": [],
+    "brands": [],
+    "attributes": [],
+    "variations": [],
+    "grouped_products": [],
+    "has_options": false,
+    "is_purchasable": true,
+    "is_in_stock": true,
+    "is_on_backorder": false,
+    "low_stock_remaining": null,
+    "stock_availability": { "text": "22 in stock", "class": "in-stock" },
+    "sold_individually": false,
+    "weight": "",
+    "dimensions": { "length": "", "width": "", "height": "" },
+    "formatted_weight": "N\/A",
+    "formatted_dimensions": "N\/A",
+    "add_to_cart": {
+      "text": "Add to cart",
+      "description": "Add to cart: &ldquo;AeroLift G\u00e1zrug\u00f3s Alum\u00ednium Monitortart\u00f3 Kar (17&#8243;\u201334&#8243; Ultrawide, 12 kg-ig)&rdquo;",
+      "url": "\/wp-json\/wc\/store\/v1\/products?per_page=100&#038;add-to-cart=23",
+      "single_text": "Add to cart",
+      "minimum": 1,
+      "maximum": 22,
+      "multiple_of": 1
+    },
+    "is_password_protected": false,
+    "extensions": {
+      "kg_headless": {
+        "lowest_price_30_days": 26990,
+        "is_on_sale": false,
+        "currency_minor_unit": 0
+      }
+    },
+    "_links": {
+      "self": [
+        {
+          "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products\/23",
+          "targetHints": { "allow": ["GET"] }
+        }
+      ],
+      "collection": [{ "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products" }],
+      "related": [
+        {
+          "embeddable": true,
+          "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products?related=23&per_page=10"
+        }
+      ]
+    }
+  },
+  {
+    "id": 22,
+    "name": "TitanWeave XXL Control Gamer Eg\u00e9rpad (900\u00d7400\u00d74 mm, Varrt Sz\u00e9l\u0171)",
+    "slug": "titanweave-xxl-control-gamer-egerpad-900x400x4-mm-varrt-szelu",
+    "parent": 0,
+    "type": "simple",
+    "variation": "",
+    "permalink": "http:\/\/localhost:8080\/product\/titanweave-xxl-control-gamer-egerpad-900x400x4-mm-varrt-szelu\/",
+    "sku": "KG-GMR-PD-006",
+    "short_description": "<p>V\u00edzleperget\u0151 mikrosz\u00f6v\u00e9s\u0171 fel\u00fclet prec\u00edz c\u00e9lz\u00e1shoz \u00e9s cs\u00fasz\u00e1smentes nat\u00fargumi alap.<\/p>",
+    "description": "<p>S\u00fcllyesztett, d\u00f6rzs\u00f6l\u0151d\u00e9smentes szeg\u00e9lyvarr\u00e1s \u00e9s 4 mm vastag rezg\u00e9scsillap\u00edt\u00f3 alap, amely egyszerre ad helyet a billenty\u0171zetnek \u00e9s a sz\u00e9les eg\u00e9rmozdulatoknak.<\/p>",
+    "on_sale": true,
+    "prices": {
+      "price": "8990",
+      "regular_price": "11990",
+      "sale_price": "8990",
+      "price_range": null,
+      "currency_code": "HUF",
+      "currency_symbol": "Ft",
+      "currency_minor_unit": 0,
+      "currency_decimal_separator": ",",
+      "currency_thousand_separator": " ",
+      "currency_prefix": "",
+      "currency_suffix": " Ft"
+    },
+    "price_html": "<del aria-hidden=\"true\"><span class=\"woocommerce-Price-amount amount\">11 990&nbsp;<span class=\"woocommerce-Price-currencySymbol\" dir=\"auto\">&#070;&#116;<\/span><\/span><\/del> <span class=\"screen-reader-text\">Original price was: 11 990&nbsp;&#070;&#116;.<\/span><ins aria-hidden=\"true\"><span class=\"woocommerce-Price-amount amount\">8 990&nbsp;<span class=\"woocommerce-Price-currencySymbol\" dir=\"auto\">&#070;&#116;<\/span><\/span><\/ins><span class=\"screen-reader-text\">Current price is: 8 990&nbsp;&#070;&#116;.<\/span>",
+    "average_rating": "0",
+    "review_count": 0,
+    "images": [],
+    "categories": [
+      {
+        "id": 18,
+        "name": "Ergon\u00f3mia \u00e9s Asztali Kieg\u00e9sz\u00edt\u0151k",
+        "slug": "ergonomia-es-kiegeszitok",
+        "link": "http:\/\/localhost:8080\/product-category\/ergonomia-es-kiegeszitok\/"
+      }
+    ],
+    "tags": [],
+    "brands": [],
+    "attributes": [],
+    "variations": [],
+    "grouped_products": [],
+    "has_options": false,
+    "is_purchasable": true,
+    "is_in_stock": true,
+    "is_on_backorder": false,
+    "low_stock_remaining": null,
+    "stock_availability": { "text": "60 in stock", "class": "in-stock" },
+    "sold_individually": false,
+    "weight": "",
+    "dimensions": { "length": "", "width": "", "height": "" },
+    "formatted_weight": "N\/A",
+    "formatted_dimensions": "N\/A",
+    "add_to_cart": {
+      "text": "Add to cart",
+      "description": "Add to cart: &ldquo;TitanWeave XXL Control Gamer Eg\u00e9rpad (900\u00d7400\u00d74 mm, Varrt Sz\u00e9l\u0171)&rdquo;",
+      "url": "\/wp-json\/wc\/store\/v1\/products?per_page=100&#038;add-to-cart=22",
+      "single_text": "Add to cart",
+      "minimum": 1,
+      "maximum": 60,
+      "multiple_of": 1
+    },
+    "is_password_protected": false,
+    "extensions": {
+      "kg_headless": { "lowest_price_30_days": 8990, "is_on_sale": true, "currency_minor_unit": 0 }
+    },
+    "_links": {
+      "self": [
+        {
+          "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products\/22",
+          "targetHints": { "allow": ["GET"] }
+        }
+      ],
+      "collection": [{ "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products" }],
+      "related": [
+        {
+          "embeddable": true,
+          "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products?related=22&per_page=10"
+        }
+      ]
+    }
+  },
+  {
+    "id": 21,
+    "name": "ClearStream 4K60 HDR Webkamera Sony STARVIS Szenzorral",
+    "slug": "clearstream-4k60-hdr-webkamera-sony-starvis-szenzorral",
+    "parent": 0,
+    "type": "simple",
+    "variation": "",
+    "permalink": "http:\/\/localhost:8080\/product\/clearstream-4k60-hdr-webkamera-sony-starvis-szenzorral\/",
+    "sku": "KG-GMR-CM-005",
+    "short_description": "<p>Val\u00f3di 4K felbont\u00e1s vagy 1080p 60 FPS gyenge f\u00e9nyviszonyok mellett is, be\u00e9p\u00edtett lencsefed\u00e9llel.<\/p>",
+    "description": "<p>Vill\u00e1mgyors PDAF autof\u00f3kusz, f\/1.8 rekesz\u00e9rt\u00e9k\u0171 \u00fcveglencse a term\u00e9szetes h\u00e1tt\u00e9relmos\u00e1s\u00e9rt, \u00e9s m\u00e1gneses adatv\u00e9delmi kupak.<\/p>",
+    "on_sale": false,
+    "prices": {
+      "price": "54990",
+      "regular_price": "54990",
+      "sale_price": "54990",
+      "price_range": null,
+      "currency_code": "HUF",
+      "currency_symbol": "Ft",
+      "currency_minor_unit": 0,
+      "currency_decimal_separator": ",",
+      "currency_thousand_separator": " ",
+      "currency_prefix": "",
+      "currency_suffix": " Ft"
+    },
+    "price_html": "<span class=\"woocommerce-Price-amount amount\">54 990&nbsp;<span class=\"woocommerce-Price-currencySymbol\" dir=\"auto\">&#070;&#116;<\/span><\/span>",
+    "average_rating": "0",
+    "review_count": 0,
+    "images": [],
+    "categories": [
+      {
+        "id": 17,
+        "name": "Streaming \u00e9s Audio",
+        "slug": "streaming-es-audio",
+        "link": "http:\/\/localhost:8080\/product-category\/streaming-es-audio\/"
+      }
+    ],
+    "tags": [],
+    "brands": [],
+    "attributes": [],
+    "variations": [],
+    "grouped_products": [],
+    "has_options": false,
+    "is_purchasable": true,
+    "is_in_stock": true,
+    "is_on_backorder": false,
+    "low_stock_remaining": null,
+    "stock_availability": { "text": "15 in stock", "class": "in-stock" },
+    "sold_individually": false,
+    "weight": "",
+    "dimensions": { "length": "", "width": "", "height": "" },
+    "formatted_weight": "N\/A",
+    "formatted_dimensions": "N\/A",
+    "add_to_cart": {
+      "text": "Add to cart",
+      "description": "Add to cart: &ldquo;ClearStream 4K60 HDR Webkamera Sony STARVIS Szenzorral&rdquo;",
+      "url": "\/wp-json\/wc\/store\/v1\/products?per_page=100&#038;add-to-cart=21",
+      "single_text": "Add to cart",
+      "minimum": 1,
+      "maximum": 15,
+      "multiple_of": 1
+    },
+    "is_password_protected": false,
+    "extensions": {
+      "kg_headless": {
+        "lowest_price_30_days": 54990,
+        "is_on_sale": false,
+        "currency_minor_unit": 0
+      }
+    },
+    "_links": {
+      "self": [
+        {
+          "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products\/21",
+          "targetHints": { "allow": ["GET"] }
+        }
+      ],
+      "collection": [{ "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products" }],
+      "related": [
+        {
+          "embeddable": true,
+          "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products?related=21&per_page=10"
+        }
+      ]
+    }
+  },
+  {
+    "id": 20,
+    "name": "VoxCaster Studio USB\/XLR Dinamikus Podcast \u00e9s Streaming Mikrofon",
+    "slug": "voxcaster-studio-usb-xlr-dinamikus-podcast-es-streaming-mikrofon",
+    "parent": 0,
+    "type": "simple",
+    "variation": "",
+    "permalink": "http:\/\/localhost:8080\/product\/voxcaster-studio-usb-xlr-dinamikus-podcast-es-streaming-mikrofon\/",
+    "sku": "KG-GMR-MC-004",
+    "short_description": "<p>Kardioid karakterisztik\u00e1j\u00fa dinamikus mikrofon be\u00e9p\u00edtett pop-filterrel \u00e9s rezg\u00e9scsillap\u00edt\u00f3 kengyellel.<\/p>",
+    "description": "<p>Kiz\u00e1rja a mechanikus billenty\u0171zet kattog\u00e1s\u00e1t \u00e9s a szobai visszhangot. Plug-and-play USB-C m\u00f3d kezd\u0151knek, \u00e9s professzion\u00e1lis XLR kimenet audio interf\u00e9szhez.<\/p>",
+    "on_sale": true,
+    "prices": {
+      "price": "39990",
+      "regular_price": "49990",
+      "sale_price": "39990",
+      "price_range": null,
+      "currency_code": "HUF",
+      "currency_symbol": "Ft",
+      "currency_minor_unit": 0,
+      "currency_decimal_separator": ",",
+      "currency_thousand_separator": " ",
+      "currency_prefix": "",
+      "currency_suffix": " Ft"
+    },
+    "price_html": "<del aria-hidden=\"true\"><span class=\"woocommerce-Price-amount amount\">49 990&nbsp;<span class=\"woocommerce-Price-currencySymbol\" dir=\"auto\">&#070;&#116;<\/span><\/span><\/del> <span class=\"screen-reader-text\">Original price was: 49 990&nbsp;&#070;&#116;.<\/span><ins aria-hidden=\"true\"><span class=\"woocommerce-Price-amount amount\">39 990&nbsp;<span class=\"woocommerce-Price-currencySymbol\" dir=\"auto\">&#070;&#116;<\/span><\/span><\/ins><span class=\"screen-reader-text\">Current price is: 39 990&nbsp;&#070;&#116;.<\/span>",
+    "average_rating": "0",
+    "review_count": 0,
+    "images": [],
+    "categories": [
+      {
+        "id": 17,
+        "name": "Streaming \u00e9s Audio",
+        "slug": "streaming-es-audio",
+        "link": "http:\/\/localhost:8080\/product-category\/streaming-es-audio\/"
+      }
+    ],
+    "tags": [],
+    "brands": [],
+    "attributes": [],
+    "variations": [],
+    "grouped_products": [],
+    "has_options": false,
+    "is_purchasable": true,
+    "is_in_stock": true,
+    "is_on_backorder": false,
+    "low_stock_remaining": null,
+    "stock_availability": { "text": "12 in stock", "class": "in-stock" },
+    "sold_individually": false,
+    "weight": "",
+    "dimensions": { "length": "", "width": "", "height": "" },
+    "formatted_weight": "N\/A",
+    "formatted_dimensions": "N\/A",
+    "add_to_cart": {
+      "text": "Add to cart",
+      "description": "Add to cart: &ldquo;VoxCaster Studio USB\/XLR Dinamikus Podcast \u00e9s Streaming Mikrofon&rdquo;",
+      "url": "\/wp-json\/wc\/store\/v1\/products?per_page=100&#038;add-to-cart=20",
+      "single_text": "Add to cart",
+      "minimum": 1,
+      "maximum": 12,
+      "multiple_of": 1
+    },
+    "is_password_protected": false,
+    "extensions": {
+      "kg_headless": { "lowest_price_30_days": 37990, "is_on_sale": true, "currency_minor_unit": 0 }
+    },
+    "_links": {
+      "self": [
+        {
+          "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products\/20",
+          "targetHints": { "allow": ["GET"] }
+        }
+      ],
+      "collection": [{ "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products" }],
+      "related": [
+        {
+          "embeddable": true,
+          "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products?related=20&per_page=10"
+        }
+      ]
+    }
+  },
+  {
+    "id": 19,
+    "name": "NovaPulse 7.1 Wireless Gamer Headset Levehet\u0151 Zajsz\u0171r\u0151s Mikrofonnal",
+    "slug": "novapulse-7-1-wireless-gamer-headset-leveheto-zajszuros-mikrofonnal",
+    "parent": 0,
+    "type": "simple",
+    "variation": "",
+    "permalink": "http:\/\/localhost:8080\/product\/novapulse-7-1-wireless-gamer-headset-leveheto-zajszuros-mikrofonnal\/",
+    "sku": "KG-GMR-HS-003",
+    "short_description": "<p>50 mm-es neod\u00edmium hangsz\u00f3r\u00f3k, mem\u00f3riahabos h\u0171s\u00edt\u0151 f\u00fclp\u00e1rn\u00e1k \u00e9s PC\/PS5\/Switch kompatibilit\u00e1s.<\/p>",
+    "description": "<p>Krist\u00e1lytiszta t\u00e9rbeli l\u00e9p\u00e9shangok \u00e9s k\u00e9nyelmes, eg\u00e9sz napos viselet. USB-C dongle alacsony k\u00e9sleltet\u00e9ssel \u00e9s Bluetooth 5.3 kett\u0151s csatlakoz\u00e1ssal.<\/p>",
+    "on_sale": false,
+    "prices": {
+      "price": "38990",
+      "regular_price": "38990",
+      "sale_price": "38990",
+      "price_range": null,
+      "currency_code": "HUF",
+      "currency_symbol": "Ft",
+      "currency_minor_unit": 0,
+      "currency_decimal_separator": ",",
+      "currency_thousand_separator": " ",
+      "currency_prefix": "",
+      "currency_suffix": " Ft"
+    },
+    "price_html": "<span class=\"woocommerce-Price-amount amount\">38 990&nbsp;<span class=\"woocommerce-Price-currencySymbol\" dir=\"auto\">&#070;&#116;<\/span><\/span>",
+    "average_rating": "0",
+    "review_count": 0,
+    "images": [],
+    "categories": [
+      {
+        "id": 16,
+        "name": "Gamer Perif\u00e9ri\u00e1k",
+        "slug": "gamer-periferiak",
+        "link": "http:\/\/localhost:8080\/product-category\/gamer-periferiak\/"
+      }
+    ],
+    "tags": [],
+    "brands": [],
+    "attributes": [],
+    "variations": [],
+    "grouped_products": [],
+    "has_options": false,
+    "is_purchasable": true,
+    "is_in_stock": true,
+    "is_on_backorder": false,
+    "low_stock_remaining": null,
+    "stock_availability": { "text": "18 in stock", "class": "in-stock" },
+    "sold_individually": false,
+    "weight": "",
+    "dimensions": { "length": "", "width": "", "height": "" },
+    "formatted_weight": "N\/A",
+    "formatted_dimensions": "N\/A",
+    "add_to_cart": {
+      "text": "Add to cart",
+      "description": "Add to cart: &ldquo;NovaPulse 7.1 Wireless Gamer Headset Levehet\u0151 Zajsz\u0171r\u0151s Mikrofonnal&rdquo;",
+      "url": "\/wp-json\/wc\/store\/v1\/products?per_page=100&#038;add-to-cart=19",
+      "single_text": "Add to cart",
+      "minimum": 1,
+      "maximum": 18,
+      "multiple_of": 1
+    },
+    "is_password_protected": false,
+    "extensions": {
+      "kg_headless": {
+        "lowest_price_30_days": 38990,
+        "is_on_sale": false,
+        "currency_minor_unit": 0
+      }
+    },
+    "_links": {
+      "self": [
+        {
+          "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products\/19",
+          "targetHints": { "allow": ["GET"] }
+        }
+      ],
+      "collection": [{ "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products" }],
+      "related": [
+        {
+          "embeddable": true,
+          "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products?related=19&per_page=10"
+        }
+      ]
+    }
+  },
+  {
+    "id": 18,
+    "name": "PhantomGlide Ultralight 54g Vezet\u00e9k N\u00e9lk\u00fcli Esport Eg\u00e9r (PAW3395)",
+    "slug": "phantomglide-ultralight-54g-vezetek-nelkuli-esport-eger-paw3395",
+    "parent": 0,
+    "type": "simple",
+    "variation": "",
+    "permalink": "http:\/\/localhost:8080\/product\/phantomglide-ultralight-54g-vezetek-nelkuli-esport-eger-paw3395\/",
+    "sku": "KG-GMR-MS-002",
+    "short_description": "<p>Pehelyk\u00f6nny\u0171, lyukmentes szimmetrikus esport eg\u00e9r 26 000 DPI-s PixArt PAW3395 szenzorral.<\/p>",
+    "description": "<p>Lag-mentes 2.4 GHz-es vezet\u00e9k n\u00e9lk\u00fcli kapcsolat, ak\u00e1r 80 \u00f3r\u00e1s akkumul\u00e1tor-\u00fczemid\u0151, 100% PTFE talpak \u00e9s optikai f\u0151kapcsol\u00f3k a dupla kattint\u00e1s elker\u00fcl\u00e9s\u00e9\u00e9rt.<\/p>",
+    "on_sale": true,
+    "prices": {
+      "price": "27990",
+      "regular_price": "32990",
+      "sale_price": "27990",
+      "price_range": null,
+      "currency_code": "HUF",
+      "currency_symbol": "Ft",
+      "currency_minor_unit": 0,
+      "currency_decimal_separator": ",",
+      "currency_thousand_separator": " ",
+      "currency_prefix": "",
+      "currency_suffix": " Ft"
+    },
+    "price_html": "<del aria-hidden=\"true\"><span class=\"woocommerce-Price-amount amount\">32 990&nbsp;<span class=\"woocommerce-Price-currencySymbol\" dir=\"auto\">&#070;&#116;<\/span><\/span><\/del> <span class=\"screen-reader-text\">Original price was: 32 990&nbsp;&#070;&#116;.<\/span><ins aria-hidden=\"true\"><span class=\"woocommerce-Price-amount amount\">27 990&nbsp;<span class=\"woocommerce-Price-currencySymbol\" dir=\"auto\">&#070;&#116;<\/span><\/span><\/ins><span class=\"screen-reader-text\">Current price is: 27 990&nbsp;&#070;&#116;.<\/span>",
+    "average_rating": "0",
+    "review_count": 0,
+    "images": [],
+    "categories": [
+      {
+        "id": 16,
+        "name": "Gamer Perif\u00e9ri\u00e1k",
+        "slug": "gamer-periferiak",
+        "link": "http:\/\/localhost:8080\/product-category\/gamer-periferiak\/"
+      }
+    ],
+    "tags": [],
+    "brands": [],
+    "attributes": [],
+    "variations": [],
+    "grouped_products": [],
+    "has_options": false,
+    "is_purchasable": true,
+    "is_in_stock": true,
+    "is_on_backorder": false,
+    "low_stock_remaining": null,
+    "stock_availability": { "text": "40 in stock", "class": "in-stock" },
+    "sold_individually": false,
+    "weight": "",
+    "dimensions": { "length": "", "width": "", "height": "" },
+    "formatted_weight": "N\/A",
+    "formatted_dimensions": "N\/A",
+    "add_to_cart": {
+      "text": "Add to cart",
+      "description": "Add to cart: &ldquo;PhantomGlide Ultralight 54g Vezet\u00e9k N\u00e9lk\u00fcli Esport Eg\u00e9r (PAW3395)&rdquo;",
+      "url": "\/wp-json\/wc\/store\/v1\/products?per_page=100&#038;add-to-cart=18",
+      "single_text": "Add to cart",
+      "minimum": 1,
+      "maximum": 40,
+      "multiple_of": 1
+    },
+    "is_password_protected": false,
+    "extensions": {
+      "kg_headless": { "lowest_price_30_days": 32990, "is_on_sale": true, "currency_minor_unit": 0 }
+    },
+    "_links": {
+      "self": [
+        {
+          "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products\/18",
+          "targetHints": { "allow": ["GET"] }
+        }
+      ],
+      "collection": [{ "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products" }],
+      "related": [
+        {
+          "embeddable": true,
+          "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products?related=18&per_page=10"
+        }
+      ]
+    }
+  },
+  {
+    "id": 17,
+    "name": "ApexStrike Pro 75% Hot-Swap Mechanikus Gamer Billenty\u0171zet (Line\u00e1ris Red)",
+    "slug": "apexstrike-pro-75-hot-swap-mechanikus-gamer-billentyuzet-linearis-red",
+    "parent": 0,
+    "type": "simple",
+    "variation": "",
+    "permalink": "http:\/\/localhost:8080\/product\/apexstrike-pro-75-hot-swap-mechanikus-gamer-billentyuzet-linearis-red\/",
+    "sku": "KG-GMR-KB-001",
+    "short_description": "<p>Gasket-mount alum\u00ednium h\u00e1zas 75%-os mechanikus billenty\u0171zet el\u0151re kent kapcsol\u00f3kkal \u00e9s PBT kupakokkal.<\/p>",
+    "description": "<p>Az ApexStrike Pro 75% kifejezetten kompetit\u00edv j\u00e1t\u00e9kosoknak k\u00e9sz\u00fclt: 1000 Hz lek\u00e9rdez\u00e9si frekvencia, 5-t\u0171s hot-swap NY\u00c1K, hangelnyel\u0151 szilikon r\u00e9tegek \u00e9s teljes QMK\/VIA programozhat\u00f3s\u00e1g.<\/p>",
+    "on_sale": true,
+    "prices": {
+      "price": "36990",
+      "regular_price": "44990",
+      "sale_price": "36990",
+      "price_range": null,
+      "currency_code": "HUF",
+      "currency_symbol": "Ft",
+      "currency_minor_unit": 0,
+      "currency_decimal_separator": ",",
+      "currency_thousand_separator": " ",
+      "currency_prefix": "",
+      "currency_suffix": " Ft"
+    },
+    "price_html": "<del aria-hidden=\"true\"><span class=\"woocommerce-Price-amount amount\">44 990&nbsp;<span class=\"woocommerce-Price-currencySymbol\" dir=\"auto\">&#070;&#116;<\/span><\/span><\/del> <span class=\"screen-reader-text\">Original price was: 44 990&nbsp;&#070;&#116;.<\/span><ins aria-hidden=\"true\"><span class=\"woocommerce-Price-amount amount\">36 990&nbsp;<span class=\"woocommerce-Price-currencySymbol\" dir=\"auto\">&#070;&#116;<\/span><\/span><\/ins><span class=\"screen-reader-text\">Current price is: 36 990&nbsp;&#070;&#116;.<\/span>",
+    "average_rating": "0",
+    "review_count": 0,
+    "images": [],
+    "categories": [
+      {
+        "id": 16,
+        "name": "Gamer Perif\u00e9ri\u00e1k",
+        "slug": "gamer-periferiak",
+        "link": "http:\/\/localhost:8080\/product-category\/gamer-periferiak\/"
+      }
+    ],
+    "tags": [],
+    "brands": [],
+    "attributes": [],
+    "variations": [],
+    "grouped_products": [],
+    "has_options": false,
+    "is_purchasable": true,
+    "is_in_stock": true,
+    "is_on_backorder": false,
+    "low_stock_remaining": null,
+    "stock_availability": { "text": "24 in stock", "class": "in-stock" },
+    "sold_individually": false,
+    "weight": "",
+    "dimensions": { "length": "", "width": "", "height": "" },
+    "formatted_weight": "N\/A",
+    "formatted_dimensions": "N\/A",
+    "add_to_cart": {
+      "text": "Add to cart",
+      "description": "Add to cart: &ldquo;ApexStrike Pro 75% Hot-Swap Mechanikus Gamer Billenty\u0171zet (Line\u00e1ris Red)&rdquo;",
+      "url": "\/wp-json\/wc\/store\/v1\/products?per_page=100&#038;add-to-cart=17",
+      "single_text": "Add to cart",
+      "minimum": 1,
+      "maximum": 24,
+      "multiple_of": 1
+    },
+    "is_password_protected": false,
+    "extensions": {
+      "kg_headless": { "lowest_price_30_days": 34990, "is_on_sale": true, "currency_minor_unit": 0 }
+    },
+    "_links": {
+      "self": [
+        {
+          "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products\/17",
+          "targetHints": { "allow": ["GET"] }
+        }
+      ],
+      "collection": [{ "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products" }],
+      "related": [
+        {
+          "embeddable": true,
+          "href": "http:\/\/localhost:8080\/wp-json\/wc\/store\/v1\/products?related=17&per_page=10"
+        }
+      ]
+    }
+  }
+]
