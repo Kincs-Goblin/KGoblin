@@ -26,5 +26,5 @@ Tervezett taskok, idempotencia, újrapróba és beszállítói szabályok:
    ```
 4. Éles deploy (a `main` ágról vagy kézi lépésként):
    ```bash
-   pnpm --filter @kg/jobs deploy
+   pnpm --filter @kg/jobs run deploy
    ```

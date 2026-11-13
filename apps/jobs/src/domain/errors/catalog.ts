@@ -33,6 +33,11 @@ export const jobErrorCatalog = {
     retryable: false,
     message: "A háttérjob bemeneti paraméterei érvénytelenek.",
   },
+  "JOB.CONFIG_MISSING": {
+    status: 500,
+    retryable: false,
+    message: "Hiányzó vagy érvénytelen környezeti konfiguráció a háttérjobban.",
+  },
   "APP.UNEXPECTED": {
     status: 500,
     retryable: true,

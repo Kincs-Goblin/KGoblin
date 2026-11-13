@@ -50,6 +50,7 @@ Az ADR-0007 és a `kg-git-workflow` szerint a GitHubon beállítandó szabályok
 | `WOO_GAMER_CONSUMER_KEY` | Szerver (Secret) | Teszt REST v3 kulcs | Demo REST v3 kulcs | Éles REST v3 kulcs | Woo REST v3 consumer key (`server-only`) |
 | `WOO_GAMER_CONSUMER_SECRET` | Szerver (Secret) | Teszt REST v3 titok | Demo REST v3 titok | Éles REST v3 titok | Woo REST v3 consumer secret (`server-only`) |
 | `WOO_GAMER_WEBHOOK_SECRET` | Szerver (Secret) | Teszt webhook titok | Demo webhook titok | Éles webhook titok | Webhook HMAC-SHA256 aláírás-ellenőrző kulcs |
+| `TRIGGER_SECRET_KEY` | Szerver (Secret) | `tr_dev_...` | `tr_stg_...` | `tr_prod_...` | Trigger.dev API kulcs a háttérjobok indításához (`server-only`) |
 | `NEXT_PUBLIC_SENTRY_DSN` | Kliens + Szerver | Opcionális | Sentry DSN | Sentry DSN | Sentry hibakövetés publikus DSN (M5) |
 
 ---
@@ -62,13 +63,12 @@ Az ADR-0007 és a `kg-git-workflow` szerint a GitHubon beállítandó szabályok
 - **Minta task:** `brand-heartbeat` (`apps/jobs/src/trigger/brand-heartbeat.ts`), amely `brand-heartbeat:<brand>:<correlationId>` idempotencia-kulccsal és brand-validációval fut.
 - **Hibajelentés:** a `src/trigger/init.ts` `tasks.onFailure` hookja a `src/adapters/telemetry.ts` `reportTaskFailure` függvényét hívja, amely PII-mentesen (csak `taskId`, `runId`, `brandId`, `code`, `retryable`) naplóz, és előkészíti a Sentry-bekötést (KG-88).
 
-### Környezeti változók (Trigger.dev)
+### Környezeti változók (`@kg/jobs` és Trigger.dev Cloud)
 
-| Változó | Típus | Dev | Staging / Demo | Production | Leírás |
+| Változó | Hol állítjuk be | Dev | Staging / Demo | Production | Leírás |
 |---|---|---|---|---|---|
-| `TRIGGER_SECRET_KEY` | Secret | `tr_dev_...` | `tr_stg_...` | `tr_prod_...` | Trigger.dev API kulcs (lokális `.env.local` / CI) |
-| `SENTRY_DSN` | Konfig | Opcionális | Sentry DSN | Sentry DSN | Sentry DSN a háttérjobokhoz |
-| `WOO_GAMER_URL` | Konfig | `http://localhost:8080` | Demo Woo URL | Éles Woo URL | Gamer WooCommerce példány URL-je |
-| `WOO_GAMER_CONSUMER_KEY` | Secret | Lokális kulcs | Demo kulcs | Éles kulcs | Woo REST v3 consumer key |
-| `WOO_GAMER_CONSUMER_SECRET` | Secret | Lokális titok | Demo titok | Éles titok | Woo REST v3 consumer secret |
-| `WOO_GAMER_WEBHOOK_SECRET` | Secret | Lokális titok | Demo titok | Éles titok | Webhook titok |
+| `TRIGGER_SECRET_KEY` | Lokális `.env.local` | `tr_dev_...` | - | - | Lokális `trigger dev` futtatáshoz (felhőben a Trigger.dev automatikusan injektálja; CI deployhoz `TRIGGER_ACCESS_TOKEN` használható) |
+| `SENTRY_DSN` | Trigger.dev Cloud + `.env.local` | Opcionális | Sentry DSN | Sentry DSN | Sentry DSN a háttérjobokhoz |
+| `WOO_GAMER_URL` | Trigger.dev Cloud + `.env.local` | `http://localhost:8080` | Demo Woo URL | Éles Woo URL | Gamer WooCommerce példány URL-je |
+| `WOO_GAMER_CONSUMER_KEY` | Trigger.dev Cloud (Secret) + `.env.local` | Lokális kulcs | Demo kulcs | Éles kulcs | Woo REST v3 consumer key |
+| `WOO_GAMER_CONSUMER_SECRET` | Trigger.dev Cloud (Secret) + `.env.local` | Lokális titok | Demo titok | Éles titok | Woo REST v3 consumer secret |

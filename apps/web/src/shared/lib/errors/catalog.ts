@@ -45,7 +45,7 @@ export const errorCatalog = {
   },
   "CHECKOUT.PAYMENT_DECLINED": {
     status: 402,
-    retryable: true,
+    retryable: false,
     message: "A fizetés nem sikerült. Próbáld újra vagy válassz másik fizetési módot.",
   },
   "APP.UNEXPECTED": {

@@ -55,11 +55,21 @@ describe("jobs domain: parseJobsEnv & getBrandWooCredentials", () => {
     expect(env.SENTRY_DSN).toBeUndefined();
   });
 
-  it("érvénytelen SENTRY_DSN URL esetén érthető hibát dob", () => {
-    expect(() => parseJobsEnv({ NODE_ENV: "test", SENTRY_DSN: "not-a-url" })).toThrow(/SENTRY_DSN/);
+  it("érvénytelen SENTRY_DSN URL esetén JOB.CONFIG_MISSING AppErrort dob (retryable: false)", () => {
+    try {
+      parseJobsEnv({ NODE_ENV: "test", SENTRY_DSN: "not-a-url" });
+      expect.unreachable("Hibát kellett volna dobnia");
+    } catch (error) {
+      expect(isAppError(error)).toBe(true);
+      if (isAppError(error)) {
+        expect(error.code).toBe("JOB.CONFIG_MISSING");
+        expect(error.retryable).toBe(false);
+        expect(error.internalReason).toMatch(/SENTRY_DSN/);
+      }
+    }
   });
 
-  it("feloldja a brand Woo REST v3 hitelesítő adatait, hiányzónál pedig a változó nevét jelzi", () => {
+  it("feloldja a brand Woo REST v3 hitelesítő adatait, hiányzónál pedig nem újrapróbálható JOB.CONFIG_MISSING AppErrort dob a változó nevével", () => {
     const creds = getBrandWooCredentials("gamer", {
       NODE_ENV: "test",
       WOO_GAMER_URL: "http://localhost:8080",
@@ -69,11 +79,19 @@ describe("jobs domain: parseJobsEnv & getBrandWooCredentials", () => {
     expect(creds.baseUrl).toBe("http://localhost:8080");
     expect(creds.consumerKey).toBe("ck_test");
 
-    expect(() =>
+    try {
       getBrandWooCredentials("gamer", {
         NODE_ENV: "test",
         WOO_GAMER_URL: "http://localhost:8080",
-      }),
-    ).toThrow(/WOO_GAMER_CONSUMER_KEY/);
+      });
+      expect.unreachable("Hibát kellett volna dobnia");
+    } catch (error) {
+      expect(isAppError(error)).toBe(true);
+      if (isAppError(error)) {
+        expect(error.code).toBe("JOB.CONFIG_MISSING");
+        expect(error.retryable).toBe(false);
+        expect(error.internalReason).toMatch(/WOO_GAMER_CONSUMER_KEY/);
+      }
+    }
   });
 });

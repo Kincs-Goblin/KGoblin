@@ -1,3 +1,3 @@
 import base from "@kg/config/eslint/base";
 
-export default base;
+export default [{ ignores: [".trigger/**"] }, ...base];
