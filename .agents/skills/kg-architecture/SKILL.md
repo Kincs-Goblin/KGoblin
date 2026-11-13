@@ -62,8 +62,9 @@ Ha egy kód két rétegbe is illene, az alacsonyabbat válaszd, ha nincs benne f
 ## 4. Hibakódok
 
 - Formátum `DOMAIN.REASON` (pl. `CART.OUT_OF_STOCK`, `CHECKOUT.PAYMENT_DECLINED`, `WOO.UNAVAILABLE`,
-  `BRAND.UNKNOWN_HOST`, `SUPPLIER.FEED_INVALID`). A kód stabil szerződés, a szöveg változhat.
-- A katalógus a `shared/lib/errors`-ban (web) és az `apps/jobs/src/domain/errors`-ban van; minden kódnak
+  `WOO.INVALID_RESPONSE`, `BRAND.UNKNOWN_HOST`, `SUPPLIER.FEED_INVALID`). A kód stabil szerződés, a szöveg változhat.
+- A katalógus és a közös `AppError` osztály az `apps/web/src/shared/lib/errors/catalog.ts` (`shared/lib/errors`)
+  és az `apps/jobs/src/domain/errors/catalog.ts` (`apps/jobs/src/domain/errors`) fájlokban van; minden kódnak
   van HTTP-státusza, `retryable` jelzője és felhasználói szövege. Új kód a katalógusba kerül.
 - Felhasználó felé emberi üzenet, soha nyers Woo-hibaszöveg vagy stack trace. Üzleti szabály sértése: 409.
 - Token, jelszó, kártyaadat, teljes cím soha nem kerül logba vagy Sentrybe.

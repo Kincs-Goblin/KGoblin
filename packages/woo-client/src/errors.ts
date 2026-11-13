@@ -1,4 +1,4 @@
-export type WooErrorCode = "WOO.UNAVAILABLE" | "WOO.CONTRACT_MISMATCH";
+export type WooErrorCode = "WOO.UNAVAILABLE" | "WOO.CONTRACT_MISMATCH" | "WOO.INVALID_RESPONSE";
 
 /** A Woo-hívások egyetlen hibatípusa; a `code` stabil szerződés (`DOMAIN.REASON`). */
 export class WooError extends Error {
