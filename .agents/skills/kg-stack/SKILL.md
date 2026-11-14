@@ -14,8 +14,8 @@ visszafordíthatatlanul) · **nyitott** (dönteni kell, mielőtt ráépül valam
 
 ## Döntésnapló
 
-Utolsó módosítás: 2026-11-13 (ADR-0008 WordPress hosting VPS + Docker Cloudflare mögött; ADR-0009
-frontend Cloudflare Workersre, spike után; ADR-0010 a ticketág a `demo`-ból indul).
+Utolsó módosítás: 2026-11-14 (ADR-0009 elfogadva: a frontend Cloudflare Workersen, OpenNext adapterrel,
+a Vercel felváltva; korábban ADR-0008 WordPress hosting, ADR-0010 a ticketág a `demo`-ból indul).
 
 ### Architektúra és frontend
 
@@ -29,8 +29,8 @@ frontend Cloudflare Workersre, spike után; ADR-0010 a ticketág a `demo`-ból i
 | Fontok | `next/font/google`, build időben letöltve és saját domainről kiszolgálva; csak szabad licencű (OFL) font | elfogadva | 0004 |
 | Kódszerkezet | FSD 3. szint (teljes) az `apps/web/src`-ben; Next-routing a `apps/web/app`-ban | elfogadva | 0001 |
 | Multi-brand | Egy Next app; a domainből a proxy/middleware választ brandet (`[brand]` szegmens) | elfogadva | 0001 |
-| Frontend hosting | Vercel (preview deploy PR-onként, production a `main`-ről); a spike sikeréig ez érvényes | elfogadva | 0001 |
-| Frontend hosting (cél) | Cloudflare Workers + OpenNext (`@opennextjs/cloudflare`); spike (KG-118) után váltja a Vercelt | javasolt | 0009 |
+| Frontend hosting | Cloudflare Workers + OpenNext (`@opennextjs/cloudflare`), Workers Builds; demo a `demo` ágról, production a `main`-ről (külön ticket); cache: KV + D1 + Durable Object, képek: Cloudflare Images | elfogadva (2026-11-14) | 0009 |
+| Frontend hosting (régi) | Vercel (preview deploy PR-onként, production a `main`-ről) | felváltva (ADR-0009) | 0001 |
 | Edge, DNS, WAF | Cloudflare: DNS, TLS, WAF a backend előtt, Cloudflare Tunnel a VPS felé | elfogadva | 0008 |
 | Szövegek, i18n | Elsőként magyar; szövegek slice-onként egy helyen, `next-intl` a 2. nyelvnél | javasolt | 0001 |
 | Képek | Woo médiatár + `next/image`; CDN (Cloudflare R2 / Cloudinary) | nyitott | - |

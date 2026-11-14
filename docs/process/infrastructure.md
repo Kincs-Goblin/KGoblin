@@ -1,4 +1,4 @@
-# Fejlesztési infrastruktúra: CI, Branch Protection, Vercel és Trigger.dev
+# Fejlesztési infrastruktúra: CI, Branch Protection, Cloudflare Workers és Trigger.dev
 
 Ez a dokumentum a `KG-6` (0. mérföldkő) infrastruktúra-beállításait és a környezeti változók jegyzékét tartalmazza az ADR-0005 és az ADR-0007 (demo-alapú kiadás) szerint.
 
@@ -25,27 +25,30 @@ Az ADR-0007 és a `kg-git-workflow` szerint a GitHubon beállítandó szabályok
 
 ---
 
-## 3. Vercel Projekt (`apps/web`)
+## 3. Cloudflare Workers (`apps/web`, ADR-0009)
 
-### Projekt-beállítások
-- **Root Directory:** `apps/web`
-- **Konfiguráció a repóban:** `apps/web/vercel.json`
-  - `installCommand`: `pnpm install --frozen-lockfile`
-  - `buildCommand`: `pnpm turbo run build --filter=@kg/web...`
-  - `ignoreCommand`: `npx turbo-ignore@2.11.11 @kg/web` (csak akkor épít, ha a `@kg/web` vagy a workspace-függőségei változtak)
-- **Git-ágak:**
-  - **Production Branch:** `main`
-  - **Demo környezet:** a `demo` ág branch-deploya (saját demo-domainnel brandenként, pl. `demo.<gamer-domain>.hu`)
-  - **Preview deploy:** minden PR-hoz automatikus preview URL készül, amely megjelenik a PR kommentjében/checkjében.
-- **Keresőmotor-tiltás (`noindex`):**
-  - Ha `NEXT_PUBLIC_APP_ENV=preview`, `NEXT_PUBLIC_APP_ENV=demo` vagy `VERCEL_ENV=preview`, a `next.config.ts` `headers()` konfigurációja automatikusan `X-Robots-Tag: noindex, nofollow` HTTP fejlécet ad minden válaszra.
+### Konfiguráció
+- **A repóban:** `apps/web/wrangler.jsonc` (Worker, bindingok, futásidejű nem titkos változók) és `apps/web/open-next.config.ts` (OpenNext: KV incremental cache, D1 tag cache, Durable Object revalidálási sor).
+- **Bindingok:** `NEXT_INC_CACHE_KV` (KV), `NEXT_TAG_CACHE_D1` (D1, `revalidations` tábla), `NEXT_CACHE_DO_QUEUE` (Durable Object), `IMAGES` (Cloudflare Images a `next/image`-hez), `WORKER_SELF_REFERENCE`, `ASSETS`.
+- **Scriptek:** `pnpm --filter @kg/web build:cf` (OpenNext build), `preview:cf` (helyi workerd), `deploy:cf`. Windowson az OpenNext build symlinkek miatt csak Developer Mode-dal vagy WSL-ben fut; a napi fejlesztés (`pnpm dev`) nem érintett.
 
-### Környezeti változók (Vercel)
+### Workers Builds (Cloudflare dashboard → Worker → Settings → Build)
+- **Repó:** `Kincs-Goblin/KGoblin`, Root directory: `/`.
+- **Build command:** `pnpm --filter @kg/web build:cf` · **Deploy command:** `pnpm --filter @kg/web deploy:cf`.
+- **Build-változók:** `NODE_VERSION=26.13.0`, `PNPM_VERSION=12.16.1`, plusz a build időben olvasott `NEXT_PUBLIC_APP_ENV` és `KG_STORE_FIXTURES` (lásd a táblázatot).
+- **Környezetek:**
+  - **Demo:** a `kincsgoblin` Worker a `demo` ágról, `https://kincsgoblin.devdemos.workers.dev` (egyelőre a személyes fiókon).
+  - **Production:** a `main`-ről, saját domainnel a KGoblin-fiókon - külön ticket.
+  - **PR-preview:** most nincs; a preview-hostokat a `proxy.ts` nem ismeri (fail-closed 404), brand-host stratégia kell hozzá.
+- **Keresőmotor-tiltás (`noindex`):** ha `NEXT_PUBLIC_APP_ENV=preview` vagy `demo`, a `next.config.ts` `headers()` konfigurációja `X-Robots-Tag: noindex, nofollow` fejlécet ad minden válaszra.
+- **Titkok:** Worker-secretként (`wrangler secret put` vagy dashboard → Variables and Secrets), soha nem a `wrangler.jsonc`-be.
 
-| Változó | Típus | Preview | Demo (`demo` ág) | Production (`main`) | Leírás |
+### Környezeti változók (Cloudflare Workers)
+
+| Változó | Típus | Preview (később) | Demo (`demo` ág) | Production (`main`) | Leírás |
 |---|---|---|---|---|---|
-| `NEXT_PUBLIC_APP_ENV` | Kliens + Szerver | `preview` | `demo` | `production` | Környezet azonosító (`noindex` szabályozás) |
-| `KG_STORE_FIXTURES` | Szerver | `1` (ha nincs staging Woo) | `0` | `0` | `1`: Store API fixture-ök használata; `0`: élő Woo |
+| `NEXT_PUBLIC_APP_ENV` | Kliens + Szerver (build és futás) | `preview` | `demo` | `production` | Környezet azonosító (`noindex` szabályozás) |
+| `KG_STORE_FIXTURES` | Szerver (build és futás) | `1` (ha nincs staging Woo) | `1`, amíg nincs demo-Woo, utána `0` | `0` | `1`: Store API fixture-ök használata; `0`: élő Woo |
 | `WOO_GAMER_URL` | Szerver | Demo/Staging Woo URL | Demo Woo URL | Éles Gamer Woo URL | A Gamer brand WooCommerce alap URL-je |
 | `WOO_GAMER_CONSUMER_KEY` | Szerver (Secret) | Teszt REST v3 kulcs | Demo REST v3 kulcs | Éles REST v3 kulcs | Woo REST v3 consumer key (`server-only`) |
 | `WOO_GAMER_CONSUMER_SECRET` | Szerver (Secret) | Teszt REST v3 titok | Demo REST v3 titok | Éles REST v3 titok | Woo REST v3 consumer secret (`server-only`) |

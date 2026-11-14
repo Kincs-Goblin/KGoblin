@@ -1,0 +1,28 @@
+// Az apps/web Cloudflare Workersen, OpenNext adapterrel (ADR-0009). Ez a demo Worker: a `demo` ágról
+// Workers Builds buildeli, egyelőre a személyes Cloudflare-fiókon; a production Worker külön ticket.
+// A NEXT_PUBLIC_* és a KG_STORE_FIXTURES a buildben is kell (a Workers Builds változóiban), mert a Next
+// build időben olvassa őket; itt a futásidejű értékük van.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kincsgoblin",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "kincsgoblin" }],
+  "kv_namespaces": [{ "binding": "NEXT_INC_CACHE_KV", "id": "eba872a2bd034837a091f90cd736ca8f" }],
+  "d1_databases": [
+    {
+      "binding": "NEXT_TAG_CACHE_D1",
+      "database_name": "kg-web-spike-tags",
+      "database_id": "33097f7f-353a-4f7a-b89a-dc322bb2b30e",
+    },
+  ],
+  "durable_objects": {
+    "bindings": [{ "name": "NEXT_CACHE_DO_QUEUE", "class_name": "DOQueueHandler" }],
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DOQueueHandler"] }],
+  "images": { "binding": "IMAGES" },
+  "vars": { "KG_STORE_FIXTURES": "1", "NEXT_PUBLIC_APP_ENV": "demo" },
+  "observability": { "enabled": true },
+}

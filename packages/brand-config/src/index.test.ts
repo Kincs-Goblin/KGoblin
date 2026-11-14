@@ -8,6 +8,11 @@ describe("resolveBrandByHost", () => {
     expect(resolveBrandByHost("GAMER.localhost")?.id).toBe("gamer");
   });
 
+  it("a demo Worker hostja a gamer brand, a Workers preview-hostja nem (ADR-0009)", () => {
+    expect(resolveBrandByHost("kincsgoblin.devdemos.workers.dev")?.id).toBe("gamer");
+    expect(resolveBrandByHost("abc123-kincsgoblin.devdemos.workers.dev")).toBeUndefined();
+  });
+
   it("ismeretlen vagy hiányzó hostra nem ad alapértelmezett brandet", () => {
     expect(resolveBrandByHost("evil.example.com")).toBeUndefined();
     expect(resolveBrandByHost("localhost:3000")).toBeUndefined();

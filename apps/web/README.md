@@ -1,6 +1,6 @@
 # apps/web - Next.js storefront
 
-Next.js (App Router) + TypeScript, Tailwind 4 + shadcn/ui (Base UI), Motion, FSD 3. szint, Vercelen.
+Next.js (App Router) + TypeScript, Tailwind 4 + shadcn/ui (Base UI), Motion, FSD 3. szint, Cloudflare Workersen (OpenNext, ADR-0009).
 Szabályok és kódhely: `.agents/skills/kg-architecture/` (főleg `references/placement.md`); döntések: ADR-0001,
 ADR-0004.
 

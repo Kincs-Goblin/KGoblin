@@ -7,8 +7,8 @@ import type { Brand } from "../schema";
 export const gamer = {
   id: "gamer",
   name: "KincsGoblin",
-  // TODO(KG): az éles és a demo domain, amint megvan.
-  domains: ["gamer.localhost"],
+  // A demo Worker (ADR-0009) host-ja; TODO(KG): az éles domain, amint megvan.
+  domains: ["gamer.localhost", "kincsgoblin.devdemos.workers.dev"],
   woo: {
     baseUrlEnv: "WOO_GAMER_URL",
   },

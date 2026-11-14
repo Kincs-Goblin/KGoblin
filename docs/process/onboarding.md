@@ -52,7 +52,7 @@ Ha valamelyik skill hiányzik, nézd meg, hogy a gyökérből indult-e az agent,
 2. `docs/project-plan.md` - cél, mérföldkövek, nyitott döntések.
 3. `.agents/skills/kg-git-workflow/SKILL.md` - ágak és merge-szabályok.
 4. `.agents/skills/kg-ticket-to-pr/SKILL.md` - hogyan megy végig egy ticket.
-5. `docs/process/infrastructure.md` - CI, branch protection, Vercel és Trigger.dev env-változók.
+5. `docs/process/infrastructure.md` - CI, branch protection, Cloudflare Workers és Trigger.dev env-változók.
 
 Lokális környezeti változók: másold le az `apps/web/.env.example` fájlt `apps/web/.env.local` néven, az `apps/jobs/.env.example` fájlt `apps/jobs/.env.local` néven (a Docker-Woo-hoz pedig igény szerint a gyökér `.env.example` fájlt `.env` néven).
 

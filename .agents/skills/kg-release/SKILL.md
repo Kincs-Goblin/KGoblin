@@ -80,8 +80,9 @@ gh pr create --base demo --head version/v0.3.0 --title "chore(release): v0.3.0"
   env-változók, Woo plugin-frissítés, webhook-regisztráció, migráció, feature flag.
 - Zöld CI (`gh pr checks <n>`, mindkét job), a demo teszt eredménye, bármelyik fejlesztő kifejezett
   „mehet”-je után **squash** merge.
-- **Production:** a Vercel a `main`-ről automatikusan élesít, a CI-től függetlenül; ezért a zöld CI-t merge
-  előtt kézzel kell megvárni. A merge maga a kiadás.
+- **Production:** a frontend Cloudflare Workersen fut (ADR-0009). A `main`-ről élesítő production Worker
+  külön ticket; amíg nincs, a merge kódkiadás, élő frontend-deploy nélkül. Ha bekerül, a Workers Builds a
+  CI-től függetlenül élesít, ezért a zöld CI-t merge előtt kézzel kell megvárni. A merge maga a kiadás.
 
 ## 6. GitHub release, a többi komponens, élő ellenőrzés
 

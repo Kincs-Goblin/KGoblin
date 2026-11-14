@@ -26,7 +26,7 @@ Ha egy esemény nem igényel teendőt, zárd a turnt üzenet nélkül; ne írj �
 - Csak a legutóbbi push utáni checkekkel és kommentekkel foglalkozz.
 - Minden bot-findingot a forráskódon ellenőrizz, mielőtt módosítasz. A jogos hibát javítsd, a hamis
   pozitívra írj rövid, indokolt választ, és zárd le a szálat.
-- Különböztesd meg a kód hibáját az infrastruktúra-flake-től (pl. Vercel build-kvóta, hálózati hiba); a
+- Különböztesd meg a kód hibáját az infrastruktúra-flake-től (pl. Workers Builds kvóta vagy sorban állás, hálózati hiba); a
   flake-et írd le linkkel, és ne állítsd sikeresnek.
 - A másik fejlesztő review-kommentje elsőbbséget élvez a botokkal szemben; vitás pontnál kérdezz.
 

@@ -17,7 +17,7 @@ kimegy, és a hirdetési tracking (Meta CAPI, Merchant feed) mérhetően működ
 ## Architektúra egy képben
 
 ```
- böngésző ──► Vercel: Next.js (apps/web, FSD) ──┬──► Woo #1 (gamer)   Store API / REST v3
+ böngésző ──► CF Workers: Next.js (apps/web) ───┬──► Woo #1 (gamer)   Store API / REST v3
              domain → brand (proxy)             ├──► Woo #2 (brand 2)
              ISR + revalidateTag                │
                     ▲  webhook (HMAC)           └──► Meilisearch (index brandenként)
@@ -30,7 +30,7 @@ kimegy, és a hirdetési tracking (Meta CAPI, Merchant feed) mérhetően működ
 ```
 
 Hosting: a Woo-példányok saját VPS-en, Docker Compose-zal, Cloudflare (DNS, WAF, Tunnel) mögött futnak
-(ADR-0008). A frontend a spike sikeréig a Vercelen marad, utána Cloudflare Workersre költözik (ADR-0009).
+(ADR-0008). A frontend Cloudflare Workersen fut az OpenNext adapterrel (ADR-0009).
 
 A részletes döntések a `kg-stack` skillben (`.agents/skills/kg-stack/SKILL.md`) és a `docs/adr/` alatt vannak.
 
@@ -38,7 +38,7 @@ A részletes döntések a `kg-stack` skillben (`.agents/skills/kg-stack/SKILL.md
 
 | # | Mérföldkő | Tartalom | Verzió |
 |---|---|---|---|
-| 0 | Alapok | monorepo-scaffold (pnpm, Turborepo, Next, Trigger.dev, packages), lint, Steiger, Vitest, Playwright, CI, branch protection, Vercel-projekt, lokális Docker-Woo, `kg-headless` plugin váz, brand-config az 1. brandre | 0.1.0 |
+| 0 | Alapok | monorepo-scaffold (pnpm, Turborepo, Next, Trigger.dev, packages), lint, Steiger, Vitest, Playwright, CI, branch protection, frontend hosting (Cloudflare Workers), lokális Docker-Woo, `kg-headless` plugin váz, brand-config az 1. brandre | 0.1.0 |
 | 1 | Katalógus | főoldal, kategória, termékoldal, keresés (Meilisearch), ISR + webhook-revalidálás, SEO (metaadatok, sitemap, strukturált adat), brand-téma | 0.2.0 |
 | 2 | Kosár és checkout | Store API kosár, kupon, szállítási mód, checkout, Stripe + Barion + SimplePay, rendelés-visszaigazolás, vendég checkout | 0.3.0 |
 | 3 | Dropshipping | 1. beszállító adaptere, feed-szinkron, árazási szabályok, rendelés-továbbítás, státusz-visszaírás | 0.4.0 |
