@@ -13,8 +13,6 @@ Két fejlesztő, akár különböző agent-eszközök, több gép. Az agent-mem�
 géphez kötött**:
 
 - minden eszköz a saját helyén tárol (helyek eszközönként: `docs/process/agent-adapters.md`); egy eszköz memóriáját a másik nem látja;
-- egyes eszközöknél a memória az indító mappához kötődik, így egy worktree-session mást lát, mint a fő
-  checkoutból indított;
 - a másik fejlesztő agentje **semmit** nem lát a te memóriádból.
 
 Következmény: **ami a csapatnak vagy a másik agentnek is kell, az a repóba megy.** A memória csak arra

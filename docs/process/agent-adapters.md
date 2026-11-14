@@ -26,6 +26,6 @@ Bármelyik eszközt használhatod; a közös forrás mindig az `AGENTS.md` és a
 | **Kérdés a felhasználónak** (várakozó állapottal) | `AskUserQuestion` | az eszköz kérdező funkciója | a záró üzenet a kérdéssel kezdődik |
 | **Többmodelles zsűri** (`kg-council`) | T3 Code: `orchestrator_capabilities`, majd tagonként `delegate_task`; CLI: tagonként külön session | tagonként külön session/modell | tagonként külön session; ami nem érhető el, „nem futott” |
 | **Ticket-worktree** (ticketenként kötelező) | T3 Code: worktree-módú thread (`t3/<id>` ág, átnevezés a `kg-git-workflow` szerint); CLI: `git worktree add` | `git worktree add`, majd a session a worktree mappájában indul | `git worktree add --no-track ../KGoblin-KG-<n> -b KG-<n> origin/demo` (hotfix: `origin/main`) |
-| **Személyes agent-memória** | `~/.claude/projects/<indító mappa, ':' '\' '/' '.' → '-'>/memory/`; minden worktree külön pool | knowledge items + `~/.gemini/GEMINI.md` | nincs; ami fontos, a repóba megy (`kg-knowledge`) |
+| **Személyes agent-memória** | `~/.claude/projects/<a fő checkout mappája, ':' '\' '/' '.' → '-'>/memory/` (pl. `E--Projects-KGoblin`); a repó worktree-jei ezt az egy poolt használják közösen | knowledge items + `~/.gemini/GEMINI.md` | nincs; ami fontos, a repóba megy (`kg-knowledge`) |
 
 A memóriák egymás között nem látszanak: ami a csapatnak vagy egy másik eszköznek is kell, az a repóba megy.
