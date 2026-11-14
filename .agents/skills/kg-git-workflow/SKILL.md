@@ -104,8 +104,8 @@ pnpm install                       # a node_modules worktree-nként külön van
 | hotfix `KG-<n>` → `main` | **squash** | Egy commit, könnyű visszaállítani |
 
 A merge-kapu (`AGENTS.md`): zöld CI (ahol fut), lezárt review-ciklus és bármelyik fejlesztő kifejezett
-„mehet”-je. A CI csak a `main`-re menő PR-okon fut; a `demo` PR-ok kapuja a helyi release-teszt, amelynek
-eredménye a PR „Ellenőrzés” részébe kerül.
+„mehet”-je. A CI a `main`-re és a `demo`-ra menő PR-okon is fut (ADR-0011); a helyi release-teszt
+eredménye mellette a PR „Ellenőrzés” részébe kerül.
 
 ## Szinkronban tartás
 

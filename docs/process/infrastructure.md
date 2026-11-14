@@ -6,8 +6,8 @@ Ez a dokumentum a `KG-6` (0. mérföldkő) infrastruktúra-beállításait és a
 
 ## 1. CI (GitHub Actions – `.github/workflows/ci.yml`)
 
-- **Mikor fut:** minden `main` célú Pull Requesten (`demo` → `main` kiadás, `KG-<n>` hotfix → `main`), a `main` pushán, valamint kézi indítással (`workflow_dispatch`).
-- **A `demo` PR-ok kapuja:** a helyi release-teszt (`kg-release` 1-3. lépés), amelynek eredményét a PR leírásának „Ellenőrzés” blokkjában rögzítjük.
+- **Mikor fut:** minden `main` és `demo` célú Pull Requesten (`KG-<n>` → `demo`, `version/*` → `demo`, `demo` → `main` kiadás, `KG-<n>` hotfix → `main`), a `main` és a `demo` pushán, valamint kézi indítással (`workflow_dispatch`); ADR-0011.
+- **A `demo` PR-ok kapuja:** a zöld CI, mellette a helyi release-teszt (`kg-release` 1-3. lépés), amelynek eredményét a PR leírásának „Ellenőrzés” blokkjában rögzítjük.
 - **Jobok:**
   1. `Quality gate`: `pnpm install --frozen-lockfile` (pnpm store cache-sel), `pnpm format:check`, majd `pnpm turbo run typecheck lint test build` (benne az ESLint, a Steiger FSD-ellenőrzés és a Vitest unit-tesztek minden csomagra, beleértve a `@kg/web` és `@kg/jobs` alkalmazásokat).
   2. `E2E (Playwright)`: a `Quality gate` által épített `.next` artifactból futtatja a Chromium smoke teszteket (desktop + mobil). Hibánál a `playwright-report` és `test-results` 7 napig artifactként elérhető.
@@ -21,7 +21,7 @@ Az ADR-0007 és a `kg-git-workflow` szerint a GitHubon beállítandó szabályok
 | Ág | Kötelező PR | Kötelező jóváhagyás | Kötelező status checkek | Force push és törlés | Merge módok |
 |---|---|---|---|---|---|
 | `main` | Igen | `0` (a kapu bármelyik fejlesztő „mehet”-je, a GitHub pedig a saját PR jóváhagyását nem engedi) | `Quality gate`, `E2E (Playwright)` | Tiltva | Squash (`demo` → `main`, hotfix → `main`) |
-| `demo` | Igen | `0` | Nincs (helyi release-teszt a kapu) | Tiltva | Merge commit (`KG-<n>` → `demo`, `version/*` → `demo`, `main` → `demo`) |
+| `demo` | Igen | `0` | `Quality gate`, `E2E (Playwright)` (ADR-0011) | Tiltva | Merge commit (`KG-<n>` → `demo`, `version/*` → `demo`, `main` → `demo`) |
 
 ---
 

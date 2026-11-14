@@ -12,7 +12,7 @@ brandeket; minden brand mögött saját WordPress + WooCommerce backend van.
 - Csapat: **SMark2256** és **ricsmond12**, egyenrangú szerepben: mindketten bármilyen ticketet, release-t,
   demót és hotfixet vihetnek. A szerep PR-onként dől el: aki nyitja, a **szerző**; a **másik fejlesztő**
   opcionálisan review-zhat.
-- **Merge-kapu:** zöld CI (a `main`-re menő PR-okon; a `demo` PR-on helyette a helyi release-teszt) + lezárt
+- **Merge-kapu:** zöld CI (a `main`-re és a `demo`-ra menő PR-okon; ADR-0011) + lezárt
   független AI review-ciklus + **bármelyik fejlesztő kifejezett „mehet”-je** (a szerzőé is elég). A másik
   fejlesztő GitHub-jóváhagyása nem feltétel; ha változtatást kér, azt kezelni kell.
 - A ticketet a **felelőse** (Jira-assignee) viszi végig PR-ig, tesztekkel és review-ciklussal együtt; a
@@ -115,8 +115,8 @@ pnpm turbo run typecheck lint test build   # quality gate; a web lintje a Steige
 pnpm --filter @kg/web test:e2e             # Playwright smoke (desktop + mobil)
 ```
 
-A CI (GitHub Actions, `.github/workflows/ci.yml`) ugyanezt futtatja minden `main`-re menő PR-on; a `demo`
-PR-ok kapuja a helyi release-teszt.
+A CI (GitHub Actions, `.github/workflows/ci.yml`) ugyanezt futtatja minden `main`-re és `demo`-ra menő PR-on
+(ADR-0011); a helyi release-teszt a több ticket együttes próbája marad.
 
 ## Git röviden
 
