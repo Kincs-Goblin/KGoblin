@@ -83,9 +83,9 @@ pnpm --filter @kg/web test:e2e      # Playwright smoke, UI-változásnál
 ```
 
 Woo-, kosár-, checkout- vagy redirect-változásnál a lokális Docker-Woo-val is próbáld ki:
-`kg-dev-practices` → `references/local-stack.md`. A `main` PR-on ugyanezt a quality gate-et és az e2e-t a CI
-(GitHub Actions) is lefuttatja, és a „zöld” csak mindkettő után igaz; a `demo` PR kapuja a helyi
-release-teszt (`kg-release` 3.).
+`kg-dev-practices` → `references/local-stack.md`. A `demo` és a `main` PR-on ugyanezt a quality gate-et és az
+e2e-t a CI (GitHub Actions) is lefuttatja (ADR-0011), és a „zöld” csak mindkettő után igaz; a `demo` PR előtt
+a helyi release-teszt is kell (`kg-release` 3.).
 
 UI-változásnál vizuális önellenőrzés: mobil, tablet és desktop töréspont, mindegyik érintett brand-téma,
 billentyűzetes navigáció, konzolhibák, „utána” screenshot ugyanarról a nézetről. Checkout- és
@@ -128,8 +128,8 @@ Eredménysor a PR-ba: `Review: <modell>, friss session, normál - 2/3 kör, jóv
 
 - Előtte: attribúció-ellenőrzés (`kg-git-workflow` → Commit: footer a commitban, a PR-ben nincs),
   `git diff --stat`, aztán `git diff`.
-- **Cél:** a `demo` (hotfixnél a `main`), a helyi release-teszt után (`kg-release` 1-3.). A `demo` PR-on nincs
-  CI, ezért a helyi teszt eredménye a leírás „Ellenőrzés” részébe kerül.
+- **Cél:** a `demo` (hotfixnél a `main`), a helyi release-teszt után (`kg-release` 1-3.). A helyi teszt eredménye
+  a leírás „Ellenőrzés” részébe kerül; a CI a `demo` PR-on is lefut (ADR-0011).
 - **Cím:** angolul, `típus(KG-<n>): mit csinál`, pl. `feat(KG-42): add cart drawer`. Több ticketnél az
   első a címben, a többi a leírásban.
 - **Leírás:** magyarul, a `.github/pull_request_template.md` szerint. Az Összefoglaló, a Ticketek és a
@@ -141,7 +141,7 @@ Eredménysor a PR-ba: `Review: <modell>, friss session, normál - 2/3 kör, jóv
 
 ## 7. PR után
 
-- Kövesd a PR-t (`kg-babysit-pr`): a `main` PR-on a CI-t a végéig, a `demo` PR-on a review-kat. Piros CI-t
+- Kövesd a PR-t (`kg-babysit-pr`): a CI-t a végéig és a review-kat (a `demo` és a `main` PR-on is). Piros CI-t
   javíts a PR-ágon; ha nem megy, írd le, mi blokkol.
 - A merge az emberé: bármelyik fejlesztő (a szerző is) kifejezett „mehet”-je után, merge committal a
   `demo`-ra (hotfixnél squash a `main`-re). Az agent csak erre a kérésre merge-el, és csak zöld CI és lezárt review-ciklus mellett; ha a

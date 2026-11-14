@@ -9,7 +9,7 @@ Minden lépés **csak kifejezett kérésre** indul, és egy korábbi jóváhagy�
 Az ágak szabályai a `kg-git-workflow` skillben vannak, a döntés az ADR-0007-ben.
 
 A kiadást bármelyik fejlesztő viheti, nincs kijelölt release-felelős. Minden PR-ra a merge-kapu érvényes
-(`AGENTS.md`: zöld CI, ahol fut, lezárt review-ciklus és bármelyik fejlesztő kifejezett „mehet”-je).
+(`AGENTS.md`: zöld CI, lezárt review-ciklus és bármelyik fejlesztő kifejezett „mehet”-je).
 Ritmus: 1-2 naponta, vagy amikor van kész ticket.
 
 ## Verziózás (SemVer)
@@ -70,7 +70,7 @@ gh pr create --base demo --head version/v0.3.0 --title "chore(release): v0.3.0"
 - Sorrend: az alap ticket a ráépülő előtt, a `version/*` PR utoljára. Mind **merge commit**. A `version/*`
   ág csak a kiadási commitot viszi; a release-ágról közvetlenül ne ágaztasd el, mert minden helyi merge-et
   magával vinne.
-- A `demo` PR-okon nincs CI; a kapu a 3. lépés helyi tesztje.
+- A `demo` PR-okon is fut a CI (ADR-0011); a merge-hez zöld CI kell, és a 3. lépés helyi tesztje is megvan.
 - A merge után a demo környezet a `demo` ágról deployol; ott történik az ügyfélteszt. (A demo környezet
   beállítása külön ticket; amíg nincs, a demo teszt a helyi release-ágon fut.)
 

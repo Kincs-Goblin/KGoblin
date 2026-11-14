@@ -1,6 +1,7 @@
 # ADR-0007: Demo-alapú kiadási folyamat (a Tinati-workflow alapján)
 
-- Állapot: elfogadott; a „Honnan” oszlopot a ticket-, `refactor/*` és `release/*` ágra felváltja: ADR-0010
+- Állapot: elfogadott; a „Honnan” oszlopot a ticket-, `refactor/*` és `release/*` ágra felváltja: ADR-0010;
+  a CI-pontot felváltja: ADR-0011 (CI a `demo` PR-okon is)
 - Dátum: 2026-11-13
 - Döntéshozók: SMark2256, ricsmond12
 - Ticket: KG-5

@@ -36,8 +36,9 @@
 
 - A ticket látja és használhatja a még nem élesített munkát; kevesebb az ütközés a `demo` PR-nál, és a helyi
   release-teszt azt az állapotot nézi, ami kimegy.
-- A `demo` PR-okon nincs CI: ami hibásan került a demóra, azt minden ráépülő ticketág megörökli. Ez eddig is
-  kiment volna vele; most korábban kiderül. A javítás továbbra is a hibás ticket ágán, új committal történik.
+- A `demo` PR-okon 2026-11-14-ig nem volt CI (azóta van, ADR-0011): ami hibásan került a demóra, azt
+  minden ráépülő ticketág megörökli. Ez eddig is kiment volna vele; most korábban kiderül. A javítás
+  továbbra is a hibás ticket ágán, új committal történik.
 - A quality gate változás-szűrője és a review base `origin/demo` lett.
 - Frissítve: `kg-git-workflow`, `kg-ticket-to-pr` (és a `.claude` mutató leírása), `kg-release`,
   `kg-full-stop`, `.agents/workflows/ticket.md` és `release-cut.md`, `docs/process/agent-adapters.md`,

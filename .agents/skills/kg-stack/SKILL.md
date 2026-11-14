@@ -14,8 +14,9 @@ visszafordíthatatlanul) · **nyitott** (dönteni kell, mielőtt ráépül valam
 
 ## Döntésnapló
 
-Utolsó módosítás: 2026-11-14 (ADR-0009 elfogadva: a frontend Cloudflare Workersen, OpenNext adapterrel,
-a Vercel felváltva; korábban ADR-0008 WordPress hosting, ADR-0010 a ticketág a `demo`-ból indul).
+Utolsó módosítás: 2026-11-14 (ADR-0011 CI a `demo` PR-okon is; ADR-0009 elfogadva: a frontend Cloudflare
+Workersen, OpenNext adapterrel, a Vercel felváltva; korábban ADR-0008 WordPress hosting, ADR-0010 a
+ticketág a `demo`-ból indul).
 
 ### Architektúra és frontend
 
@@ -77,7 +78,7 @@ a Vercel felváltva; korábban ADR-0008 WordPress hosting, ADR-0010 a ticketág 
 | Runtime | Node aktuális Active LTS (2026-11: Node 26), `.nvmrc`-ben | javasolt | 0001 |
 | Lint, formázás | ESLint flat config + Prettier; Steiger az FSD-szabályokra | javasolt | 0001 |
 | Tesztek | Vitest (unit, integráció), MSW a Woo-mockokhoz, Playwright (e2e) | javasolt | 0001 |
-| CI | GitHub Actions (`.github/workflows/ci.yml`): quality gate + Playwright e2e minden `main`-re menő PR-on; Woo nélkül, MSW-fixture-ökkel | elfogadva | 0005 |
+| CI | GitHub Actions (`.github/workflows/ci.yml`): quality gate + Playwright e2e minden `main`-re és `demo`-ra menő PR-on és a két ág pushán; Woo nélkül, MSW-fixture-ökkel | elfogadva (2026-11-14: `demo` is) | 0005, 0011 |
 | Hibakódok | `DOMAIN.REASON` formátumú, katalógusban tartott hibakódok | javasolt | 0001 |
 | Ticketek | Jira, `KG` kulcs | elfogadva | 0002, 0007 |
 | Branch-folyamat | Tinati-alapú: `KG-<n>` friss `origin/demo`-ból → helyi release-teszt → PR a `demo`-ra; külön kérésre `demo` → `main` squash, `gh release`; hotfix a `main`-ből | elfogadva (2026-11-13, felváltja: 0002) | 0007, 0010 |

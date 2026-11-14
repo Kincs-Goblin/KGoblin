@@ -1,6 +1,6 @@
 # ADR-0005: CI GitHub Actionsszel
 
-- Állapot: elfogadott
+- Állapot: elfogadott; a triggereket az ADR-0007 szűkítette, az ADR-0011 a `demo`-ra is kiterjesztette
 - Dátum: 2026-11-12
 - Döntéshozók: SMark2256, ricsmond12
 - Ticket: KG-5
@@ -17,7 +17,8 @@
 ## Döntés
 
 GitHub Actions a CI. Egy workflow (`.github/workflows/ci.yml`) minden `main` és `release/**` célú PR-on és
-pushon (2026-11-13 óta az ADR-0007 szerint csak a `main`-re menő PR-on és a `main` pushán):
+pushon (2026-11-13 óta az ADR-0007 szerint csak a `main`-re menő PR-on és a `main` pushán; 2026-11-14 óta az
+ADR-0011 szerint a `demo`-ra menő PR-on és a `demo` pushán is):
 
 1. **Quality gate:** `pnpm install --frozen-lockfile`, Prettier-ellenőrzés, majd
    `pnpm turbo run typecheck lint test build` (a web lintje a Steigert is futtatja). A Node-verzió a
