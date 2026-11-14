@@ -27,7 +27,7 @@ brandeket; minden brand mögött saját WordPress + WooCommerce backend van.
 A teljes, státuszos döntésnapló a `kg-stack` skillben van; ütközésnél az az irányadó.
 
 - **Frontend:** Next.js (App Router) + TypeScript, Tailwind + shadcn/ui Base UI-jal, Motion az animációkhoz,
-  FSD 3. szint (`apps/web`), Vercel; a cél Cloudflare Workers + OpenNext, spike után (ADR-0009, javasolt).
+  FSD 3. szint (`apps/web`), Cloudflare Workers + OpenNext, Workers Builds (ADR-0009).
 - **Commerce:** WooCommerce brandenként külön példányban. Store API a katalógushoz, kosárhoz és
   checkouthoz; REST v3 csak szerveroldalon. Minden Woo-válasz Zod-dal validálva.
 - **Háttérjobok:** Trigger.dev (`apps/jobs`): beszállítói feed-szinkron, rendelés-továbbítás, újrapróba.
@@ -100,7 +100,7 @@ kerül (ADR-0006).
 - A legkisebb működő megoldás, kéretlen refaktor és scope-bővítés nélkül. A scope-on túli észrevételt
   külön jelezd.
 - Több értelmezésnél nevezd meg, melyiket választottad és miért.
-- Külső rendszerbe (Jira, Woo admin, Vercel, Trigger.dev, Billingo, éles adat) csak kifejezett kérésre írj.
+- Külső rendszerbe (Jira, Woo admin, Cloudflare, Trigger.dev, Billingo, éles adat) csak kifejezett kérésre írj.
 - Titok soha nem kerül a kódba, a logba, a memóriába vagy a frontendbe (`NEXT_PUBLIC_*` csak publikus érték).
 - A FSD-rétegszabály, a Woo-adatréteg és a brandkezelés szabályai a `kg-architecture` skillben vannak.
 

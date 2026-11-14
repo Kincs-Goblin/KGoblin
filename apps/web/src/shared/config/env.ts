@@ -6,8 +6,6 @@ import { z } from "zod";
 const serverEnvSchema = z.object({
   /** `1`: a katalógus Woo helyett a mentett Store API-fixture-ökből jön (CI e2e, Docker nélküli fejlesztés). */
   KG_STORE_FIXTURES: z.enum(["0", "1"]).default("0"),
-  /** Vercel futási környezet (production | preview | development). */
-  VERCEL_ENV: z.enum(["production", "preview", "development"]).optional(),
 });
 
 const brandWooSecretsSchema = z.object({
@@ -25,7 +23,6 @@ export type BrandWooEnv = z.infer<typeof brandWooSecretsSchema>;
 export function parseServerEnv(raw: NodeJS.ProcessEnv) {
   const normalized = {
     KG_STORE_FIXTURES: raw.KG_STORE_FIXTURES || undefined,
-    VERCEL_ENV: raw.VERCEL_ENV || undefined,
   };
   const result = serverEnvSchema.safeParse(normalized);
   if (!result.success) {

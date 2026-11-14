@@ -1,6 +1,6 @@
 # ADR-0001: Kezdő stack - headless Next.js + brandenkénti WooCommerce, dropshipping
 
-- Állapot: elfogadott
+- Állapot: elfogadott; a frontend hosting (Vercel) felváltva: ADR-0009 (Cloudflare Workers)
 - Dátum: 2026-11-12
 - Döntéshozók: SMark2256, ricsmond12
 
@@ -18,7 +18,7 @@
 
 | Terület | Választás |
 |---|---|
-| Architektúra | Headless: Next.js (App Router, TypeScript) frontend Vercelen, WooCommerce backend |
+| Architektúra | Headless: Next.js (App Router, TypeScript) frontend Vercelen (a hosting felváltva: ADR-0009, Cloudflare Workers), WooCommerce backend |
 | Multi-brand | Egy Next app, a domainből a proxy választ brandet; brandenként külön WP + Woo példány |
 | Adatréteg | Store API (katalógus, kosár, checkout), REST v3 csak szerveroldalon; BFF, a böngésző nem hívja a WP-t; Zod minden válaszon |
 | Cache | ISR + `revalidateTag`, aláírt Woo webhookkal |

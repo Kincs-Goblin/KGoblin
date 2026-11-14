@@ -13,10 +13,10 @@
 - Érintett brandek: <!-- gamer / mind -->
 - Kézzel kipróbálva: igen/nem
 - Review: <!-- modell, szint, kör/keret, head SHA, x javítva, y elvetve -->
-<!-- Preview: Vercel-link -->
+<!-- Preview: Workers-link, ha van -->
 <!-- Screenshot előtte-utána, ha UI-t érint -->
 
 ## Stack-változás
 - [ ] A PR stack-változást tartalmaz: ADR (`docs/adr/`), `kg-stack` döntésnapló és `AGENTS.md` frissítve
 
-<!-- ## Figyelni - csak ha van: env-változó (Vercel / Trigger.dev), Woo plugin-frissítés, webhook-regisztráció, feature flag, rollback, kimaradt ellenőrzés -->
+<!-- ## Figyelni - csak ha van: env-változó (Workers Builds, Worker-secret / Trigger.dev), Woo plugin-frissítés, webhook-regisztráció, feature flag, rollback, kimaradt ellenőrzés -->

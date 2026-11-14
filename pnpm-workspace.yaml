@@ -5,3 +5,4 @@ packages:
 allowBuilds:
   "@depot/cli": true
   esbuild: true
+  workerd: true

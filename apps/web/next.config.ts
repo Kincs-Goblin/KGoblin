@@ -5,12 +5,10 @@ import "./src/shared/config/env.client";
 
 const buildServerEnvSchema = z.object({
   KG_STORE_FIXTURES: z.enum(["0", "1"]).default("0"),
-  VERCEL_ENV: z.enum(["production", "preview", "development"]).optional(),
 });
 
 const buildEnvCheck = buildServerEnvSchema.safeParse({
   KG_STORE_FIXTURES: process.env.KG_STORE_FIXTURES || undefined,
-  VERCEL_ENV: process.env.VERCEL_ENV || undefined,
 });
 
 if (!buildEnvCheck.success) {
@@ -21,9 +19,7 @@ if (!buildEnvCheck.success) {
 }
 
 const isNoIndex =
-  process.env.NEXT_PUBLIC_APP_ENV === "preview" ||
-  process.env.NEXT_PUBLIC_APP_ENV === "demo" ||
-  process.env.VERCEL_ENV === "preview";
+  process.env.NEXT_PUBLIC_APP_ENV === "preview" || process.env.NEXT_PUBLIC_APP_ENV === "demo";
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@kg/brand-config", "@kg/woo-client"],

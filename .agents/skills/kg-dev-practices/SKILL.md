@@ -44,7 +44,7 @@ a git a `kg-git-workflow`-ban vannak; itt nincsenek megismételve.
   `.env.<mode>` > `.env`. A lokális felülbírálás a gitignore-olt `*.local` fájlba kerül.
 - Az env-séma Zod-dal validált (`shared/config/env.ts`), külön server- és client-részre. Hiányzó kötelező
   változó → a build elbukik, nem futásidőben derül ki.
-- Új env-kulcs: csak a kulcsnév a `.env.example`-be, plusz a beállítás helye (Vercel, Trigger.dev) a PR
+- Új env-kulcs: csak a kulcsnév a `.env.example`-be, plusz a beállítás helye (Workers Builds és Worker-secret, Trigger.dev) a PR
   „Figyelni” részébe. Érték soha nem kerül a repóba.
 - A csak nálad működő módosítás (lokális proxy, debug flag a `next.config`-ban) soha nem kerül commitba.
 
@@ -53,7 +53,7 @@ a git a `kg-git-workflow`-ban vannak; itt nincsenek megismételve.
 | Mit | Ajánlott | Kerülendő |
 |---|---|---|
 | Vásárlói token, kosártoken | httpOnly + Secure + SameSite cookie, brandenként | `localStorage`, `sessionStorage` |
-| Woo consumer key/secret, webhook-titok | Vercel / Trigger.dev env, `server-only` modul | `NEXT_PUBLIC_*`, kód, commitolt config |
+| Woo consumer key/secret, webhook-titok | Worker-secret (`wrangler secret`) / Trigger.dev env, `server-only` modul | `NEXT_PUBLIC_*`, kód, commitolt config |
 | Fizetési titkok | csak a WordPress gateway pluginjében | a Next.js-ben bárhol |
 
 - **Frontendbe nem kerül titok.** Ami a kliens bundle-ben van, az nyilvános.
