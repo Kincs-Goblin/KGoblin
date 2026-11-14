@@ -47,7 +47,8 @@ A végrehajtás részletei: `kg-git-workflow` és `kg-release` skill.
 - Egy ticket egy ág, egy demo PR; a release-ág nem él GitHubon, ezért nincs célág-átállítás.
 - A `main` lineárisan, kiadásonként egy squash committal nő; egy revert az egész kiadást visszavonja.
 - A `demo` PR-okon nincs CI, ezért a helyi release-teszt kötelező, és az eredménye a PR-ba kerül.
-- A demo környezet (Vercel branch-deploy a `demo`-ról) beállítása külön ticket.
+- A demo környezet: eredetileg Vercel branch-deploy a `demo`-ról; az ADR-0009 óta a `demo` ágról buildelt
+  Cloudflare Worker (KG-119).
 - Átállás: a 2026-11-13-án GitHubon élő `release/2026-11-26` még a régi modell szerint (release PR) megy a
   `main`-re; utána jön létre a `demo` ág a `main`-ből, és ettől kezdve ez az ADR érvényes.
 - Frissítve: `AGENTS.md`, `kg-git-workflow`, `kg-release`, `kg-ticket-to-pr`, `kg-babysit-pr`, `kg-full-stop`,
