@@ -35,7 +35,8 @@ Az ADR-0007 és a `kg-git-workflow` szerint a GitHubon beállítandó szabályok
 ### Workers Builds (Cloudflare dashboard → Worker → Settings → Build)
 - **Repó:** `Kincs-Goblin/KGoblin`, Root directory: `/`.
 - **Build command:** `pnpm --filter @kg/web build:cf` · **Deploy command:** `pnpm --filter @kg/web deploy:cf`.
-- **Build-változók:** `NODE_VERSION=26.13.0`, `PNPM_VERSION=12.16.1`, plusz a build időben olvasott `NEXT_PUBLIC_APP_ENV` és `KG_STORE_FIXTURES` (lásd a táblázatot).
+- **Ág:** a demo Workernél a figyelt (production) ág a `demo`; a nem-production ágak buildje (preview) kikapcsolva, amíg nincs brand-host stratégia a preview-hostokra.
+- **Build-változók:** `NODE_VERSION=26.13.0`, `PNPM_VERSION=12.16.1`, plusz a build időben olvasott `NEXT_PUBLIC_APP_ENV` és `KG_STORE_FIXTURES` (lásd a táblázatot). A `noindex` fejléc build időben dől el: ha a build-változóból hiányzik a `NEXT_PUBLIC_APP_ENV`, a demo `noindex` nélkül megy ki, hiába `demo` a `wrangler.jsonc` futásidejű értéke.
 - **Környezetek:**
   - **Demo:** a `kincsgoblin` Worker a `demo` ágról, `https://kincsgoblin.devdemos.workers.dev` (egyelőre a személyes fiókon).
   - **Production:** a `main`-ről, saját domainnel a KGoblin-fiókon - külön ticket.

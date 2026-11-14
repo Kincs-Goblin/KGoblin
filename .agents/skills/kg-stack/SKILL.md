@@ -33,7 +33,7 @@ a Vercel felváltva; korábban ADR-0008 WordPress hosting, ADR-0010 a ticketág 
 | Frontend hosting (régi) | Vercel (preview deploy PR-onként, production a `main`-ről) | felváltva (ADR-0009) | 0001 |
 | Edge, DNS, WAF | Cloudflare: DNS, TLS, WAF a backend előtt, Cloudflare Tunnel a VPS felé | elfogadva | 0008 |
 | Szövegek, i18n | Elsőként magyar; szövegek slice-onként egy helyen, `next-intl` a 2. nyelvnél | javasolt | 0001 |
-| Képek | Woo médiatár + `next/image`; CDN (Cloudflare R2 / Cloudinary) | nyitott | - |
+| Képek | Woo médiatár + `next/image`; az optimalizálás a Cloudflare Images `IMAGES` bindingjával (ADR-0009); a médiatár tárolása és CDN-je (Cloudflare R2 / Cloudinary) | nyitott (az optimalizálás elfogadva: 0009) | - |
 
 ### Commerce és adat
 
