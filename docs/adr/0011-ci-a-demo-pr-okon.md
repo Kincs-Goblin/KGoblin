@@ -29,7 +29,7 @@
 - Több GitHub Actions-perc: minden `demo` PR és `demo` push lefuttatja a teljes CI-t.
 - A `demo` branch protectionjében a `Quality gate` és az `E2E (Playwright)` kötelező status check lesz; a
   GitHub-beállítás a KG-23 része.
-- Frissítve: `ci.yml`, ADR-0005 és ADR-0007 állapota, `kg-stack` (CI sor), `AGENTS.md` (merge-kapu,
+- Frissítve: `ci.yml`, ADR-0005 és ADR-0007 állapota, ADR-0010 megjegyzése, `kg-babysit-pr`, `kg-stack` (CI sor), `AGENTS.md` (merge-kapu,
   Parancsok), `kg-git-workflow`, `kg-ticket-to-pr`, `kg-release`, `docs/process/infrastructure.md`.
 
 ## Mérlegelt alternatívák

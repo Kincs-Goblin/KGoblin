@@ -9,7 +9,7 @@ Minden lépés **csak kifejezett kérésre** indul, és egy korábbi jóváhagy�
 Az ágak szabályai a `kg-git-workflow` skillben vannak, a döntés az ADR-0007-ben.
 
 A kiadást bármelyik fejlesztő viheti, nincs kijelölt release-felelős. Minden PR-ra a merge-kapu érvényes
-(`AGENTS.md`: zöld CI, ahol fut, lezárt review-ciklus és bármelyik fejlesztő kifejezett „mehet”-je).
+(`AGENTS.md`: zöld CI, lezárt review-ciklus és bármelyik fejlesztő kifejezett „mehet”-je).
 Ritmus: 1-2 naponta, vagy amikor van kész ticket.
 
 ## Verziózás (SemVer)

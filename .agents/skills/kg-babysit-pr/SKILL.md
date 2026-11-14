@@ -41,7 +41,7 @@ plusz kompatibilitás, apró teljesítményköltség) írásos indokkal utasíts
 - Figyeld a célág (`demo`, hotfixnél és kiadásnál `main`) változását. Ha a PR BEHIND vagy DIRTY, a
   `kg-git-workflow` → Szinkronban tartás szerint frissíts (a ticketágba soha nem a `demo`-t merge-eled), oldd fel az ütközést, futtasd újra az ellenőrzéseket.
   A watcherek jellemzően csak az ütközést jelzik, a BEHIND állapotot neked kell megnézned.
-- Merge csak bármelyik fejlesztő kifejezett „mehet”-jére, lezárt review-ciklussal; a `main` PR-on zöld CI-vel.
+- Merge csak bármelyik fejlesztő kifejezett „mehet”-jére, lezárt review-ciklussal és zöld CI-vel (a `demo` és a `main` PR-on is, ADR-0011).
   Stratégia: `demo` PR merge commit, `main` PR squash (`kg-git-workflow`). Merge előtt `git fetch`, és nézd meg újra a PR-t. Ha egy átfedő PR feleslegessé teszi ezt, állj meg, és kérdezz,
   mielőtt lezárnád.
 - Ha `gh` GraphQL-limitbe futsz: `gh api rate_limit --jq .resources.graphql`; REST-tel olvasd tovább
