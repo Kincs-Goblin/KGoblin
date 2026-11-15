@@ -11,8 +11,9 @@ van. Az első brand a gamer shop; egy új brand bevezetése **config + téma + W
 2. Az `app/[brand]/layout.tsx` a `brand` paraméterből tölti a configot, és a `src/app` providerein át adja
    tovább (téma, szövegek, analytics ID-k).
 3. Szerveroldali kód a brandet paraméterként kapja (`getProduct(brand, slug)`), nem globális állapotból.
-4. Lokálisan: `<brand>.localhost:3000` aldomainek (a brand `domains` listájában szerepelnek). `?brand=` váltó
-   nincs; ha kell, csak development módban, külön döntéssel.
+4. Lokálisan: `<brand>.localhost:3000` aldomainek (a brand `domains` listájában szerepelnek). A `?brand=`
+   query paraméter kizárólag `NODE_ENV === "development"` módban él (ismeretlen `?brand=` → 404); éles és
+   előnézeti környezetben figyelmen kívül marad, és csak a `Host` fejléc dönt (KG-8 / KG-37 döntés).
 
 ## Brand-config (`packages/brand-config`)
 

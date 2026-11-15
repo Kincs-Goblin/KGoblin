@@ -38,6 +38,11 @@ export const errorCatalog = {
     retryable: false,
     message: "A megadott kuponkód nem érvényes vagy már lejárt.",
   },
+  "CART.SESSION_INVALID": {
+    status: 401,
+    retryable: false,
+    message: "A kosár munkamenete lejárt. Frissítsd az oldalt és próbáld újra.",
+  },
   "CHECKOUT.VALIDATION_FAILED": {
     status: 400,
     retryable: false,
@@ -47,6 +52,21 @@ export const errorCatalog = {
     status: 402,
     retryable: false,
     message: "A fizetés nem sikerült. Próbáld újra vagy válassz másik fizetési módot.",
+  },
+  "WEBHOOK.INVALID_SIGNATURE": {
+    status: 401,
+    retryable: false,
+    message: "Érvénytelen webhook aláírás.",
+  },
+  "WEBHOOK.INVALID_PAYLOAD": {
+    status: 400,
+    retryable: false,
+    message: "Érvénytelen webhook payload.",
+  },
+  "WEBHOOK.UNSUPPORTED_TOPIC": {
+    status: 400,
+    retryable: false,
+    message: "Nem támogatott webhook topic.",
   },
   "APP.UNEXPECTED": {
     status: 500,

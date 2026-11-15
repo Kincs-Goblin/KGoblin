@@ -1,18 +1,92 @@
-export type WooErrorCode = "WOO.UNAVAILABLE" | "WOO.CONTRACT_MISMATCH" | "WOO.INVALID_RESPONSE";
+export type WooErrorCode =
+  | "WOO.UNAVAILABLE"
+  | "WOO.CONTRACT_MISMATCH"
+  | "WOO.INVALID_RESPONSE"
+  | "CART.OUT_OF_STOCK"
+  | "CART.INVALID_QUANTITY"
+  | "CART.COUPON_INVALID"
+  | "CART.SESSION_INVALID"
+  | "CHECKOUT.VALIDATION_FAILED";
 
-/** A Woo-hívások egyetlen hibatípusa; a `code` stabil szerződés (`DOMAIN.REASON`). */
+export type WooErrorContext = "catalog" | "cart" | "checkout" | "rest";
+
+/**
+ * A Woo-hívások egyetlen hibatípusa; a `code` stabil szerződés (`DOMAIN.REASON`).
+ * A `message` kizárólag belső diagnosztikára szolgál, felhasználói felületen mindig a hibakatalógus szövege jelenjen meg.
+ */
 export class WooError extends Error {
   readonly code: WooErrorCode;
   readonly status: number | undefined;
+  readonly wooCode: string | undefined;
 
-  constructor(code: WooErrorCode, message: string, options?: { status?: number; cause?: unknown }) {
+  constructor(
+    code: WooErrorCode,
+    message: string,
+    options?: { status?: number; wooCode?: string; cause?: unknown },
+  ) {
     super(message, { cause: options?.cause });
     this.name = "WooError";
     this.code = code;
     this.status = options?.status;
+    this.wooCode = options?.wooCode;
   }
 }
 
 export function isWooError(error: unknown): error is WooError {
   return error instanceof WooError;
+}
+
+/**
+ * A WooCommerce API 4xx/5xx hibakódjait saját, stabil `DOMAIN.REASON` kódokra képezi le kontextus szerint.
+ */
+export function mapWooErrorCode(
+  wooCode: string | undefined,
+  status: number,
+  context: WooErrorContext = "catalog",
+): WooErrorCode {
+  if (status >= 500) {
+    return "WOO.UNAVAILABLE";
+  }
+
+  const normalized = wooCode?.toLowerCase() ?? "";
+
+  if (
+    (context === "cart" || context === "checkout") &&
+    (status === 401 ||
+      status === 403 ||
+      normalized.includes("cart_token") ||
+      normalized.includes("invalid_nonce") ||
+      normalized.includes("nonce_failure"))
+  ) {
+    return "CART.SESSION_INVALID";
+  }
+
+  if (!normalized) {
+    return "WOO.INVALID_RESPONSE";
+  }
+
+  if (
+    normalized.includes("stock") ||
+    normalized.includes("not_purchasable") ||
+    normalized === "woocommerce_rest_product_partially_out_of_stock"
+  ) {
+    return "CART.OUT_OF_STOCK";
+  }
+  if (normalized.includes("quantity")) {
+    return "CART.INVALID_QUANTITY";
+  }
+  if (normalized.includes("coupon")) {
+    return "CART.COUPON_INVALID";
+  }
+  if (
+    normalized.startsWith("kg_") ||
+    (context === "checkout" &&
+      (normalized.includes("checkout") ||
+        normalized.includes("invalid_param") ||
+        normalized.includes("missing_param")))
+  ) {
+    return "CHECKOUT.VALIDATION_FAILED";
+  }
+
+  return "WOO.INVALID_RESPONSE";
 }

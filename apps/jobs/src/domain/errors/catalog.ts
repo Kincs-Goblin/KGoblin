@@ -38,6 +38,21 @@ export const jobErrorCatalog = {
     retryable: false,
     message: "Hiányzó vagy érvénytelen környezeti konfiguráció a háttérjobban.",
   },
+  "WEBHOOK.INVALID_SIGNATURE": {
+    status: 401,
+    retryable: false,
+    message: "Érvénytelen webhook aláírás.",
+  },
+  "WEBHOOK.INVALID_PAYLOAD": {
+    status: 400,
+    retryable: false,
+    message: "Érvénytelen webhook payload.",
+  },
+  "WEBHOOK.UNSUPPORTED_TOPIC": {
+    status: 400,
+    retryable: false,
+    message: "Nem támogatott webhook topic.",
+  },
   "APP.UNEXPECTED": {
     status: 500,
     retryable: true,
