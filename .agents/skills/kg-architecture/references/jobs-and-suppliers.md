@@ -16,7 +16,7 @@ apps/jobs/src/
 | `supplier-feed-sync` | ütemezett, brandenként és beszállítónként | feed letöltése → Zod → leképezés → SKU szerinti diff → Woo batch upsert (REST v3) → reindex → revalidálás |
 | `forward-order` | Woo webhook: fizetett rendelés | rendelés továbbítása a beszállítónak, a beszállítói azonosító visszaírása a Woo-rendelésbe |
 | `sync-order-status` | ütemezett vagy beszállítói webhook | szállítási státusz és csomagkövetési szám visszaírása, email a vásárlónak |
-| `issue-invoice` | fizetett rendelés (ha a Billingo-bekötés job-alapú lesz) | Billingo-számla, a számla linkje a rendelésbe |
+| `issue-invoice` | Woo webhook: fizetett rendelés | Billingo-számla API v3-mal (`vendor_id` idempotenciával), számlalink visszaírása a rendelésbe |
 | `send-email` | rendelés-események | React Email sablon → Resend |
 | `reindex-search` | termékváltozás | Meilisearch-dokumentum frissítése a brand indexében |
 | `merchant-feed` | ütemezett | Google Merchant feed generálása brandenként |
@@ -43,9 +43,20 @@ apps/jobs/src/
 
 ## Billingo
 
-Nyitott döntés, hogy a Woo Billingo-pluginja vagy egy `issue-invoice` task állítja ki a számlát (`kg-stack`).
-Amíg nincs döntés, ne építs olyat, ami az egyiket kizárja. Mindkét esetben: a számla a fizetett állapotból
-indul, idempotensen, és sztornó csak kézi művelettel történhet.
+A számlázás a Trigger.dev `issue-invoice` taskjában fut majd (`apps/jobs/src/adapters/billingo/`, `KG-16`), a Billingo API
+v3-mal (ADR-0015); Woo Billingo-plugint nem használunk:
+
+- **Idempotencia és bizonytalan eset:** Trigger.dev kulcs (`issue-invoice:<brand>:<orderId>`) és Billingo `vendor_id`
+  egyedi kulcs; bizonytalan `POST /documents` válasz után előzetes ellenőrzés a `GET /documents/vendor/{vendor_id}`
+  végponton. Ha maga a `vendor_id` lekérdezés is hibás vagy bizonytalan, nincs vak automatikus újralétrehozás:
+  a rendelés `invoice_uncertain` állapotba kerül, riasztás megy, és kézi ellenőrzés következik.
+- **Céges adatok és tételek:** a Woo REST v3-ból beolvasott `kg-headless` HPOS-mezőkkel (`_billing_is_company`,
+  `_billing_company_name`, `_billing_tax_number`), a kedvezményeket negatív tételként átadva.
+- **Kimenet és hibakezelés:** a `billingo_document_id` és a PDF/elérési link visszaírása a Woo-rendelésbe;
+  aszinkron PDF-generálásnál késleltetett újrapróba; brandenként `billingo.blockId` és `billingo.apiKeyEnv` a
+  `packages/brand-config`-ban, a kulcs értéke pedig a Trigger.dev env-ben (`KG-16`).
+- **Sztornó:** csak kézi művelettel történhet (Billingo felületen vagy külön admin parancsból), vak automatikus
+  sztornó nincs.
 
 ## Meilisearch
 
