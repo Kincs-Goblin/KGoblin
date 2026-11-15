@@ -37,7 +37,7 @@ A teljes, státuszos döntésnapló a `kg-stack` skillben van; ütközésnél az
   Cloudflare CDN és Images binding (ADR-0009, ADR-0013). **Email:** Resend + React Email.
 - **Mérés:** Sentry, PostHog, Meta Conversions API, Google Merchant Center feed.
 - **Monorepo:** pnpm + Turborepo. **WordPress hosting:** saját VPS + Docker Compose, Cloudflare (DNS, WAF,
-  Tunnel) mögött (ADR-0008).
+  Tunnel) mögött (ADR-0008); a `demo` környezethez brandenként külön demo-Woo sandbox módban (ADR-0014).
 
 ## Stack-változás (kötelező szabály)
 

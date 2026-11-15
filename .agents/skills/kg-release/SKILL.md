@@ -71,8 +71,16 @@ gh pr create --base demo --head version/v0.3.0 --title "chore(release): v0.3.0"
   ág csak a kiadási commitot viszi; a release-ágról közvetlenül ne ágaztasd el, mert minden helyi merge-et
   magával vinne.
 - A `demo` PR-okon is fut a CI (ADR-0011); a merge-hez zöld CI kell, és a 3. lépés helyi tesztje is megvan.
-- A merge után a demo környezet a `demo` ágról deployol; ott történik az ügyfélteszt. (A demo környezet
-  beállítása külön ticket; amíg nincs, a demo teszt a helyi release-ágon fut.)
+- A merge után a demo környezet a `demo` ágról deployol; ott történik az ügyfélteszt.
+- **Demo-Woo és reset (ADR-0014):** a távoli demo környezet háttere brandenként külön demo-Woo Docker
+  konténer lesz (`demo-api.<domain>`, külön demo DB-vel, sandbox gateway- és Billingo-kulcsokkal, fake
+  beszállítóval, éles PII nélkül; amíg nincs beüzemelve, a demo Worker `KG_STORE_FIXTURES=1`-gyel fut, a
+  kézi Woo-teszt pedig a helyi release-ágon történik). Ügyfélteszt vagy kiadás előtt a tiszta visszaállítás
+  elsődleges útja a tiszta SQL-snapshot visszatöltése vagy üres DB + `wp core install` + a
+  `wordpress/seed/seed-brand.php` futtatása (`KG_FRONTEND_URL` és `KG_WEBHOOK_SECRET` demo értékekkel; a
+  seed önmagában csak idempotens katalógus- és beállítás-upsert, rendeléseket nem töröl). Ezután a
+  keresés-reindex (`KG-10` után) és a demo Worker cache-frissítése következik (újraseedelés aláírt Woo
+  webhookokkal vagy külön KV/D1 cache-ürítés a beüzemelési ticket szerint).
 
 ## 5. Élesítés: demo → main
 

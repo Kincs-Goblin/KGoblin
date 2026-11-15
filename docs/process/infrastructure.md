@@ -50,7 +50,7 @@ Az ADR-0007 és a `kg-git-workflow` szerint a GitHubon beállítandó szabályok
 |---|---|---|---|---|---|
 | `NEXT_PUBLIC_APP_ENV` | Kliens + Szerver (build és futás) | `preview` | `demo` | `production` | Környezet azonosító (`noindex` szabályozás) |
 | `KG_STORE_FIXTURES` | Szerver (build és futás) | `1` (ha nincs staging Woo) | `1`, amíg nincs demo-Woo, utána `0` | `0` | `1`: Store API fixture-ök használata; `0`: élő Woo |
-| `WOO_GAMER_URL` | Szerver | Demo/Staging Woo URL | Demo Woo URL | Éles Gamer Woo URL | A Gamer brand WooCommerce alap URL-je |
+| `WOO_GAMER_URL` | Szerver | Demo/Staging Woo URL | Demo Woo URL (`demo-api.<domain>`, ADR-0014) | Éles Gamer Woo URL | A Gamer brand WooCommerce alap URL-je (brandenként külön példány) |
 | `WOO_GAMER_CONSUMER_KEY` | Szerver (Secret) | Teszt REST v3 kulcs | Demo REST v3 kulcs | Éles REST v3 kulcs | Woo REST v3 consumer key (`server-only`) |
 | `WOO_GAMER_CONSUMER_SECRET` | Szerver (Secret) | Teszt REST v3 titok | Demo REST v3 titok | Éles REST v3 titok | Woo REST v3 consumer secret (`server-only`) |
 | `WOO_GAMER_WEBHOOK_SECRET` | Szerver (Secret) | Teszt webhook titok | Demo webhook titok | Éles webhook titok | Webhook HMAC-SHA256 aláírás-ellenőrző kulcs |

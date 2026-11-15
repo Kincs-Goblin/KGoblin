@@ -14,7 +14,7 @@ visszafordíthatatlanul) · **nyitott** (dönteni kell, mielőtt ráépül valam
 
 ## Döntésnapló
 
-Utolsó módosítás: 2026-11-15 (ADR-0012 Meilisearch hosting saját VPS Dockerrel; ADR-0013 Woo médiatár + Cloudflare CDN/Images, később R2 offload; korábban ADR-0011, ADR-0009, ADR-0008, ADR-0010).
+Utolsó módosítás: 2026-11-20 (ADR-0014 demo/staging Woo brandenként külön konténerben, seed/snapshot resettel; korábban ADR-0012, ADR-0013, ADR-0011, ADR-0009, ADR-0008, ADR-0010).
 
 ### Architektúra és frontend
 
@@ -48,7 +48,7 @@ Utolsó módosítás: 2026-11-15 (ADR-0012 Meilisearch hosting saját VPS Docker
 | Auth plugin | Melyik WP JWT/headless auth plugin | nyitott | - |
 | WordPress hosting | Saját VPS + Docker Compose (a lokális compose éles változata), Cloudflare mögött; brandenként `api.<domain>` | elfogadva | 0008 |
 | VPS-szolgáltató | Melyik VPS-szolgáltató | nyitott | - |
-| Demo/staging Woo | Külön demo-Woo brandenként, vagy közös staging | nyitott | - |
+| Demo/staging Woo | Brandenként külön demo-Woo Docker konténer (`demo-api.<domain>`) külön demo DB-vel, sandbox kulcsokkal és SQL-snapshot / tiszta DB + `seed-brand.php` resettel | elfogadva (2026-11-15, frissítve: 2026-11-20) | 0014 |
 
 ### Üzlet és integrációk
 
