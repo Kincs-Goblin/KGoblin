@@ -61,7 +61,7 @@ A mérföldkövek sorrendje irányadó, a verziószámok a kiadáskor dőlnek el
 
 ## Nyitott döntések
 
-A `kg-stack` „nyitott” státuszú sorai: VPS-szolgáltató · auth plugin. Ezen felül: az 1. beszállító(k) kiválasztása, a gamer brand neve és
+A `kg-stack` „nyitott” státuszú sorai: VPS-szolgáltató. Ezen felül: az 1. beszállító(k) kiválasztása, a gamer brand neve és
 domainje (a Jira site URL-je lezárva: `https://kincsgoblin.atlassian.net`).
 
 ## Nem része (most)
