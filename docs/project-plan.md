@@ -62,7 +62,7 @@ A mérföldkövek sorrendje irányadó, a verziószámok a kiadáskor dőlnek el
 ## Nyitott döntések
 
 A `kg-stack` „nyitott” státuszú sorai: VPS-szolgáltató · demo/staging Woo · auth plugin · Billingo-bekötés
-módja · Meilisearch hosting · kép-CDN. Ezen felül: az 1. beszállító(k) kiválasztása, a gamer brand neve és
+módja. Ezen felül: az 1. beszállító(k) kiválasztása, a gamer brand neve és
 domainje (a Jira site URL-je lezárva: `https://kincsgoblin.atlassian.net`).
 
 ## Nem része (most)

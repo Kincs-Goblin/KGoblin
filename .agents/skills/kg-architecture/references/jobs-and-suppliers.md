@@ -51,4 +51,5 @@ indul, idempotensen, és sztornó csak kézi művelettel történhet.
 
 Brandenként egy index (`products_<brand>`). A dokumentum a Store API termékadataiból készül (név, slug, ár
 minor unitban, kategóriák, attribútumok, készletjelzés, kép). A keresési API-kulcs csak search-jogú, és
-indexre korlátozott; az admin kulcs csak a jobokban van.
+indexre korlátozott (vagy BFF-en generált tenant token); az admin kulcs csak a jobokban van. A kereső
+saját Docker konténerként fut a backend VPS-en Cloudflare Tunnel és WAF mögött (ADR-0012).

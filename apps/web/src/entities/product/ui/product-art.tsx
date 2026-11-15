@@ -30,7 +30,7 @@ type ProductArtProps = {
 
 /**
  * A „kártyakép”: a termékfotó, vagy ha nincs, saját díszítő illusztráció a ritkaság színével.
- * A Woo-képek egyelőre optimalizálás nélkül jönnek (a kép-CDN nyitott döntés a kg-stackben).
+ * A Woo-képek éles bekötése a KG-9-ben történik (Woo médiatár + Cloudflare CDN és IMAGES binding: ADR-0009, ADR-0013).
  */
 export function ProductArt({ image, rarity, className, sizes, priority }: ProductArtProps) {
   return (
