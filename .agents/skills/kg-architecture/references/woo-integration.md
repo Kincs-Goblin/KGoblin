@@ -24,13 +24,11 @@ külön belépési pontban, a REST v3 `server-only`.
   cookie-ban tároljuk. A kosár nem cache-elt (`no-store`). A `KG-15` megvalósítása után bejelentkezéskor és
   regisztrációkor a `kg-headless` `/wp-json/kg/v1/auth/*` végpont a kapott vendég `Cart-Token` tételeit
   szerveroldalon egyesíti majd a customer sessionjével (ADR-0016), és visszaadja a customer `Cart-Token`-t.
-- **Checkout és fizetés:** a Store API `/checkout` `payment_method` + `payment_data` mezőkkel megy.
-  Átirányításos gatewaynél (Barion, SimplePay) a válasz `payment_result.redirect_url`-jére irányítunk, a
-  visszatérés a rendelés-visszaigazoló oldalra jön, és a **státuszt mindig a Woo-tól kérdezzük le**, nem
-  az URL-paraméterből hisszük el. Stripe: a kártyaadat a Stripe.js-en megy (publishable key), a Woo csak
-  a payment method ID-t kapja.
-  - Kockázat: minden gateway pluginnél korán ellenőrizni kell a Store API (block checkout) támogatást;
-    erre külön spike-ticket kell.
+- **Checkout és fizetés (ADR-0017, tervezett megvalósítás: `KG-13`):** a Store API `/checkout` `payment_method` + `payment_data` mezőkkel fog menni (`KG-62` - `KG-66`):
+  - **Barion** (`pay-via-barion-for-woocommerce`): `payment_data` nem kell; külső `payment_result.redirect_url`-re irányít, visszatérés `?wc-api=wc_gateway_barion_return_from_payment` és IPN `?wc-api=wc_gateway_barion`.
+  - **SimplePay** (`wpxpert-payment-gateway-for-simplepay`, `simplepay` / `simplepay_wire`): `payment_data` nem kell; külső `payment_result.redirect_url`-re irányít, return `?wc-api=woo_simplepay_return` és IPN `?wc-api=woo_simplepay_ipn`. A `start` hívás szigorúan HTTPS return URL-t követel (lokálisan Cloudflare Tunnel / HTTPS kell), és élesítési előírás a checkouton a SimplePay logó + adattovábbítási nyilatkozat, hiba esetén a `transactionId` megjelenítése.
+  - **Stripe** (`woocommerce-gateway-stripe`): UPE deferred intent - a böngészőben a Stripe.js (`@stripe/stripe-js`, `NEXT_PUBLIC_*` publishable key) hozza létre a `PaymentMethod` (`pm_...`) vagy `ConfirmationToken` (`ctoken_...`) azonosítót, és `payment_data`-ként küldjük be (`wc-stripe-payment-method`, `wc_stripe_selected_upe_payment_type`). 3DS `requires_action` esetén a `payment_intent_secret`-re a böngészőben `stripe.handleNextAction` fut, a tartós státuszt a `?wc-api=wc_stripe` webhook adja.
+  - **Visszatérés, újrapróba és `kg-headless` (`KG-13`):** a `wp-json` és `/?wc-api=...` végpontok bypassolják a `kg-headless` 302 átirányítását, viszont a Stripe és SimplePay visszatéréskor `wp_safe_redirect($this->get_return_url($order))`-t hív, amihez a `kg-headless`-ben (tervezett: `KG-13`) fel kell venni az `allowed_redirect_hosts` filtert a `KG_FRONTEND_URL` hostjával. Sikertelen visszatéréskor a `wc_add_notice` üzeneteket (pl. SimplePay `transactionId`) query paraméterrel kell továbbítani a Next.js-nek; a WP `order-pay` oldal helyett a Next.js a Store API `GET /wc/store/v1/order/{id}?key=...&billing_email=...` és `POST /wc/store/v1/checkout/{id}` végpontokat fogja használni (a státuszt mindig a Woo-tól kérdezzük le). Mivel a `kg-headless.php` visszatérési URL-je nem tartalmaz és adatvédelmi okból nem is tartalmazhat `billing_email` query paramétert, a vendég `billing_email` kontextusát a Next.js checkout BFF rövid élettartamú, brand-előtagos `httpOnly` cookie-ban tárolja (fallbackkel).
 - **Fizetés idempotenciája:** dupla kattintás és újrapróba nem indíthat két checkoutot. A gomb tiltása
   kevés: a server action is ellenőrzi, hogy fut-e már checkout az adott kosárra.
 - **Jogi elemek** (Omnibus 30 napos legalacsonyabb ár, ÁSZF-elfogadás, cégadat-validálás) a Woo oldalon
@@ -58,8 +56,8 @@ külön belépési pontban, a REST v3 `server-only`.
 ## Saját WP plugin (`kg-headless`)
 
 A WordPress oldali kiegészítések egy saját pluginban (`wordpress/plugins/kg-headless/`): Store API-kiterjesztések,
-webhook-beállítások, CORS lezárása (csak a Next szerver hívhatja a REST v3-at), headless-beállítások (a nem-admin
-kérések `302` átirányítása a `KG_FRONTEND_URL` storefrontra, valamint a rendelés-visszaigazoló URL átírása).
+webhook-beállítások, CORS lezárása (csak a Next szerver hívhatja a REST v3-at), headless-beállítások (a nem-admin kérések `302` átirányítása a `KG_FRONTEND_URL` storefrontra, valamint a
+rendelés-visszaigazoló URL átírása; tervezett `KG-13` bővítés: `allowed_redirect_hosts` és gateway-hiba query-továbbítás).
 Más pluginhez nem nyúlunk; a harmadik féltől származó pluginek listája és verziója a plugin README-jében van.
 
 ### `kg-headless` Store API mezők
