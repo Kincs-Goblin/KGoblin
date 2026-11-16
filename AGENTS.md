@@ -82,6 +82,8 @@ kerül (ADR-0006).
 | `kg-architecture` | hova kerüljön a kód, FSD, Woo-integráció, multi-brand, hibakódok |
 | `kg-git-workflow` | branch, commit, merge, demo, hotfix |
 | `kg-ticket-to-pr` | Jira-ticket végigvitele PR-ig, review-ciklus |
+| `kg-ticket-refine` | ticket ellenőrzése és átfogalmazás-javaslat munka előtt (DoR, frissesség, ellentmondás a repóval) |
+| `kg-pr-review` | PR review-ja a ticket ellen (AC-leképezés, állítások ellenőrzése, ellentmondások); csak findingot ad |
 | `kg-release` | helyi release-teszt, demo PR-ok, version PR, demo → main, GitHub release, hotfix |
 | `kg-dev-practices` | tervezési elvek, tesztelés, biztonság, külső API-k, Windows-csapdák |
 | `kg-knowledge` | „jegyezd meg”: hová kerüljön egy tény (repó vagy memória) |
@@ -95,7 +97,10 @@ kerül (ADR-0006).
 - **Ticketenként külön git worktree:** az agent minden ticketet saját worktree-ben, saját ticketágon fejleszt,
   soha nem a fő checkoutban és nem egy másik ticket worktree-jében. Egy worktree = egy ticket (a ticket
   stacked PR-ágai együtt). Menete: `kg-git-workflow` → Worktree.
-- „Nézd meg”, „adj tervet”, „review-zd”, „ne kódolj”: kizárólag read-only munka.
+- „Nézd meg”, „adj tervet”, „review-zd”, „ne kódolj”: kizárólag read-only munka. PR-review: `kg-pr-review`.
+- **A ticket sem tény.** Munka előtt vesd össze a ticketet a friss `origin/demo`-val és az azóta elfogadott
+  ADR-ekkel (`kg-ticket-refine`); ellentmondásnál állj meg és jelezd, ne építs a repó ellenében. A repóról
+  leírt állítást (dokumentum, ADR, PR-leírás) ellenőrizd `git grep`-pel vagy futtatással, mielőtt leírod.
 - Széles vagy kockázatos változtatás előtt rövid, jóváhagyott terv. Nyitott döntést opciós kérdésként tegyél
   fel, ne prózában. Kis, egyértelmű javításnál ez felesleges.
 - A legkisebb működő megoldás, kéretlen refaktor és scope-bővítés nélkül. A scope-on túli észrevételt
@@ -141,6 +146,8 @@ tesztág, `version/vX.Y.Z`.
 - A változáshoz szükséges ellenőrzés (typecheck, lint, Steiger, teszt, build, böngészős próba) lefutott.
   A kész-jelentés megnevezi, mit futtattál és mi lett az eredménye; amit nem ellenőriztél, azt kimondod.
 - A skipelt teszt nem sikeres teszt. A „kész” és a „kész, de böngészőben nem próbáltam” két külön állapot.
+- Minden elfogadási kritériumhoz bizonyíték vagy kimondott „nem ellenőrzött”. Külső rendszer viselkedését
+  (pl. Woo REST-hitelesítés) fixture-zöld nem igazolja; a PR-leírás a bizonyítékokkal együtt frissül.
 
 ## Kommunikáció
 

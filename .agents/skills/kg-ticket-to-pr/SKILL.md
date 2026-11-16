@@ -34,11 +34,19 @@ mást mondanak, mint ez a skill, azok az irányadók; jelezd az eltérést.
 1. Olvasd be a ticketet. Ha van Jira-eszköz a sessionben, azzal (csak olvasás); ha nincs, kérd meg a
    felhasználót, hogy illessze be a leírást és az elfogadási kritériumokat. Link:
    `https://kincsgoblin.atlassian.net/browse/KG-<n>`.
-2. Ellenőrizd a **Definition of Ready**-t (`docs/process/ticket-template.md`):
-   cél egy mondatban · ellenőrizhető elfogadási kritériumok · scope és ami nem része · érintett terület ·
-   elvárt bizonyíték · kockázat. Ami hiányzik vagy ellentmondásos: kérdezz, ne találj ki.
-3. Foglald össze röviden: mit kér a ticket, mi nem része, mik az AC-k, mi a nyitott kérdés.
-4. **Stack-ellenőrzés:** ha a megoldás új szolgáltatást, könyvtár-kategóriát vagy integrációt igényelne,
+2. Ellenőrizd a **Definition of Ready**-t (`docs/process/ticket-template.md`, a mezők listája a
+   `kg-ticket-refine` 2. lépésében: cél · brand(ek) · Alapok · AC-k · scope és „nem része” · terület · bizonyíték ·
+   külső rendszer · kockázat · stack-hatás). Ami hiányzik vagy ellentmondásos: kérdezz, ne találj ki.
+3. **Frissesség és ellentmondás (kapu):** futtasd a `kg-ticket-refine` 3. lépését a ticketen (és az
+   alfeladatain): a ticket dátuma óta elfogadott ADR-ek, a ticket állításai a mai kóddal (`git grep`), a
+   `kg-stack` kényszerei, a külső rendszerre épülő AC-k. Ha a ticket ellentmond a repónak vagy egy
+   elfogadott döntésnek, **állj meg**: ne építs a ticket szövege szerint a repó ellenében, hanem jelezd az
+   ellentmondást, és kérj átfogalmazást (javaslatot a `kg-ticket-refine` ad, a Jira-írás kifejezett kérésre).
+   Kis ticketnél a felelős válasza a sessionben („a javaslat szerint menj”) elég: a Jira átírása nem előfeltétel,
+   az eltérés és a választott értelmezés a PR-leírásba kerül.
+4. Foglald össze röviden: mit kér a ticket, mi nem része, mik az AC-k, mi a nyitott kérdés, mit találtál a
+   frissességi kapun.
+5. **Stack-ellenőrzés:** ha a megoldás új szolgáltatást, könyvtár-kategóriát vagy integrációt igényelne,
    állj meg, és kövesd a `kg-stack` folyamatát.
 
 ## 1. Munkakörnyezet
@@ -93,8 +101,8 @@ fizetési változásnál végigkattintás a teszt-gatewayjel a lokális vagy a p
 
 ## 5. Review-ciklus (PR előtt)
 
-Független review egy **friss agent-sessionben**, amelyik nem látta a fejlesztést, csak a diffet és a
-szabályokat. Ajánlott, de nem feltétel, hogy **más modell** review-zzon, mint amelyik implementált; ha nincs
+Független review egy **friss agent-sessionben**, amelyik nem látta a fejlesztést; a diffet, a szabályokat, a
+repót és a ticketet olvassa (`kg-pr-review`). Ajánlott, de nem feltétel, hogy **más modell** review-zzon, mint amelyik implementált; ha nincs
 ilyen, ugyanaz a modell friss sessionben is megfelel, és ezt a PR-ban jelzed. Hogy ezt az eszközödben hogyan
 indítod: `docs/process/agent-adapters.md`. A review nem helyettesíti a tesztet.
 
@@ -102,7 +110,8 @@ indítod: `docs/process/agent-adapters.md`. A review nem helyettesíti a tesztet
 
 Ha bizonytalan vagy, a magasabbat válaszd. A szint bekerül a PR „Ellenőrzés” részébe.
 
-- **Könnyű:** csak docs, szöveg, komment, config-érték, teszt, függőség patch-verziója. 1 kör.
+- **Könnyű:** csak docs, szöveg, komment, config-érték, teszt, függőség patch-verziója. 1 kör. Kivétel: ADR,
+  `kg-stack`, `AGENTS.md` és skill-változás döntést vagy szabályt rögzít, ezért legalább normál.
 - **Normál:** minden más kódváltozás. Legfeljebb 3 kör.
 - **Kockázatos:** fizetés, checkout, kosár-összeg, auth és session, webhook-aláírás, rendelés-továbbítás a
   beszállítónak, számlázás, személyes adat, titokkezelés, brand-elkülönítés (egyik brand adata a másiknál),
@@ -111,11 +120,16 @@ Ha bizonytalan vagy, a magasabbat válaszd. A szint bekerül a PR „Ellenőrzé
 ### Menet
 
 1. Rögzítsd a review tárgyát: `git fetch origin`, base = `origin/demo` (hotfixnél `origin/main`, ráépülő ticketnél az alap ticket ága), és a base/head SHA.
-2. Reviewer-prompt, eszköztől függetlenül (read-only session, csak `git diff`/`git log` és fájlolvasás):
-   „Review-zd a `git diff ${BASE_SHA}...${HEAD_SHA}` változásait a KGoblin `AGENTS.md` és a `kg-architecture`
-   szerint. Csak valódi hibát jelezz (bug, biztonság, adatszivárgás brandek között, ár- vagy
-   összegszámítás a kliensen, kihagyott hibaeset, FSD-sértés), fájl:sor és rövid indoklás. A nem futtatott
-   teszt nem sikeres teszt. Add meg a review-zott SHA-kat és a verdiktet.”
+2. Reviewer-prompt, eszköztől függetlenül (read-only session, `git diff`/`git log`/`git grep`, fájl- és
+   ticketolvasás): „Review-zd a `git diff ${BASE_SHA}...${HEAD_SHA}` változásait a `.agents/skills/kg-pr-review`
+   szerint, a KGoblin `AGENTS.md` és a `kg-architecture` mellett. A ticket (KG-<n>) AC-it képezd le a diffre
+   (AC → bizonyíték), a repóra vonatkozó állításokat (PR-leírás, ADR, kommentek) ellenőrizd `git grep`-pel,
+   keress belső és külső ellentmondást. Csak valódi hibát jelezz (bug, biztonság, adatszivárgás brandek
+   között, ár- vagy összegszámítás a kliensen, kihagyott hibaeset, FSD-sértés, ellenőrizetlen külső
+   feltételezés), fájl:sor és rövid indoklás. A nem futtatott teszt nem sikeres teszt. Add meg a review-zott
+   SHA-kat és a verdiktet.” PR még nincs, ezért a promptban add át a PR-leírás tervezetét (a 6. lépés
+   „Ellenőrzés” része) és a ticket AC-it/kommentjeit, ha a reviewer nem éri el a Jirát: a `kg-pr-review`
+   „PR előtti mód”-ja szerint a tervezet állításait is ellenőrzi.
 3. Minden findingot fogadj el, bizonyítékkal vess el, vagy jóváhagyással halassz el. A javítás után célzott
    teszt, majd új review-kör az új head SHA-n.
 4. Megállás: ha a keret elfogyott, vagy a reviewer nem elérhető, állítsd le a ciklust, és kérj emberi döntést.
@@ -135,6 +149,12 @@ Eredménysor a PR-ba: `Review: <modell>, friss session, normál - 2/3 kör, jóv
 - **Leírás:** magyarul, a `.github/pull_request_template.md` szerint. Az Összefoglaló, a Ticketek és a
   Változások együtt legfeljebb kb. 10 sor. Az üres template-kommenteket töröld; a „Figyelni” rész csak
   akkor kell, ha van benne valami.
+- **AC → bizonyíték:** az „Ellenőrzés” részben minden elfogadási kritériumhoz egy sor: melyik teszt vagy
+  próba igazolja, vagy kimondva „nem ellenőrzött” (ok, követő ticket). Külső rendszer viselkedésére épülő AC
+  (pl. Woo REST-hitelesítés) fixture-zölddel nem igazolt; valódi ellen futott-e, azt külön írd ki.
+- **Repóra vonatkozó állítás** (PR-leírás, ADR, doc): minden állítás `git grep`-pel vagy futtatással
+  ellenőrzött; ami még nincs meg, jövő időben és követő ticketre hivatkozva szerepel (kulcs, vagy ha még nincs:
+  javasolt cím a PR-leírásban; a Jira-ticket létrehozása kifejezett kérésre).
 - A **Stack-változás** jelölőnégyzetet pipáld, ha a PR ADR-t vagy `kg-stack` módosítást tartalmaz.
 - Reviewer: a másik fejlesztő (CODEOWNERS), opcionálisan; a merge-hez nem kell a jóváhagyása. WIP-limit:
   fejlesztőnként legfeljebb 2 nyitott PR.
@@ -143,6 +163,9 @@ Eredménysor a PR-ba: `Review: <modell>, friss session, normál - 2/3 kör, jóv
 
 - Kövesd a PR-t (`kg-babysit-pr`): a CI-t a végéig és a review-kat (a `demo` és a `main` PR-on is). Piros CI-t
   javíts a PR-ágon; ha nem megy, írd le, mi blokkol.
+- **A PR-leírás a head-del együtt él:** ha utólag lefut egy addig kimaradt ellenőrzés, vagy új commit változtat
+  az állításokon, a PR-leírás „Ellenőrzés”/„Figyelni” része (és kérésre a Jira-komment) is frissül; az
+  elavult „nem futott” sor félrevezeti a reviewert.
 - A merge az emberé: bármelyik fejlesztő (a szerző is) kifejezett „mehet”-je után, merge committal a
   `demo`-ra (hotfixnél squash a `main`-re). Az agent csak erre a kérésre merge-el, és csak zöld CI és lezárt review-ciklus mellett; ha a
   másik fejlesztő változtatást kért, előbb azt kezeli.
