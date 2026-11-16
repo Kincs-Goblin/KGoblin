@@ -181,12 +181,25 @@ $state7 = Omnibus::calculate_omnibus_state(
 assert_same( 0, $state7['sale_started_at'], 'Jövőbeli ütemezett akciónál (is_on_sale = false) a sale_started_at 0 marad' );
 assert_same( 44990, $state7['lowest_30_days'], 'Jövőbeli ütemezett akciónál a normál ár (44 990 Ft) kerül rögzítésre' );
 
+// Eset G (Variáció Omnibus-számítás: ugyanaz az árkövető függvény fut variációnál is)
+$var_state_1 = Omnibus::calculate_omnibus_state( array(), 46990, null, 0, $now - ( 20 * DAY_IN_SECONDS ) );
+$var_state_2 = Omnibus::calculate_omnibus_state( $var_state_1['history'], 46990, 41990, 0, $now - ( 12 * DAY_IN_SECONDS ) );
+$var_state_3 = Omnibus::calculate_omnibus_state( $var_state_2['history'], 46990, null, $var_state_2['sale_started_at'], $now - ( 5 * DAY_IN_SECONDS ) );
+$var_state_4 = Omnibus::calculate_omnibus_state( $var_state_3['history'], 46990, 39990, $var_state_3['sale_started_at'], $now );
+assert_same( 41990, $var_state_4['lowest_30_days'], 'Variáció új akciójánál az előző 30 napos akciós ár (41 990 Ft) marad az Omnibus referenciaár' );
+
 echo "\n=== 3. Magyar adószám validáció tesztek ===\n";
 assert_same( true, Checkout_Fields::is_valid_hungarian_tax_number( '12345678-2-42' ), 'Helyes kötőjeles adószám (12345678-2-42)' );
 assert_same( true, Checkout_Fields::is_valid_hungarian_tax_number( '12345678242' ), 'Helyes 11 jegyű adószám (12345678242)' );
 assert_same( false, Checkout_Fields::is_valid_hungarian_tax_number( '12345' ), 'Túl rövid adószám elutasítása' );
 assert_same( false, Checkout_Fields::is_valid_hungarian_tax_number( '12345678-9-42' ), 'Érvénytelen ÁFA-kód (9) elutasítása' );
 assert_same( false, Checkout_Fields::is_valid_hungarian_tax_number( '' ), 'Üres adószám elutasítása' );
+
+if ( function_exists( 'has_action' ) ) {
+	echo "\n=== 4. WooCommerce hook regisztráció tesztek ===\n";
+	assert_same( true, false !== has_action( 'woocommerce_before_product_object_save', array( Omnibus::class, 'on_before_product_save' ) ), 'Termék Omnibus save hook regisztrálva' );
+	assert_same( true, false !== has_action( 'woocommerce_before_product_variation_object_save', array( Omnibus::class, 'on_before_product_save' ) ), 'Variáció Omnibus save hook regisztrálva' );
+}
 
 if ( $failures > 0 ) {
 	echo "\nÖSSZESÍTÉS: {$failures} teszt ELBUKOTT!\n";

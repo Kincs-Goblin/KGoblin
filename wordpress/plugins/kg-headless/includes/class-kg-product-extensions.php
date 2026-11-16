@@ -135,9 +135,19 @@ class Product_Extensions {
 				continue;
 			}
 
-			$active_int  = Omnibus::parse_price_to_int( $variation->get_price(), $decimals ) ?? 0;
-			$regular_int = Omnibus::parse_price_to_int( $variation->get_regular_price(), $decimals ) ?? $active_int;
-			$sale_int    = Omnibus::parse_price_to_int( $variation->get_sale_price(), $decimals );
+			$raw_active  = $variation->get_price();
+			$raw_regular = $variation->get_regular_price();
+			$raw_sale    = $variation->get_sale_price();
+
+			if ( function_exists( 'wc_get_price_to_display' ) ) {
+				$raw_active  = '' !== (string) $raw_active ? (string) wc_get_price_to_display( $variation, array( 'price' => $raw_active ) ) : $raw_active;
+				$raw_regular = '' !== (string) $raw_regular ? (string) wc_get_price_to_display( $variation, array( 'price' => $raw_regular ) ) : $raw_regular;
+				$raw_sale    = '' !== (string) $raw_sale ? (string) wc_get_price_to_display( $variation, array( 'price' => $raw_sale ) ) : $raw_sale;
+			}
+
+			$active_int  = Omnibus::parse_price_to_int( $raw_active, $decimals ) ?? 0;
+			$regular_int = Omnibus::parse_price_to_int( $raw_regular, $decimals ) ?? $active_int;
+			$sale_int    = Omnibus::parse_price_to_int( $raw_sale, $decimals );
 			$is_on_sale  = (bool) $variation->is_on_sale() && null !== $sale_int && $sale_int > 0 && $sale_int < $regular_int;
 
 			$attrs = array();

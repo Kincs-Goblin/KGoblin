@@ -32,6 +32,7 @@ class Omnibus {
 	 */
 	public static function init(): void {
 		add_action( 'woocommerce_before_product_object_save', array( self::class, 'on_before_product_save' ), 10, 1 );
+		add_action( 'woocommerce_before_product_variation_object_save', array( self::class, 'on_before_product_save' ), 10, 1 );
 	}
 
 	/**

@@ -789,7 +789,7 @@ foreach ( $products_data as $item ) {
 
 	$product->update_meta_data( \KG_Headless\Omnibus::META_HISTORY, $seed_history );
 	$product->update_meta_data( \KG_Headless\Omnibus::META_SALE_START_TS, (string) $sale_start_ts );
-	$product->update_meta_data( \KG_Headless\Omnibus::META_LOWEST_30_DAYS, (string) $item['prior_lowest_30'] );
+	$product->delete_meta_data( \KG_Headless\Omnibus::META_LOWEST_30_DAYS );
 
 	$saved_id        = $product->save();
 	$saved_product   = wc_get_product( $saved_id );
@@ -957,7 +957,7 @@ foreach ( $variations_spec as $vspec ) {
 	);
 	$variation->update_meta_data( \KG_Headless\Omnibus::META_HISTORY, $v_history );
 	$variation->update_meta_data( \KG_Headless\Omnibus::META_SALE_START_TS, (string) $v_sale_start );
-	$variation->update_meta_data( \KG_Headless\Omnibus::META_LOWEST_30_DAYS, (string) $vspec['prior_lowest_30'] );
+	$variation->delete_meta_data( \KG_Headless\Omnibus::META_LOWEST_30_DAYS );
 
 	$saved_vid = $variation->save();
 	echo "Variáció kész: [{$vspec['sku']}] (#{$saved_vid})\n";
@@ -1001,12 +1001,13 @@ $webhook_topics = array(
 	'action.delete_product_cat'  => "KG ({$brand}) Kategória törölve",
 );
 
-$wh_data_store  = \WC_Data_Store::load( 'webhook' );
-$existing_wh    = $wh_data_store->search_webhooks( array( 'limit' => 100 ) );
-$by_topic       = array();
+$wh_data_store = \WC_Data_Store::load( 'webhook' );
+$existing_wh   = $wh_data_store->search_webhooks( array( 'limit' => 100 ) );
+$by_topic      = array();
+$kg_wh_prefix  = "KG ({$brand}) ";
 foreach ( $existing_wh as $wh_id ) {
 	$wh = wc_get_webhook( $wh_id );
-	if ( $wh ) {
+	if ( $wh && str_starts_with( $wh->get_name(), $kg_wh_prefix ) ) {
 		$by_topic[ $wh->get_topic() ] = $wh;
 	}
 }

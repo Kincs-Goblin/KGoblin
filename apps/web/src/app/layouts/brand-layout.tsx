@@ -63,7 +63,7 @@ export async function BrandLayout({ children, params }: BrandLayoutProps) {
             brandName={brand.name}
             tagline={brand.texts.tagline}
             nav={nav}
-            cart={<CartDrawer />}
+            cart={<CartDrawer locale={brand.locale} />}
           />
           <main id="tartalom" className="flex-1">
             {children}

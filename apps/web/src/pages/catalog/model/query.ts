@@ -149,13 +149,18 @@ export function countActiveFilters(state: CatalogQueryState): number {
   return count;
 }
 
-export function toProductQuery(state: CatalogQueryState, categoryId?: number): ProductQuery {
+export function toProductQuery(
+  state: CatalogQueryState,
+  categoryId?: number,
+  minorUnit = 0,
+): ProductQuery {
+  const scale = 10 ** Math.max(0, minorUnit);
   return {
     category: categoryId ? String(categoryId) : undefined,
     onSale: state.onSale || undefined,
     stockStatus: state.inStockOnly ? "instock" : undefined,
-    minPrice: state.minPrice,
-    maxPrice: state.maxPrice,
+    minPrice: state.minPrice !== undefined ? state.minPrice * scale : undefined,
+    maxPrice: state.maxPrice !== undefined ? state.maxPrice * scale : undefined,
     attributes: state.attributes.length > 0 ? state.attributes : undefined,
     page: state.page,
     perPage: PRODUCTS_PER_PAGE,

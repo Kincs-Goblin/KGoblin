@@ -7,8 +7,9 @@ test("katalógus attribútum-, készlet-, árszűrés, rendezés és lapozás", 
   page,
 }, testInfo) => {
   await page.goto("/termekek");
-  await expect(page.getByText("12 termék", { exact: true })).toBeVisible();
-  await expect(page.getByText("1. / 2 oldal")).toBeVisible();
+  const main = page.getByRole("main");
+  await expect(main.getByText("12 termék", { exact: true })).toBeVisible();
+  await expect(main.getByText("1. / 2 oldal")).toBeVisible();
 
   if (takeShots) {
     await page.screenshot({
@@ -18,18 +19,18 @@ test("katalógus attribútum-, készlet-, árszűrés, rendezés és lapozás", 
   }
 
   // Lapozás a 2. oldalra
-  await page
+  await main
     .getByRole("navigation", { name: /lapozó/i })
     .getByRole("link", { name: "2" })
     .click();
   await expect(page).toHaveURL(/oldal=2/);
-  await expect(page.getByText("2. / 2 oldal")).toBeVisible();
+  await expect(main.getByText("2. / 2 oldal")).toBeVisible();
 
   // Csak raktáron gyors szűrő (visszaállítja az oldalszámot 1-re)
-  await page.getByRole("link", { name: "Csak raktáron" }).click();
+  await main.getByRole("link", { name: "Csak raktáron" }).click();
   await expect(page).toHaveURL(/raktaron=1/);
   await expect(page).not.toHaveURL(/oldal=2/);
-  await expect(page.getByText("10 termék", { exact: true })).toBeVisible();
+  await expect(main.getByText("10 termék", { exact: true })).toBeVisible();
 
   // Attribútumszűrés: desktopon oldalsáv, mobilon Sheet drawer
   if (testInfo.project.name === "mobile") {
@@ -55,8 +56,8 @@ test("katalógus attribútum-, készlet-, árszűrés, rendezés és lapozás", 
 
   // Szűrők törlése üres találati listáról
   await page.goto("/termekek?min=900000");
-  await expect(page.getByText("Nincs a szűrésnek megfelelő termék")).toBeVisible();
-  await page.getByRole("link", { name: "Szűrők visszaállítása" }).click();
+  await expect(main.getByText("Nincs a szűrésnek megfelelő termék")).toBeVisible();
+  await main.getByRole("link", { name: "Szűrők visszaállítása" }).click();
   await expect(page).toHaveURL(/\/termekek$/);
 });
 

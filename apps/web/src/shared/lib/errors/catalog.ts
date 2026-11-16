@@ -68,6 +68,16 @@ export const errorCatalog = {
     retryable: false,
     message: "Nem támogatott webhook topic.",
   },
+  "WEBHOOK.PAYLOAD_TOO_LARGE": {
+    status: 413,
+    retryable: false,
+    message: "Túl nagy webhook kérés.",
+  },
+  "WEBHOOK.CONFIG_ERROR": {
+    status: 500,
+    retryable: false,
+    message: "Webhook konfigurációs hiba.",
+  },
   "APP.UNEXPECTED": {
     status: 500,
     retryable: true,

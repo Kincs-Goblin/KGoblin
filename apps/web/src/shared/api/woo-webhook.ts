@@ -4,6 +4,7 @@ import { getBrandById, type Brand } from "@kg/brand-config";
 import { verifyAndParseWooWebhook, type VerifiedWooWebhookEvent } from "@kg/woo-client/webhooks";
 import { NextResponse } from "next/server";
 
+import type { ErrorCode } from "../lib/errors";
 import { cacheTags } from "./cache-tags";
 
 export type WooWebhookDependencies = {
@@ -11,6 +12,10 @@ export type WooWebhookDependencies = {
   env?: Record<string, string | undefined>;
   resolveBrand?: (brandId: string) => Brand | undefined;
 };
+
+function webhookError(code: ErrorCode, status: number, message: string) {
+  return NextResponse.json({ ok: false, code, message }, { status });
+}
 
 export function collectWebhookCacheTags(brandId: string, event: VerifiedWooWebhookEvent): string[] {
   switch (event.topic) {
@@ -22,13 +27,7 @@ export function collectWebhookCacheTags(brandId: string, event: VerifiedWooWebho
     case "product.updated":
     case "product.deleted":
     case "product.restored": {
-      const tags = new Set<string>([
-        cacheTags.catalog(brandId),
-        cacheTags.product(brandId, event.payload.id),
-      ]);
-      if (event.payload.parent_id && event.payload.parent_id > 0) {
-        tags.add(cacheTags.product(brandId, event.payload.parent_id));
-      }
+      const tags = new Set<string>([cacheTags.catalog(brandId)]);
       if (event.payload.slug) {
         tags.add(cacheTags.productSlug(brandId, event.payload.slug));
       }
@@ -97,18 +96,12 @@ export async function handleWooWebhookRequest(
 ): Promise<NextResponse> {
   const brand = (deps.resolveBrand ?? getBrandById)(brandId);
   if (!brand) {
-    return NextResponse.json(
-      { ok: false, code: "BRAND.UNKNOWN", message: "Ismeretlen brand." },
-      { status: 404 },
-    );
+    return webhookError("BRAND.UNKNOWN_HOST", 404, "Ismeretlen brand.");
   }
 
   const bodyResult = await readBoundedBody(request, MAX_WEBHOOK_BODY_BYTES);
   if (!bodyResult.ok) {
-    return NextResponse.json(
-      { ok: false, code: "WEBHOOK.PAYLOAD_TOO_LARGE", message: "Túl nagy webhook kérés." },
-      { status: 413 },
-    );
+    return webhookError("WEBHOOK.PAYLOAD_TOO_LARGE", 413, "Túl nagy webhook kérés.");
   }
   const rawBody = bodyResult.text;
 
@@ -125,10 +118,7 @@ export async function handleWooWebhookRequest(
       brandId: brand.id,
       message: error instanceof Error ? error.message : "Ismeretlen hiba",
     });
-    return NextResponse.json(
-      { ok: false, code: "WEBHOOK.CONFIG_ERROR", message: "Webhook konfigurációs hiba." },
-      { status: 500 },
-    );
+    return webhookError("WEBHOOK.CONFIG_ERROR", 500, "Webhook konfigurációs hiba.");
   }
 
   if (!verified.ok) {

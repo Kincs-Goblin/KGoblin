@@ -39,6 +39,7 @@ type CatalogFiltersProps = {
   attributes: CatalogFilterAttribute[];
   query: CatalogQueryState;
   total: number;
+  currencyUnit?: string;
 };
 
 const filterTexts = catalogTexts.filters;
@@ -75,10 +76,12 @@ function FilterChip({
 function PriceRangeForm({
   basePath,
   query,
+  currencyUnit,
   onApplied,
 }: {
   basePath: string;
   query: CatalogQueryState;
+  currencyUnit: string;
   onApplied?: () => void;
 }) {
   const router = useRouter();
@@ -108,37 +111,39 @@ function PriceRangeForm({
   }
 
   const hasPriceFilter = query.minPrice !== undefined || query.maxPrice !== undefined;
+  const minLabel = filterTexts.minPriceLabel(currencyUnit);
+  const maxLabel = filterTexts.maxPriceLabel(currencyUnit);
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
       <div className="grid grid-cols-2 gap-2">
         <label className="flex flex-col gap-1">
-          <span className="sr-only">{filterTexts.minPriceLabel}</span>
+          <span className="sr-only">{minLabel}</span>
           <Input
             type="number"
             inputMode="numeric"
             min={0}
             max={1_000_000_000}
-            step={100}
+            step={1}
             value={minInput}
             onChange={(event) => setMinInput(event.target.value)}
             placeholder={filterTexts.minPricePlaceholder}
-            aria-label={filterTexts.minPriceLabel}
+            aria-label={minLabel}
             className="border-bronze/60 bg-background/80 text-sm"
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="sr-only">{filterTexts.maxPriceLabel}</span>
+          <span className="sr-only">{maxLabel}</span>
           <Input
             type="number"
             inputMode="numeric"
             min={0}
             max={1_000_000_000}
-            step={100}
+            step={1}
             value={maxInput}
             onChange={(event) => setMaxInput(event.target.value)}
             placeholder={filterTexts.maxPricePlaceholder}
-            aria-label={filterTexts.maxPriceLabel}
+            aria-label={maxLabel}
             className="border-bronze/60 bg-background/80 text-sm"
           />
         </label>
@@ -179,6 +184,7 @@ function FilterSections({
   categories,
   attributes,
   query,
+  currencyUnit = "Ft",
   onNavigate,
 }: Omit<CatalogFiltersProps, "total"> & { onNavigate?: () => void }) {
   const activeCount = countActiveFilters(query);
@@ -212,13 +218,14 @@ function FilterSections({
 
       <div className="border-t border-border/40 pt-4">
         <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-          {filterTexts.priceLabel}
+          {filterTexts.priceLabel(currencyUnit)}
         </h2>
         <div className="mt-2.5">
           <PriceRangeForm
             key={`${query.minPrice ?? ""}-${query.maxPrice ?? ""}`}
             basePath={basePath}
             query={query}
+            currencyUnit={currencyUnit}
             onApplied={onNavigate}
           />
         </div>
@@ -279,6 +286,7 @@ export function CatalogFilterToolbar({
   attributes,
   query,
   total,
+  currencyUnit,
 }: CatalogFiltersProps) {
   const router = useRouter();
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -327,6 +335,7 @@ export function CatalogFilterToolbar({
                 categories={categories}
                 attributes={attributes}
                 query={query}
+                currencyUnit={currencyUnit}
                 onNavigate={() => setSheetOpen(false)}
               />
             </div>

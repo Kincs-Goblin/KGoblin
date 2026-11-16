@@ -1,4 +1,4 @@
-import { formatMoney } from "./money";
+import { formatMoney, getCurrencyLabel, getCurrencyMinorUnit } from "./money";
 
 const nbsp = (value: string) => value.replace(/\s/g, " ");
 
@@ -15,5 +15,13 @@ describe("formatMoney", () => {
     expect(nbsp(formatMoney({ amount: "5", currency: "EUR", minorUnit: 2 }))).toMatch(
       /^0,05 (€|EUR)$/,
     );
+  });
+
+  it("helyes minorUnit és lokalizált pénznemcímke segédfüggvényeket ad", () => {
+    expect(getCurrencyMinorUnit("HUF")).toBe(0);
+    expect(getCurrencyMinorUnit("EUR")).toBe(2);
+    expect(getCurrencyMinorUnit("KWD")).toBe(3);
+    expect(getCurrencyLabel("HUF", "hu-HU")).toBe("Ft");
+    expect(getCurrencyLabel("EUR", "hu-HU")).toMatch(/€|EUR/);
   });
 });

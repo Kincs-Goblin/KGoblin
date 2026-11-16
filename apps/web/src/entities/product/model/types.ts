@@ -78,6 +78,7 @@ export type Product = {
   lowStockRemaining: number | null;
   deliveryTime: string | null;
   rarity: Rarity;
+  locale?: string;
 };
 
 export type ProductPageResult = {

@@ -6,30 +6,31 @@ import type { ProductPrice as ProductPriceModel } from "../model/types";
 
 type ProductPriceProps = {
   price: ProductPriceModel;
+  locale?: string;
   size?: "sm" | "lg";
   className?: string;
 };
 
 /** Csak a Woo által adott árakat jeleníti meg; kedvezményt vagy különbözetet nem számol. */
-export function ProductPrice({ price, size = "sm", className }: ProductPriceProps) {
+export function ProductPrice({ price, locale, size = "sm", className }: ProductPriceProps) {
   return (
     <div className={cn("flex flex-col gap-0.5", className)}>
       <div className="flex flex-wrap items-baseline gap-x-2">
         <span
           className={cn("font-heading font-bold text-gold", size === "lg" ? "text-3xl" : "text-lg")}
         >
-          {formatMoney(price.current)}
+          {formatMoney(price.current, locale)}
         </span>
         {price.onSale ? (
           <span className="text-sm text-muted-foreground line-through">
             <span className="sr-only">{productTexts.regularPrice}: </span>
-            {formatMoney(price.regular)}
+            {formatMoney(price.regular, locale)}
           </span>
         ) : null}
       </div>
       {price.lowest30Days ? (
         <p className="text-xs text-muted-foreground">
-          {productTexts.lowest30Days} {formatMoney(price.lowest30Days)}
+          {productTexts.lowest30Days} {formatMoney(price.lowest30Days, locale)}
         </p>
       ) : null}
     </div>

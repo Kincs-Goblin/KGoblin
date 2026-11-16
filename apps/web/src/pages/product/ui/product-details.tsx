@@ -7,7 +7,9 @@ import {
   RarityBadge,
   StockLabel,
   type Product,
+  type ProductAttribute,
   type ProductVariation,
+  type ProductVariationAttribute,
 } from "@/entities/product";
 import { AddToCartButton } from "@/features/add-to-cart";
 import { cn } from "@/shared/lib/utils";
@@ -15,16 +17,118 @@ import { cn } from "@/shared/lib/utils";
 import { productPageTexts } from "../config/texts";
 import { ProductGallery } from "./product-gallery";
 
-function variationHasTerm(variation: ProductVariation, taxonomy: string, slug: string): boolean {
-  return variation.attributes.some((attr) => attr.taxonomy === taxonomy && attr.slug === slug);
+function getAttributeKey(attr: Pick<ProductAttribute, "taxonomy" | "name">): string {
+  return attr.taxonomy || attr.name;
 }
 
-function getInitialSelection(product: Product): Record<string, string> {
+function normalizeAttrKey(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function variationAttrMatchesProductAttr(
+  vAttr: Pick<ProductVariationAttribute, "taxonomy" | "name">,
+  attr: Pick<ProductAttribute, "taxonomy" | "name">,
+): boolean {
+  if (attr.taxonomy) {
+    return vAttr.taxonomy === attr.taxonomy;
+  }
+  if (vAttr.name.trim().toLowerCase() === attr.name.trim().toLowerCase()) {
+    return true;
+  }
+  return vAttr.taxonomy !== "" && normalizeAttrKey(vAttr.taxonomy) === normalizeAttrKey(attr.name);
+}
+
+function variationMatchesOption(
+  variation: ProductVariation,
+  attr: Pick<ProductAttribute, "taxonomy" | "name">,
+  slug: string,
+): boolean {
+  const entry = variation.attributes.find((vAttr) => variationAttrMatchesProductAttr(vAttr, attr));
+  if (!entry || entry.slug === "") return true;
+  return entry.slug === slug;
+}
+
+function variationSpecificity(
+  variation: ProductVariation,
+  variationAttributes: ProductAttribute[],
+  selection: Record<string, string>,
+): number {
+  let score = 0;
+  for (const attr of variationAttributes) {
+    const selectedSlug = selection[getAttributeKey(attr)];
+    if (!selectedSlug) continue;
+    const entry = variation.attributes.find((vAttr) =>
+      variationAttrMatchesProductAttr(vAttr, attr),
+    );
+    if (entry && entry.slug === selectedSlug) {
+      score += 1;
+    }
+  }
+  return score;
+}
+
+function findMatchingVariation(
+  variations: ProductVariation[],
+  variationAttributes: ProductAttribute[],
+  selection: Record<string, string>,
+): ProductVariation | null {
+  let best: ProductVariation | null = null;
+  let bestScore = -1;
+  for (const variation of variations) {
+    const matchesAll = variationAttributes.every((attr) => {
+      const selectedSlug = selection[getAttributeKey(attr)];
+      return !selectedSlug || variationMatchesOption(variation, attr, selectedSlug);
+    });
+    if (!matchesAll) continue;
+    const score = variationSpecificity(variation, variationAttributes, selection);
+    if (score > bestScore) {
+      best = variation;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
+function selectionFromVariation(
+  variation: ProductVariation,
+  variationAttributes: ProductAttribute[],
+  preferred?: Record<string, string>,
+): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const attr of variationAttributes) {
+    const key = getAttributeKey(attr);
+    const entry = variation.attributes.find((vAttr) =>
+      variationAttrMatchesProductAttr(vAttr, attr),
+    );
+    if (entry && entry.slug !== "") {
+      result[key] = entry.slug;
+    } else {
+      const preferredSlug = preferred?.[key];
+      const hasPreferred = preferredSlug && attr.terms.some((term) => term.slug === preferredSlug);
+      const fallbackSlug = hasPreferred ? preferredSlug : attr.terms[0]?.slug;
+      if (fallbackSlug) {
+        result[key] = fallbackSlug;
+      }
+    }
+  }
+  return result;
+}
+
+function getInitialSelection(
+  product: Product,
+  variationAttributes: ProductAttribute[],
+): Record<string, string> {
   const initialVariation =
     product.variations.find((variation) => variation.inStock && variation.purchasable) ??
     product.variations[0];
   if (!initialVariation) return {};
-  return Object.fromEntries(initialVariation.attributes.map((attr) => [attr.taxonomy, attr.slug]));
+  return selectionFromVariation(initialVariation, variationAttributes);
 }
 
 export function ProductDetails({ product }: { product: Product }) {
@@ -38,63 +142,44 @@ export function ProductDetails({ product }: { product: Product }) {
   );
 
   const [selected, setSelected] = useState<Record<string, string>>(() =>
-    getInitialSelection(product),
+    getInitialSelection(product, variationAttributes),
   );
 
   const activeVariation = useMemo(() => {
     if (product.variations.length === 0) return null;
-    return (
-      product.variations.find((variation) =>
-        variationAttributes.every(
-          (attr) =>
-            !selected[attr.taxonomy] ||
-            variationHasTerm(variation, attr.taxonomy, selected[attr.taxonomy]!),
-        ),
-      ) ?? null
-    );
+    return findMatchingVariation(product.variations, variationAttributes, selected);
   }, [product.variations, variationAttributes, selected]);
 
-  function handleSelectTerm(attrIndex: number, taxonomy: string, slug: string) {
+  function handleSelectTerm(attrIndex: number, attr: ProductAttribute, slug: string) {
+    const key = getAttributeKey(attr);
     setSelected((prev) => {
-      const next = { ...prev, [taxonomy]: slug };
-      const exactMatch = product.variations.find((variation) =>
-        variationAttributes.every(
-          (attr) =>
-            !next[attr.taxonomy] ||
-            variationHasTerm(variation, attr.taxonomy, next[attr.taxonomy]!),
-        ),
-      );
+      const next = { ...prev, [key]: slug };
+      const exactMatch = findMatchingVariation(product.variations, variationAttributes, next);
       if (exactMatch) return next;
 
       // Ha a későbbi attribútum korábbi választása nem létezik az új opcióval, ugorjunk az első érvényes variációra.
       const prefixAttrs = variationAttributes.slice(0, attrIndex + 1);
       const fallback =
-        product.variations.find((variation) =>
-          prefixAttrs.every(
-            (attr) =>
-              !next[attr.taxonomy] ||
-              variationHasTerm(variation, attr.taxonomy, next[attr.taxonomy]!),
-          ),
-        ) ?? product.variations.find((variation) => variationHasTerm(variation, taxonomy, slug));
+        findMatchingVariation(product.variations, prefixAttrs, next) ??
+        product.variations.find((variation) => variationMatchesOption(variation, attr, slug));
 
       if (!fallback) return next;
-      return Object.fromEntries(fallback.attributes.map((attr) => [attr.taxonomy, attr.slug]));
+      return selectionFromVariation(fallback, variationAttributes, next);
     });
   }
 
-  function isOptionEnabled(attrIndex: number, taxonomy: string, slug: string): boolean {
+  function isOptionEnabled(attrIndex: number, attr: ProductAttribute, slug: string): boolean {
     if (attrIndex === 0) {
-      return product.variations.some((variation) => variationHasTerm(variation, taxonomy, slug));
+      return product.variations.some((variation) => variationMatchesOption(variation, attr, slug));
     }
     const previousAttrs = variationAttributes.slice(0, attrIndex);
     return product.variations.some(
       (variation) =>
-        variationHasTerm(variation, taxonomy, slug) &&
-        previousAttrs.every(
-          (prevAttr) =>
-            !selected[prevAttr.taxonomy] ||
-            variationHasTerm(variation, prevAttr.taxonomy, selected[prevAttr.taxonomy]!),
-        ),
+        variationMatchesOption(variation, attr, slug) &&
+        previousAttrs.every((prevAttr) => {
+          const prevSlug = selected[getAttributeKey(prevAttr)];
+          return !prevSlug || variationMatchesOption(variation, prevAttr, prevSlug);
+        }),
     );
   }
 
@@ -113,7 +198,19 @@ export function ProductDetails({ product }: { product: Product }) {
     ? Boolean(activeVariation && activeVariation.inStock && activeVariation.purchasable)
     : product.inStock && product.purchasable;
   const variantLabel = activeVariation
-    ? activeVariation.attributes.map((attr) => attr.value).join(", ")
+    ? variationAttributes
+        .map((attr) => {
+          const key = getAttributeKey(attr);
+          const selectedSlug = selected[key];
+          const selectedTerm = attr.terms.find((term) => term.slug === selectedSlug);
+          if (selectedTerm) return selectedTerm.name;
+          const entry = activeVariation.attributes.find((vAttr) =>
+            variationAttrMatchesProductAttr(vAttr, attr),
+          );
+          return entry?.value || "";
+        })
+        .filter(Boolean)
+        .join(", ") || undefined
     : undefined;
 
   return (
@@ -147,44 +244,47 @@ export function ProductDetails({ product }: { product: Product }) {
               aria-label={productPageTexts.variantGroupLabel}
               className="surface-wood flex flex-col gap-4 rounded-xl border border-bronze/40 p-4"
             >
-              {variationAttributes.map((attr, attrIndex) => (
-                <div key={attr.taxonomy} className="flex flex-col gap-2">
-                  <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                    {attr.name}
-                  </span>
-                  <div className="flex flex-wrap gap-2">
-                    {attr.terms.map((term) => {
-                      const isSelected = selected[attr.taxonomy] === term.slug;
-                      const enabled = isOptionEnabled(attrIndex, attr.taxonomy, term.slug);
-                      return (
-                        <button
-                          key={term.slug}
-                          type="button"
-                          disabled={!enabled}
-                          aria-pressed={isSelected}
-                          title={!enabled ? productPageTexts.unavailableCombination : undefined}
-                          onClick={() => handleSelectTerm(attrIndex, attr.taxonomy, term.slug)}
-                          className={cn(
-                            "rounded-lg border px-3 py-1.5 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:outline-none",
-                            isSelected
-                              ? "border-gold bg-gold font-medium text-gold-foreground"
-                              : enabled
-                                ? "border-bronze/60 text-foreground/90 hover:border-gold hover:text-gold"
-                                : "cursor-not-allowed border-border/30 text-muted-foreground/45 line-through",
-                          )}
-                        >
-                          {term.name}
-                        </button>
-                      );
-                    })}
+              {variationAttributes.map((attr, attrIndex) => {
+                const attrKey = getAttributeKey(attr);
+                return (
+                  <div key={attrKey} className="flex flex-col gap-2">
+                    <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                      {attr.name}
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {attr.terms.map((term) => {
+                        const isSelected = selected[attrKey] === term.slug;
+                        const enabled = isOptionEnabled(attrIndex, attr, term.slug);
+                        return (
+                          <button
+                            key={term.slug}
+                            type="button"
+                            disabled={!enabled}
+                            aria-pressed={isSelected}
+                            title={!enabled ? productPageTexts.unavailableCombination : undefined}
+                            onClick={() => handleSelectTerm(attrIndex, attr, term.slug)}
+                            className={cn(
+                              "rounded-lg border px-3 py-1.5 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:outline-none",
+                              isSelected
+                                ? "border-gold bg-gold font-medium text-gold-foreground"
+                                : enabled
+                                  ? "border-bronze/60 text-foreground/90 hover:border-gold hover:text-gold"
+                                  : "cursor-not-allowed border-border/30 text-muted-foreground/45 line-through",
+                            )}
+                          >
+                            {term.name}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : null}
 
           <div className="surface-wood flex flex-col gap-4 rounded-xl border border-bronze/40 p-5">
-            <ProductPrice price={activePrice} size="lg" />
+            <ProductPrice price={activePrice} size="lg" locale={product.locale} />
             <StockLabel
               stockStatus={activeStockStatus}
               inStock={activeInStock}

@@ -22,6 +22,24 @@ describe("WooCommerce lokális Docker contract-teszt", () => {
 
     const first =
       page.products.find((p) => p.type === "simple" && p.is_in_stock) ?? page.products[0]!;
+    const saleSimple = page.products.find((p) => p.type === "simple" && p.on_sale);
+    const variableProduct = page.products.find((p) => p.type === "variable");
+
+    expect(first.extensions.kg_headless).toBeDefined();
+    expect(typeof first.extensions.kg_headless?.delivery_time).toBe("string");
+    if (saleSimple) {
+      expect(saleSimple.extensions.kg_headless?.lowest_price_30_days).toEqual(expect.any(Number));
+    }
+    expect(variableProduct).toBeDefined();
+    const variations = variableProduct?.extensions.kg_headless?.variations ?? [];
+    expect(variations.length).toBeGreaterThan(0);
+    expect(variations[0]?.attributes.length).toBeGreaterThan(0);
+    expect(Number(variations[0]?.prices.price)).toBeGreaterThan(0);
+    expect(variations[0]?.lowest_price_30_days).toEqual(expect.any(Number));
+    expect(
+      variations.some((v) => typeof v.delivery_time === "string" && v.delivery_time.length > 0),
+    ).toBe(true);
+
     const [bySlug, byId, categories, attributes, initialCart] = await Promise.all([
       client.getProductBySlug(first.slug),
       client.getProductById(first.id),

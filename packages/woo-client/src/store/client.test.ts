@@ -62,6 +62,44 @@ describe("createStoreClient", () => {
     expect(variable?.extensions.kg_headless?.variations?.length).toBeGreaterThan(0);
   });
 
+  it("elfogadja a lokális attribútum null taxonomy-ját és az Any variáció üres slug-ját", async () => {
+    const base = structuredClone(productsJson.find((p) => p.type === "variable")!) as Record<
+      string,
+      unknown
+    >;
+    base.attributes = [
+      {
+        id: 0,
+        name: "Anyag",
+        taxonomy: null,
+        has_variations: true,
+        terms: [
+          { id: 0, name: "Acél", slug: "Acél" },
+          { id: 0, name: "Titán", slug: "Titán" },
+        ],
+      },
+    ];
+    const ext = structuredClone(
+      (base.extensions as { kg_headless: { variations: Array<Record<string, unknown>> } })
+        .kg_headless,
+    );
+    ext.variations = [
+      {
+        ...ext.variations[0]!,
+        attributes: [{ name: "Anyag", taxonomy: "anyag", value: "", slug: "" }],
+      },
+    ];
+    base.extensions = { kg_headless: ext };
+
+    const client = createStoreClient({
+      baseUrl: "http://woo.test",
+      fetch: async () => jsonResponse([base]),
+    });
+    const [parsed] = await client.getProducts();
+    expect(parsed?.attributes[0]?.taxonomy).toBe("");
+    expect(parsed?.extensions.kg_headless?.variations?.[0]?.attributes[0]?.slug).toBe("");
+  });
+
   it("getProductsPage kiolvassa az X-WP-Total / X-WP-TotalPages fejléceket és szerializálja a szűrőket", async () => {
     const fetchMock = vi.fn(
       async () =>

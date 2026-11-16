@@ -105,8 +105,6 @@ describe("handleWooWebhookRequest", () => {
     expect(firstJson.revalidated).toEqual(
       expect.arrayContaining([
         "gamer:catalog",
-        "gamer:product:18",
-        "gamer:product:63",
         "gamer:product-slug:apexstrike-pro",
         "gamer:category:16",
       ]),
@@ -120,7 +118,7 @@ describe("handleWooWebhookRequest", () => {
       env: { WOO_GAMER_WEBHOOK_SECRET: "whsec_gamer" },
     });
     expect(second.status).toBe(200);
-    expect(revalidate).toHaveBeenCalledTimes(10);
+    expect(revalidate).toHaveBeenCalledTimes(6);
   });
 
   it("kategória webhooknál (<brand>:catalog + <brand>:category:<id>) és pingnél helyesen válaszol", async () => {
@@ -157,7 +155,7 @@ describe("handleWooWebhookRequest", () => {
     expect(revalidate).toHaveBeenCalledTimes(2);
   });
 
-  it("ismeretlen brand esetén 404-et ad", async () => {
+  it("ismeretlen brand esetén 404 BRAND.UNKNOWN_HOST választ ad", async () => {
     const revalidate = vi.fn();
     const res = await handleWooWebhookRequest(
       new Request("http://localhost:3000/api/webhooks/woo/nincs", { method: "POST", body: "{}" }),
@@ -165,10 +163,11 @@ describe("handleWooWebhookRequest", () => {
       { revalidate, resolveBrand, env: {} },
     );
     expect(res.status).toBe(404);
+    expect(await res.json()).toMatchObject({ ok: false, code: "BRAND.UNKNOWN_HOST" });
     expect(revalidate).not.toHaveBeenCalled();
   });
 
-  it("1 MiB-nál nagyobb törzs esetén 413-at ad és nem pufferel / revalidál", async () => {
+  it("1 MiB-nál nagyobb törzs esetén 413 WEBHOOK.PAYLOAD_TOO_LARGE választ ad és nem pufferel / revalidál", async () => {
     const revalidate = vi.fn();
     const oversized = "x".repeat(1024 * 1024 + 10);
     const res = await handleWooWebhookRequest(
@@ -180,6 +179,7 @@ describe("handleWooWebhookRequest", () => {
       { revalidate, resolveBrand, env: { WOO_GAMER_WEBHOOK_SECRET: "whsec_gamer" } },
     );
     expect(res.status).toBe(413);
+    expect(await res.json()).toMatchObject({ ok: false, code: "WEBHOOK.PAYLOAD_TOO_LARGE" });
     expect(revalidate).not.toHaveBeenCalled();
   });
 });

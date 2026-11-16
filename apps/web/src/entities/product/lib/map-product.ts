@@ -118,5 +118,6 @@ export function mapProduct(raw: StoreProduct, brand: Brand): Product {
       Number(raw.prices.regular_price),
       brand.merchandising.rarityThresholds,
     ),
+    locale: brand.locale,
   };
 }

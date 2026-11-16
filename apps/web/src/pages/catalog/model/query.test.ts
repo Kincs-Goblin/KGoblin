@@ -122,4 +122,12 @@ describe("toggleAttributeFilter & countActiveFilters & toProductQuery", () => {
       page: 1,
     });
   });
+
+  it("minorUnit > 0 esetén felszorozza a minPrice/maxPrice határokat", () => {
+    const state = parseCatalogQuery({ min: "15", max: "49" }, sampleAttributes);
+    expect(toProductQuery(state, undefined, 2)).toMatchObject({
+      minPrice: 1500,
+      maxPrice: 4900,
+    });
+  });
 });

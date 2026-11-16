@@ -153,19 +153,47 @@ add_filter(
 
 /**
  * 5. Lokális Docker fejlesztői környezetben (opt-in) a localhost / host.docker.internal webhook
- *    célcímek engedélyezése a `wp_safe_remote_post` hívásokhoz. Élesben soha nincs bekapcsolva.
+ *    célcímek és dev portok engedélyezése a `wp_safe_remote_post` hívásokhoz. Élesben soha nincs bekapcsolva.
  */
-if ( '1' === getenv( 'KG_ALLOW_LOCAL_WEBHOOKS' ) || 'yes' === get_option( 'kg_headless_allow_local_webhooks' ) ) {
-	add_filter(
-		'http_request_host_is_external',
-		static function ( bool $external, string $host ): bool {
-			if ( in_array( strtolower( $host ), array( 'host.docker.internal', 'localhost', '127.0.0.1' ), true ) ) {
-				return true;
-			}
-			return $external;
-		},
-		10,
-		2
-	);
+function kg_headless_allows_local_webhooks(): bool {
+	return '1' === getenv( 'KG_ALLOW_LOCAL_WEBHOOKS' )
+		|| 'yes' === get_option( 'kg_headless_allow_local_webhooks' );
 }
+
+add_filter(
+	'http_request_host_is_external',
+	static function ( bool $external, string $host ): bool {
+		if ( ! kg_headless_allows_local_webhooks() ) {
+			return $external;
+		}
+		if ( in_array( strtolower( $host ), array( 'host.docker.internal', 'localhost', '127.0.0.1' ), true ) ) {
+			return true;
+		}
+		return $external;
+	},
+	10,
+	2
+);
+
+add_filter(
+	'http_allowed_safe_ports',
+	static function ( array $ports ): array {
+		if ( ! kg_headless_allows_local_webhooks() ) {
+			return $ports;
+		}
+		$dev_ports = array( 3000, 3001 );
+		$fe_port   = wp_parse_url( kg_headless_get_frontend_url(), PHP_URL_PORT );
+		if ( is_int( $fe_port ) && $fe_port > 0 ) {
+			$dev_ports[] = $fe_port;
+		}
+		foreach ( $dev_ports as $port ) {
+			if ( ! in_array( $port, $ports, true ) ) {
+				$ports[] = $port;
+			}
+		}
+		return $ports;
+	},
+	10,
+	1
+);
 

@@ -40,14 +40,22 @@ export const productAttributeTermRefSchema = z.object({
 export const productAttributeSchema = z.object({
   id: z.number(),
   name: z.string(),
-  taxonomy: z.string().default(""),
+  taxonomy: z
+    .string()
+    .nullable()
+    .transform((val) => val ?? "")
+    .default(""),
   has_variations: z.boolean().default(false),
   terms: z.array(productAttributeTermRefSchema).default([]),
 });
 
 export const kgHeadlessVariationAttributeSchema = z.object({
   name: z.string(),
-  taxonomy: z.string(),
+  taxonomy: z
+    .string()
+    .nullable()
+    .transform((val) => val ?? "")
+    .default(""),
   value: z.string(),
   slug: z.string(),
 });

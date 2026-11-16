@@ -24,7 +24,7 @@ import {
 import { cartDrawerTexts } from "../config/texts";
 
 /** A fejléc kosár-gombja és a jobbról beúszó kosár. Összeget nem számol (`totalsNote`). */
-export function CartDrawer() {
+export function CartDrawer({ locale }: { locale?: string } = {}) {
   const { state, itemCount, dispatch } = useCart();
   const [open, setOpen] = useState(false);
 
@@ -158,7 +158,7 @@ export function CartDrawer() {
                             {cartDrawerTexts.unitPrice}
                           </span>
                           <span className="font-heading text-gold">
-                            {formatMoney(line.unitPrice)}
+                            {formatMoney(line.unitPrice, locale)}
                           </span>
                         </p>
                       </div>
