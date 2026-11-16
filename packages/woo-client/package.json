@@ -6,7 +6,6 @@
   "exports": {
     ".": "./src/index.ts",
     "./rest": "./src/rest/index.ts",
-    "./rest/node": "./src/rest/node.ts",
     "./webhooks": "./src/webhooks/index.ts",
     "./fixtures": "./test/fixtures/index.ts",
     "./msw": "./test/msw/index.ts"

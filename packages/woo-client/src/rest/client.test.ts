@@ -186,11 +186,84 @@ describe("createWooRestClient(brand)", () => {
     ).toThrowError(/HTTPS/);
   });
 
-  it("a @kg/woo-client/rest/node belépési pont server-only nélkül működik Node-ban", async () => {
-    const nodeEntry = await import("./node");
-    const entryPath = fileURLToPath(new URL("./node.ts", import.meta.url));
-    const source = readFileSync(entryPath, "utf8");
-    expect(source).not.toContain('import "server-only"');
-    expect(typeof nodeEntry.createWooRestClient).toBe("function");
+  it("loopback HTTP-n one-legged OAuth 1.0a HMAC-SHA256 aláírást küld consumer_secret nélkül (matematikai ellenőrzéssel)", async () => {
+    const { createHmac } = await import("node:crypto");
+    const fetchMock = vi.fn(async () => jsonResponse([]));
+    const rest = createRestClient({
+      baseUrl: "http://localhost:8080",
+      consumerKey: "ck_loopback",
+      consumerSecret: "cs_super_secret",
+      fetch: fetchMock,
+    });
+
+    await rest.listProducts({ perPage: 5, sku: "KG+1 ~ teszt!" });
+
+    const [calledUrl, init] = fetchMock.mock.calls[0] as unknown as [URL, RequestInit];
+    expect(calledUrl.searchParams.has("consumer_key")).toBe(false);
+    expect(calledUrl.searchParams.has("consumer_secret")).toBe(false);
+    expect(calledUrl.searchParams.get("oauth_consumer_key")).toBe("ck_loopback");
+    expect(calledUrl.searchParams.get("oauth_signature_method")).toBe("HMAC-SHA256");
+    expect(calledUrl.searchParams.get("oauth_timestamp")).toMatch(/^\d+$/);
+    expect(calledUrl.searchParams.get("oauth_nonce")).toMatch(/^[0-9a-f]{32}$/);
+
+    const rfc3986 = (v: string) =>
+      encodeURIComponent(v).replace(
+        /[!'()*]/g,
+        (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
+      );
+    const params = Array.from(calledUrl.searchParams.entries())
+      .filter(([k]) => k !== "oauth_signature")
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(([k, v]) => rfc3986(`${rfc3986(k)}=${rfc3986(v)}`))
+      .join("%26");
+    const stringToSign = `GET&${rfc3986("http://localhost:8080/wp-json/wc/v3/products")}&${params}`;
+    const expectedSig = createHmac("sha256", "cs_super_secret&")
+      .update(stringToSign)
+      .digest("base64");
+    expect(calledUrl.searchParams.get("oauth_signature")).toBe(expectedSig);
+
+    const headers = init.headers as Record<string, string>;
+    expect(headers.Authorization).toBeUndefined();
+  });
+
+  it("REST v3 401/403 WOO.UNAVAILABLE, míg a REST 400 stock/quantity WOO.INVALID_RESPONSE marad", async () => {
+    const rest401 = createRestClient({
+      baseUrl: "https://woo.example.test",
+      consumerKey: "ck",
+      consumerSecret: "cs",
+      fetch: async () =>
+        jsonResponse({ code: "woocommerce_rest_cannot_view", message: "Nincs jogosultság." }, 401),
+    });
+    await expect(rest401.listProducts()).rejects.toMatchObject({
+      code: "WOO.UNAVAILABLE",
+      status: 401,
+    });
+
+    const rest403 = createRestClient({
+      baseUrl: "https://woo.example.test",
+      consumerKey: "ck",
+      consumerSecret: "cs",
+      fetch: async () =>
+        jsonResponse({ code: "woocommerce_rest_cannot_create", message: "Tiltott." }, 403),
+    });
+    await expect(rest403.batchProducts({ create: [] })).rejects.toMatchObject({
+      code: "WOO.UNAVAILABLE",
+      status: 403,
+    });
+
+    const rest400Stock = createRestClient({
+      baseUrl: "https://woo.example.test",
+      consumerKey: "ck",
+      consumerSecret: "cs",
+      fetch: async () =>
+        jsonResponse(
+          { code: "woocommerce_rest_product_invalid_stock", message: "Hibás készlet." },
+          400,
+        ),
+    });
+    await expect(rest400Stock.batchProducts({ update: [] })).rejects.toMatchObject({
+      code: "WOO.INVALID_RESPONSE",
+      status: 400,
+    });
   });
 });

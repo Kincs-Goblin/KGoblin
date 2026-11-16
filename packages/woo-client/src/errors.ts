@@ -6,7 +6,8 @@ export type WooErrorCode =
   | "CART.INVALID_QUANTITY"
   | "CART.COUPON_INVALID"
   | "CART.SESSION_INVALID"
-  | "CHECKOUT.VALIDATION_FAILED";
+  | "CHECKOUT.VALIDATION_FAILED"
+  | "CHECKOUT.PAYMENT_DECLINED";
 
 export type WooErrorContext = "catalog" | "cart" | "checkout" | "rest";
 
@@ -61,29 +62,45 @@ export function mapWooErrorCode(
     return "CART.SESSION_INVALID";
   }
 
+  if (context === "rest" && (status === 401 || status === 403)) {
+    return "WOO.UNAVAILABLE";
+  }
+
   if (!normalized) {
     return "WOO.INVALID_RESPONSE";
   }
 
   if (
-    normalized.includes("stock") ||
-    normalized.includes("not_purchasable") ||
-    normalized === "woocommerce_rest_product_partially_out_of_stock"
+    (context === "cart" || context === "checkout") &&
+    (normalized.includes("stock") ||
+      normalized.includes("not_purchasable") ||
+      normalized === "woocommerce_rest_product_partially_out_of_stock")
   ) {
     return "CART.OUT_OF_STOCK";
   }
-  if (normalized.includes("quantity")) {
+  if ((context === "cart" || context === "checkout") && normalized.includes("quantity")) {
     return "CART.INVALID_QUANTITY";
   }
-  if (normalized.includes("coupon")) {
+  if ((context === "cart" || context === "checkout") && normalized.includes("coupon")) {
     return "CART.COUPON_INVALID";
   }
+  if (context === "checkout" && normalized.startsWith("kg_")) {
+    return "CHECKOUT.VALIDATION_FAILED";
+  }
   if (
-    normalized.startsWith("kg_") ||
-    (context === "checkout" &&
-      (normalized.includes("checkout") ||
-        normalized.includes("invalid_param") ||
-        normalized.includes("missing_param")))
+    context === "checkout" &&
+    (normalized === "woocommerce_rest_checkout_process_payment_error" ||
+      normalized.includes("payment_declined") ||
+      normalized.includes("payment_failed") ||
+      normalized.includes("payment_error"))
+  ) {
+    return "CHECKOUT.PAYMENT_DECLINED";
+  }
+  if (
+    context === "checkout" &&
+    (normalized.includes("checkout") ||
+      normalized.includes("invalid_param") ||
+      normalized.includes("missing_param"))
   ) {
     return "CHECKOUT.VALIDATION_FAILED";
   }

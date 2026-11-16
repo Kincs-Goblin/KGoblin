@@ -311,4 +311,59 @@ describe("createWooClient(brand) + MSW Store API", () => {
       code: "CART.SESSION_INVALID",
     });
   });
+
+  it("checkout fizetési hiba CHECKOUT.PAYMENT_DECLINED, míg a kg_payment_obligation_not_accepted CHECKOUT.VALIDATION_FAILED marad", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = new URL(String(input));
+      if (url.pathname.endsWith("/checkout") && init?.method === "POST") {
+        const body = JSON.parse(String(init.body)) as { payment_method?: string };
+        if (body.payment_method === "declined_card") {
+          return jsonResponse(
+            {
+              code: "woocommerce_rest_checkout_process_payment_error",
+              message: "A kártyás fizetés elutasítva.",
+            },
+            400,
+          );
+        }
+        return jsonResponse(
+          {
+            code: "kg_payment_obligation_not_accepted",
+            message: "Fizetési kötelezettség elfogadása kötelező.",
+          },
+          400,
+        );
+      }
+      return jsonResponse({});
+    });
+
+    const client = createStoreClient({ baseUrl: "https://woo.example.test", fetch: fetchMock });
+    const address = {
+      first_name: "Teszt",
+      last_name: "Elek",
+      address_1: "Kossuth u. 1.",
+      city: "Budapest",
+      postcode: "1053",
+      country: "HU",
+      email: "teszt@example.com",
+    };
+    const baseCheckout = {
+      billing_address: address,
+      shipping_address: address,
+    };
+
+    await expect(
+      client.submitCheckout(
+        { ...baseCheckout, payment_method: "declined_card" },
+        { cartToken: "t", nonce: "n" },
+      ),
+    ).rejects.toMatchObject({ code: "CHECKOUT.PAYMENT_DECLINED" });
+
+    await expect(
+      client.submitCheckout(
+        { ...baseCheckout, payment_method: "stripe" },
+        { cartToken: "t", nonce: "n" },
+      ),
+    ).rejects.toMatchObject({ code: "CHECKOUT.VALIDATION_FAILED" });
+  });
 });

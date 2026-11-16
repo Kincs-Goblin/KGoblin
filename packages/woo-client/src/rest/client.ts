@@ -99,10 +99,77 @@ function isLoopbackHost(hostname: string): boolean {
   return normalized === "localhost" || normalized === "127.0.0.1" || normalized === "[::1]";
 }
 
+function rfc3986Encode(value: string): string {
+  return encodeURIComponent(value).replace(
+    /[!'()*]/g,
+    (ch) => `%${ch.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]!);
+  }
+  return btoa(binary);
+}
+
+function createOAuthNonce(): string {
+  const bytes = new Uint8Array(16);
+  globalThis.crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * WooCommerce 11.x plain HTTP alatt csak RFC 5849 one-legged OAuth 1.0a aláírást fogad el
+ * (`is_ssl()` hamis esetén a query-stringes `consumer_secret` elutasításra kerül).
+ * Ezt kizárólag lokális loopback fejlesztői/contract-teszt végponton használjuk.
+ */
+async function signLoopbackOAuth1Request(
+  method: "GET" | "POST" | "PUT",
+  url: URL,
+  consumerKey: string,
+  consumerSecret: string,
+): Promise<void> {
+  url.searchParams.set("oauth_consumer_key", consumerKey);
+  url.searchParams.set("oauth_timestamp", String(Math.floor(Date.now() / 1000)));
+  url.searchParams.set("oauth_nonce", createOAuthNonce());
+  url.searchParams.set("oauth_signature_method", "HMAC-SHA256");
+
+  const sortedEntries = Array.from(url.searchParams.entries()).sort(([a], [b]) =>
+    a < b ? -1 : a > b ? 1 : 0,
+  );
+  const encodedPairs = sortedEntries.map(([k, v]) =>
+    rfc3986Encode(`${rfc3986Encode(k)}=${rfc3986Encode(v)}`),
+  );
+  const baseUri = rfc3986Encode(`${url.origin}${url.pathname}`);
+  const stringToSign = `${method.toUpperCase()}&${baseUri}&${encodedPairs.join("%26")}`;
+
+  const cryptoKey = await globalThis.crypto.subtle.importKey(
+    "raw",
+    utf8Encoder.encode(`${consumerSecret}&`),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sigBuffer = await globalThis.crypto.subtle.sign(
+    "HMAC",
+    cryptoKey,
+    utf8Encoder.encode(stringToSign),
+  );
+  url.searchParams.set("oauth_signature", bytesToBase64(new Uint8Array(sigBuffer)));
+}
+
 function redactErrorReason(cause: unknown, key: string, secret: string): string | undefined {
   if (!(cause instanceof Error)) return undefined;
   let message = cause.message;
-  if (key) message = message.split(key).join("[REDACTED]");
+  if (key) {
+    message = message.split(key).join("[REDACTED]");
+    const encodedKey = encodeURIComponent(key);
+    if (encodedKey !== key) {
+      message = message.split(encodedKey).join("[REDACTED]");
+    }
+  }
   if (secret) message = message.split(secret).join("[REDACTED]");
   return message;
 }
@@ -151,9 +218,7 @@ export function createRestClient({
     if (isHttps) {
       headers.Authorization = `Basic ${encodeBasicAuth(consumerKey, consumerSecret)}`;
     } else {
-      // Kizárólag lokális loopback fejlesztői/teszt végponton engedett HTTP query auth.
-      url.searchParams.set("consumer_key", consumerKey);
-      url.searchParams.set("consumer_secret", consumerSecret);
+      await signLoopbackOAuth1Request(options.method, url, consumerKey, consumerSecret);
     }
 
     if (options.body !== undefined) {
