@@ -61,7 +61,7 @@ Utolsó módosítás: 2026-11-15 (ADR-0012 Meilisearch hosting saját VPS Docker
 | Számlázás | Billingo (NAV Online Számla) | elfogadva | 0001 |
 | Számlázás bekötése | Woo Billingo plugin vagy Trigger.dev task a Billingo API-val | nyitott | - |
 | Keresés | Meilisearch, brandenként külön index, jobokból és webhookból táplálva | elfogadva | 0001 |
-| Keresés hosting | Saját Docker konténer a backend VPS-en (Cloudflare Tunnel + WAF mögött), index-korlátozott keresőkulccsal / tenant tokennel | elfogadva (2026-11-15) | 0012 |
+| Keresés hosting | Saját Docker konténer a backend VPS-en (Cloudflare Tunnel mögött), kizárólag szerveroldali BFF-eléréssel, index-korlátozott keresőkulccsal | elfogadva (2026-11-15, frissítve: 2026-11-16) | 0012 |
 | Email | Resend + React Email; a Woo saját vásárlói emailjei kikapcsolva vagy felülírva | elfogadva | 0001 |
 | Hibakövetés | Sentry (web + jobs) | elfogadva | 0001 |
 | Analitika | PostHog | elfogadva | 0001 |

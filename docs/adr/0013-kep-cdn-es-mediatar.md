@@ -1,13 +1,13 @@
 # ADR-0013: Kép-CDN és médiatár - Woo médiatár + Cloudflare CDN és Images binding
 
-- Állapot: elfogadott
-- Dátum: 2026-11-15
+- Állapot: elfogadott (`ricsmond12` választása 2026-11-15 / 2026-11-16; `SMark2256` a [PR #15](https://github.com/Kincs-Goblin/KGoblin/pull/15) review-ban a tartalmi irányt jóváhagyta, véglegesítés a merge-hez adott „mehet”-tel)
+- Dátum: 2026-11-15 (frissítve: 2026-11-16)
 - Döntéshozók: SMark2256, ricsmond12
 - Ticket: KG-34
 
 ## Kontextus
 
-- A `kg-stack` „Képek” sora részben nyitott volt: az ADR-0009 már elfogadta a Cloudflare Images `IMAGES` bindingját a `next/image` képtranszformációhoz (átméretezés, WebP/AVIF; havi 5 000 egyedi transzformációig ingyenes, felette $0,50 / 1 000; nincs Vercel image-optimization kvóta).
+- A `kg-stack` „Képek” sora részben nyitott volt: az ADR-0009 már elfogadta a Cloudflare Images `IMAGES` bindingját a `next/image` képtranszformációhoz (átméretezés, WebP/AVIF; havi 5 000 egyedi transzformációig ingyenes, felette $0,50 / 1 000).
 - Nyitott maradt viszont, hol tároljuk az eredeti termékképeket és milyen CDN szolgálja ki azokat a `KG-9` (katalógus) és `KG-14` (beszállítói feed-szinkron) megvalósítása előtt.
 
 ## Döntés

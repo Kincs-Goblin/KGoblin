@@ -50,6 +50,7 @@ indul, idempotensen, és sztornó csak kézi művelettel történhet.
 ## Meilisearch
 
 Brandenként egy index (`products_<brand>`). A dokumentum a Store API termékadataiból készül (név, slug, ár
-minor unitban, kategóriák, attribútumok, készletjelzés, kép). A keresési API-kulcs csak search-jogú, és
-indexre korlátozott (vagy BFF-en generált tenant token); az admin kulcs csak a jobokban van. A kereső
-saját Docker konténerként fut a backend VPS-en Cloudflare Tunnel és WAF mögött (ADR-0012).
+minor unitban, kategóriák, attribútumok, készletjelzés, kép). A keresés kizárólag a Next.js BFF-en keresztül
+megy: a böngésző nem kap keresőkulcsot, a BFF szerveroldalon indexre korlátozott search-only kulcsot használ,
+az admin kulcs pedig csak a jobokban van. A kereső saját Docker konténerként fut majd a backend VPS-en
+belső/védett Cloudflare Tunnel mögött (ADR-0012).
