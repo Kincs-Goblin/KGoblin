@@ -33,7 +33,8 @@ A teljes, státuszos döntésnapló a `kg-stack` skillben van; ütközésnél az
 - **Háttérjobok:** Trigger.dev (`apps/jobs`): beszállítói feed-szinkron, rendelés-továbbítás, újrapróba.
 - **Fizetés:** Stripe, Barion, SimplePay (Woo gateway pluginek). **Számlázás:** Billingo.
 - **Auth:** Woo customer + vendég checkout, token httpOnly cookie-ban.
-- **Keresés:** Meilisearch. **Email:** Resend + React Email.
+- **Keresés:** Meilisearch (saját Docker a VPS-en, Cloudflare Tunnel mögött; ADR-0012). **Képek:** Woo médiatár +
+  Cloudflare CDN és Images binding (ADR-0009, ADR-0013). **Email:** Resend + React Email.
 - **Mérés:** Sentry, PostHog, Meta Conversions API, Google Merchant Center feed.
 - **Monorepo:** pnpm + Turborepo. **WordPress hosting:** saját VPS + Docker Compose, Cloudflare (DNS, WAF,
   Tunnel) mögött (ADR-0008).

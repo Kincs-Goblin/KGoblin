@@ -14,9 +14,7 @@ visszafordíthatatlanul) · **nyitott** (dönteni kell, mielőtt ráépül valam
 
 ## Döntésnapló
 
-Utolsó módosítás: 2026-11-14 (ADR-0011 CI a `demo` PR-okon is; ADR-0009 elfogadva: a frontend Cloudflare
-Workersen, OpenNext adapterrel, a Vercel felváltva; korábban ADR-0008 WordPress hosting, ADR-0010 a
-ticketág a `demo`-ból indul).
+Utolsó módosítás: 2026-11-15 (ADR-0012 Meilisearch hosting saját VPS Dockerrel; ADR-0013 Woo médiatár + Cloudflare CDN/Images, később R2 offload; korábban ADR-0011, ADR-0009, ADR-0008, ADR-0010).
 
 ### Architektúra és frontend
 
@@ -34,7 +32,7 @@ ticketág a `demo`-ból indul).
 | Frontend hosting (régi) | Vercel (preview deploy PR-onként, production a `main`-ről) | felváltva (ADR-0009) | 0001 |
 | Edge, DNS, WAF | Cloudflare: DNS, TLS, WAF a backend előtt, Cloudflare Tunnel a VPS felé | elfogadva | 0008 |
 | Szövegek, i18n | Elsőként magyar; szövegek slice-onként egy helyen, `next-intl` a 2. nyelvnél | javasolt | 0001 |
-| Képek | Woo médiatár + `next/image`; az optimalizálás a Cloudflare Images `IMAGES` bindingjával (ADR-0009); a médiatár tárolása és CDN-je (Cloudflare R2 / Cloudinary) | nyitott (az optimalizálás elfogadva: 0009) | - |
+| Képek | Woo médiatár (`wp-content/uploads` a VPS-en `api.<brand>` alatt) + Cloudflare CDN és `IMAGES` binding (`next/image`); később R2 offloaddal bővíthető | elfogadva (2026-11-15) | 0009, 0013 |
 
 ### Commerce és adat
 
@@ -63,7 +61,7 @@ ticketág a `demo`-ból indul).
 | Számlázás | Billingo (NAV Online Számla) | elfogadva | 0001 |
 | Számlázás bekötése | Woo Billingo plugin vagy Trigger.dev task a Billingo API-val | nyitott | - |
 | Keresés | Meilisearch, brandenként külön index, jobokból és webhookból táplálva | elfogadva | 0001 |
-| Keresés hosting | Meilisearch Cloud vagy saját | nyitott | - |
+| Keresés hosting | Saját Docker konténer a backend VPS-en (Cloudflare Tunnel mögött), kizárólag szerveroldali BFF-eléréssel, index-korlátozott keresőkulccsal | elfogadva (2026-11-15, frissítve: 2026-11-16) | 0012 |
 | Email | Resend + React Email; a Woo saját vásárlói emailjei kikapcsolva vagy felülírva | elfogadva | 0001 |
 | Hibakövetés | Sentry (web + jobs) | elfogadva | 0001 |
 | Analitika | PostHog | elfogadva | 0001 |
