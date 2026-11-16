@@ -4,8 +4,49 @@ import { brandSchema, colorTokenNames, type Brand, type BrandTheme } from "./sch
 export { brandSchema, colorTokenNames, fontKeys, themeSchema } from "./schema";
 export type { Brand, BrandTheme, ColorTokenName, FontKey } from "./schema";
 
+function normalizeDomain(domain: string): string {
+  return domain.trim().toLowerCase().replace(/:\d+$/, "").replace(/\.$/, "");
+}
+
+function stripWww(hostname: string): string {
+  return hostname.startsWith("www.") ? hostname.slice(4) : hostname;
+}
+
+/**
+ * Validálja és ellenőrzi a brandek regisztrációját: minden brand átmegy a Zod-sémán, és sem
+ * az azonosító, sem a domain (beleértve a `www.` változatot) nem fedheti át egymást.
+ */
+export function validateBrands(rawBrands: readonly Brand[]): readonly Brand[] {
+  const parsed = rawBrands.map((brand) => brandSchema.parse(brand));
+  const seenIds = new Set<string>();
+  const seenDomains = new Map<string, string>();
+
+  for (const brand of parsed) {
+    if (seenIds.has(brand.id)) {
+      throw new Error(`Duplikált brand azonosító: ${brand.id}`);
+    }
+    seenIds.add(brand.id);
+
+    for (const rawDomain of brand.domains) {
+      const normalized = normalizeDomain(rawDomain);
+      const canonical = stripWww(normalized);
+      for (const key of [normalized, canonical]) {
+        const owner = seenDomains.get(key);
+        if (owner && owner !== brand.id) {
+          throw new Error(
+            `Duplikált domain a brand-configban (${rawDomain}): már a(z) "${owner}" brandhez tartozik.`,
+          );
+        }
+        seenDomains.set(key, brand.id);
+      }
+    }
+  }
+
+  return parsed;
+}
+
 /** Minden brand itt regisztrálódik; betöltéskor Zod validálja, hibás config nem indul el. */
-export const brands: readonly Brand[] = [gamer].map((brand) => brandSchema.parse(brand));
+export const brands: readonly Brand[] = validateBrands([gamer]);
 
 export const brandIds = brands.map((brand) => brand.id);
 
@@ -13,11 +54,18 @@ export function getBrandById(id: string): Brand | undefined {
   return brands.find((brand) => brand.id === id);
 }
 
-/** Host header (port nélkül vagy porttal) alapján; ismeretlen hostra `undefined` (fail-closed). */
+/** Host header (port nélkül vagy porttal, `www.` változattal) alapján; ismeretlen hostra `undefined` (fail-closed). */
 export function resolveBrandByHost(host: string | null | undefined): Brand | undefined {
   if (!host) return undefined;
-  const hostname = host.toLowerCase().split(":")[0];
-  return brands.find((brand) => brand.domains.includes(hostname ?? ""));
+  const hostname = normalizeDomain(host);
+  if (!hostname) return undefined;
+  const bare = stripWww(hostname);
+  return brands.find((brand) =>
+    brand.domains.some((domain) => {
+      const normalized = normalizeDomain(domain);
+      return normalized === hostname || normalized === bare;
+    }),
+  );
 }
 
 /** A téma CSS-változói (`--background`, `--radius` …), a Tailwind `@theme` ezekre hivatkozik. */

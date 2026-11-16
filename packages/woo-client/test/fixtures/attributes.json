@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "name": "Switch típus",
+    "taxonomy": "pa_switch_tipus",
+    "type": "select",
+    "order": "menu_order",
+    "has_archives": false
+  },
+  {
+    "id": 2,
+    "name": "Méret",
+    "taxonomy": "pa_meret",
+    "type": "select",
+    "order": "menu_order",
+    "has_archives": false
+  }
+]
