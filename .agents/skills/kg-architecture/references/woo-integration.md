@@ -38,7 +38,7 @@ külön belépési pontban, a REST v3 `server-only`.
 
 ## Cache és revalidálás
 
-- Cache-tagek **brand-előtaggal**: `<brand>:catalog`, `<brand>:product-slug:<slug>`, `<brand>:category:<id>`, `<brand>:menu`. A tagképzés egy helyen van (`shared/api/cache-tags.ts`). Jelenleg minden termék- vagy kategória-webhook a `<brand>:catalog`-ot is érvényteleníti; egyedi termék-ID szerinti célzott invalidálás és webhook-debounce a KG-14 tömeges feed-szinkron előtt készül el.
+- Cache-tagek **brand-előtaggal**: `<brand>:catalog`, `<brand>:product-slug:<slug>`, `<brand>:category:<id>`. A tagképzés egy helyen van (`shared/api/cache-tags.ts`). Jelenleg minden termék- vagy kategória-webhook a `<brand>:catalog`-ot is érvényteleníti; egyedi termék-ID szerinti célzott invalidálás és webhook-debounce a KG-14 tömeges feed-szinkron előtt készül el.
 - Katalógusoldal: ISR, alapból hosszú revalidate, a frissítést a webhook adja.
 - Webhook-route lépései: nyers body beolvasása → `X-WC-Webhook-Signature` ellenőrzése (base64 HMAC-SHA256 a
   brand webhook-titkával, időzítésbiztos összehasonlítással) → Zod → `revalidateTag` → nehéz munkánál

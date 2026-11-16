@@ -1,3 +1,7 @@
-import "server-only";
-
-export { getCatalogAttributes, getProduct, getProducts, getProductsPage } from "./api/get-products";
+export {
+  getCatalogAttributes,
+  getProduct,
+  getProducts,
+  getProductsPage,
+  getStoreMinorUnit,
+} from "./api/get-products";

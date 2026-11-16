@@ -108,6 +108,8 @@ services:
   #       condition: service_healthy
   #   ports:
   #     - "127.0.0.1:${WP_BRAND2_PORT:-8081}:80"
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
   #   environment:
   #     WORDPRESS_DB_HOST: db:3306
   #     WORDPRESS_DB_USER: ${WP_BRAND2_DB_USER:-kg_wp_brand2_user}
@@ -135,6 +137,8 @@ services:
   #     wp-brand2:
   #       condition: service_started
   #   user: "33:33"
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
   #   environment:
   #     WORDPRESS_DB_HOST: db:3306
   #     WORDPRESS_DB_USER: ${WP_BRAND2_DB_USER:-kg_wp_brand2_user}

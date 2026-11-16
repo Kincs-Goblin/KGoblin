@@ -64,9 +64,15 @@ class Omnibus {
 
 		if ( $decimals <= 0 ) {
 			$val = (int) $whole;
+			if ( isset( $frac[0] ) && $frac[0] >= '5' ) {
+				$val += 1;
+			}
 		} else {
 			$frac_padded = substr( str_pad( $frac, $decimals, '0', STR_PAD_RIGHT ), 0, $decimals );
 			$val         = (int) ( $whole . $frac_padded );
+			if ( isset( $frac[ $decimals ] ) && $frac[ $decimals ] >= '5' ) {
+				$val += 1;
+			}
 		}
 
 		return $val > 0 ? $val : null;
@@ -311,23 +317,53 @@ class Omnibus {
 	}
 
 	/**
-	 * Termék 30 napos legalacsonyabb árának lekérése egész számként (minor unit).
-	 * A `_hu_lowest_price_30_days` meta már minor unitban (int) van tárolva, ezért
-	 * nem skálázzuk újra tizedesjegyekkel!
+	 * Minor unitban tárolt egész ár visszaalakítása tizedes sztringgé (float nélkül),
+	 * pl. 1999 (decimals=2) -> "19.99", 41990 (decimals=0) -> "41990".
+	 */
+	public static function format_int_to_price_string( int $minor_amount, int $decimals = 0 ): string {
+		if ( $decimals <= 0 ) {
+			return (string) $minor_amount;
+		}
+		$padded = str_pad( (string) $minor_amount, $decimals + 1, '0', STR_PAD_LEFT );
+		return substr( $padded, 0, -$decimals ) . '.' . substr( $padded, -$decimals );
+	}
+
+	/**
+	 * Termék 30 napos legalacsonyabb árának lekérése egész számként (minor unit),
+	 * a Store API-val azonos megjelenítési adószabállyal (`wc_get_price_to_display`).
 	 *
 	 * @param \WC_Product $product Termék objektum.
 	 * @return int|null Legalacsonyabb ár minor unitban, vagy null.
 	 */
 	public static function get_lowest_price_for_product( \WC_Product $product ): ?int {
+		$decimals = function_exists( 'wc_get_price_decimals' ) ? wc_get_price_decimals() : 0;
 		$raw_meta = trim( (string) $product->get_meta( self::META_LOWEST_30_DAYS, true ) );
+		$base_int = null;
+
 		if ( '' !== $raw_meta && preg_match( '/^\d+$/', $raw_meta ) ) {
 			$val = (int) $raw_meta;
 			if ( $val > 0 ) {
-				return $val;
+				$base_int = $val;
 			}
 		}
 
-		$decimals = function_exists( 'wc_get_price_decimals' ) ? wc_get_price_decimals() : 0;
-		return self::parse_price_to_int( $product->get_regular_price(), $decimals );
+		if ( null === $base_int ) {
+			$raw_regular = $product->get_regular_price();
+			if ( function_exists( 'wc_get_price_to_display' ) && '' !== (string) $raw_regular ) {
+				$raw_regular = (string) wc_get_price_to_display( $product, array( 'price' => $raw_regular ) );
+			}
+			return self::parse_price_to_int( $raw_regular, $decimals );
+		}
+
+		if ( function_exists( 'wc_get_price_to_display' ) ) {
+			$price_str = self::format_int_to_price_string( $base_int, $decimals );
+			$displayed = wc_get_price_to_display( $product, array( 'price' => $price_str ) );
+			$parsed    = self::parse_price_to_int( (string) $displayed, $decimals );
+			if ( null !== $parsed ) {
+				return $parsed;
+			}
+		}
+
+		return $base_int;
 	}
 }

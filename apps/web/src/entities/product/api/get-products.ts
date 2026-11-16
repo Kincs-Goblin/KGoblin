@@ -4,6 +4,7 @@ import type { Brand } from "@kg/brand-config";
 import type { ProductQuery } from "@kg/woo-client";
 
 import { cacheTags, getStoreClient } from "@/shared/api/index.server";
+import { getCurrencyMinorUnit } from "@/shared/lib/format";
 import { decodeEntities } from "@/shared/lib/html";
 
 import { mapProduct } from "../lib/map-product";
@@ -11,6 +12,17 @@ import type { CatalogFilterAttribute, Product, ProductPageResult } from "../mode
 
 /** A katalógus ISR-rel frissül; az azonnali frissítést a Woo webhook adja (`revalidateTag`). */
 const REVALIDATE_SECONDS = 300;
+
+export async function getStoreMinorUnit(brand: Brand): Promise<number> {
+  const page = await getStoreClient(brand).getProductsPage(
+    { perPage: 1 },
+    {
+      revalidate: REVALIDATE_SECONDS,
+      tags: [cacheTags.catalog(brand.id)],
+    },
+  );
+  return page.products[0]?.prices.currency_minor_unit ?? getCurrencyMinorUnit(brand.currency);
+}
 
 export async function getProductsPage(
   brand: Brand,

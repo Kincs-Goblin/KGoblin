@@ -24,7 +24,7 @@ export default defineConfig({
     port,
     // Alapból determinisztikus Store API-fixture-ök (ADR-0005), de KG_STORE_FIXTURES=0 értékkel élő Docker-Woo ellen is futtatható.
     env: {
-      KG_STORE_FIXTURES: process.env.KG_STORE_FIXTURES ?? "1",
+      KG_STORE_FIXTURES: process.env.KG_STORE_FIXTURES || "1",
       ...(process.env.WOO_GAMER_URL ? { WOO_GAMER_URL: process.env.WOO_GAMER_URL } : {}),
     },
     // Mindig friss szerver: egy régi build kiszolgálása hamis zöldet vagy hibát adna.

@@ -155,7 +155,7 @@ describe("handleWooWebhookRequest", () => {
     expect(revalidate).toHaveBeenCalledTimes(2);
   });
 
-  it("ismeretlen brand esetén 404 BRAND.UNKNOWN_HOST választ ad", async () => {
+  it("ismeretlen brand esetén 404 BRAND.UNKNOWN_ID választ ad", async () => {
     const revalidate = vi.fn();
     const res = await handleWooWebhookRequest(
       new Request("http://localhost:3000/api/webhooks/woo/nincs", { method: "POST", body: "{}" }),
@@ -163,7 +163,7 @@ describe("handleWooWebhookRequest", () => {
       { revalidate, resolveBrand, env: {} },
     );
     expect(res.status).toBe(404);
-    expect(await res.json()).toMatchObject({ ok: false, code: "BRAND.UNKNOWN_HOST" });
+    expect(await res.json()).toMatchObject({ ok: false, code: "BRAND.UNKNOWN_ID" });
     expect(revalidate).not.toHaveBeenCalled();
   });
 

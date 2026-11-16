@@ -16,11 +16,15 @@ export function getCurrencyMinorUnit(currency: string): number {
 }
 
 export function getCurrencyLabel(currency: string, locale = "hu-HU"): string {
-  return (
-    new Intl.NumberFormat(locale, { style: "currency", currency })
-      .formatToParts(0)
-      .find((part) => part.type === "currency")?.value ?? currency
-  );
+  try {
+    return (
+      new Intl.NumberFormat(locale, { style: "currency", currency })
+        .formatToParts(0)
+        .find((part) => part.type === "currency")?.value ?? currency
+    );
+  } catch {
+    return currency;
+  }
 }
 
 /**

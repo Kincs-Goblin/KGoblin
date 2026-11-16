@@ -96,7 +96,7 @@ export async function handleWooWebhookRequest(
 ): Promise<NextResponse> {
   const brand = (deps.resolveBrand ?? getBrandById)(brandId);
   if (!brand) {
-    return webhookError("BRAND.UNKNOWN_HOST", 404, "Ismeretlen brand.");
+    return webhookError("BRAND.UNKNOWN_ID", 404, "Ismeretlen brand-azonosító.");
   }
 
   const bodyResult = await readBoundedBody(request, MAX_WEBHOOK_BODY_BYTES);

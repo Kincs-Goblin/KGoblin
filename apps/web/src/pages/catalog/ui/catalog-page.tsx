@@ -6,7 +6,11 @@ import { notFound } from "next/navigation";
 import type { Category } from "@/entities/category";
 import { getCategories, getCategoryBySlug } from "@/entities/category/index.server";
 import type { CatalogFilterAttribute, ProductPageResult } from "@/entities/product";
-import { getCatalogAttributes, getProductsPage } from "@/entities/product/index.server";
+import {
+  getCatalogAttributes,
+  getProductsPage,
+  getStoreMinorUnit,
+} from "@/entities/product/index.server";
 import {
   catalogHref,
   countActiveFilters,
@@ -19,7 +23,7 @@ import { CatalogFilterSidebar, CatalogFilterToolbar } from "./catalog-filters";
 import { CatalogPagination } from "./catalog-pagination";
 import { routes } from "@/shared/config";
 import { getBrandOrNotFound } from "@/shared/config/index.server";
-import { getCurrencyLabel, getCurrencyMinorUnit } from "@/shared/lib/format";
+import { getCurrencyLabel } from "@/shared/lib/format";
 import { buttonVariants } from "@/shared/ui/button";
 import { ErrorState } from "@/shared/ui/error-state";
 import { ProductGrid } from "@/widgets/product-grid";
@@ -49,8 +53,6 @@ async function loadCatalog(
   rawSearchParams: CatalogSearchParams,
 ): Promise<CatalogData> {
   const brand = getBrandOrNotFound(brandId);
-  const minorUnit = getCurrencyMinorUnit(brand.currency);
-  const currencyUnit = getCurrencyLabel(brand.currency, brand.locale);
   try {
     const [categories, attributes, category] = await Promise.all([
       getCategories(brand),
@@ -60,7 +62,11 @@ async function loadCatalog(
     if (slug && !category) notFound();
 
     const query = parseCatalogQuery(rawSearchParams, attributes);
+    const hasPriceFilter = query.minPrice !== undefined || query.maxPrice !== undefined;
+    const minorUnit = hasPriceFilter ? await getStoreMinorUnit(brand) : 0;
     const page = await getProductsPage(brand, toProductQuery(query, category?.id, minorUnit));
+    const storeCurrency = page.products[0]?.price.current.currency ?? brand.currency;
+    const currencyUnit = getCurrencyLabel(storeCurrency, brand.locale);
     return { ok: true, currencyUnit, category, categories, attributes, query, page };
   } catch (error) {
     // Woo-kiesésnél barátságos hibaállapot; minden más (pl. notFound) megy tovább.

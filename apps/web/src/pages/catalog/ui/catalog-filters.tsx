@@ -39,7 +39,7 @@ type CatalogFiltersProps = {
   attributes: CatalogFilterAttribute[];
   query: CatalogQueryState;
   total: number;
-  currencyUnit?: string;
+  currencyUnit: string;
 };
 
 const filterTexts = catalogTexts.filters;
@@ -184,7 +184,7 @@ function FilterSections({
   categories,
   attributes,
   query,
-  currencyUnit = "Ft",
+  currencyUnit,
   onNavigate,
 }: Omit<CatalogFiltersProps, "total"> & { onNavigate?: () => void }) {
   const activeCount = countActiveFilters(query);

@@ -23,5 +23,6 @@ describe("formatMoney", () => {
     expect(getCurrencyMinorUnit("KWD")).toBe(3);
     expect(getCurrencyLabel("HUF", "hu-HU")).toBe("Ft");
     expect(getCurrencyLabel("EUR", "hu-HU")).toMatch(/€|EUR/);
+    expect(getCurrencyLabel("INVALID", "hu-HU")).toBe("INVALID");
   });
 });

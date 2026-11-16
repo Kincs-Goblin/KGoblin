@@ -8,6 +8,11 @@ export const errorCatalog = {
     retryable: false,
     message: "Ez a cím nem tartozik egyik boltunkhoz sem.",
   },
+  "BRAND.UNKNOWN_ID": {
+    status: 404,
+    retryable: false,
+    message: "Ismeretlen brand-azonosító.",
+  },
   "WOO.UNAVAILABLE": {
     status: 503,
     retryable: true,

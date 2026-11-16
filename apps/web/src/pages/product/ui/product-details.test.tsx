@@ -272,4 +272,92 @@ describe("ProductDetails", () => {
     expect(screen.getByText(/KG-TITAN-GLD/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Obszidián Fekete" })).toBeDisabled();
   });
+
+  it("elutasítja a variációt, ha hiányzik róla a termék attribútumához tartozó bejegyzés", () => {
+    const mismatchedProduct: Product = {
+      ...variableProduct,
+      id: 75,
+      slug: "mismatched-attr-product",
+      name: "Hiányos Variáció Teszt",
+      attributes: [
+        {
+          id: 0,
+          name: "Anyag",
+          taxonomy: "",
+          hasVariations: true,
+          terms: [
+            { id: 0, name: "Acél", slug: "acel" },
+            { id: 0, name: "Bronz", slug: "bronz" },
+          ],
+        },
+        {
+          id: 2,
+          name: "Szín",
+          taxonomy: "pa_szin",
+          hasVariations: true,
+          terms: [
+            { id: 21, name: "Obszidián Fekete", slug: "obszidian-fekete" },
+            { id: 22, name: "Goblin Arany", slug: "goblin-arany" },
+          ],
+        },
+      ],
+      variations: [
+        {
+          id: 76,
+          sku: "KG-MISSING-ENTRY",
+          attributes: [
+            // Szándékosan csak "Anyag" van, a "pa_szin" bejegyzés teljesen hiányzik!
+            { name: "Anyag", taxonomy: "anyag", value: "Acél", slug: "acel" },
+          ],
+          price: {
+            current: { amount: "10000", currency: "HUF", minorUnit: 0 },
+            regular: { amount: "10000", currency: "HUF", minorUnit: 0 },
+            onSale: false,
+            lowest30Days: null,
+          },
+          stockStatus: "in_stock",
+          inStock: true,
+          onBackorder: false,
+          purchasable: true,
+          lowStockRemaining: null,
+          deliveryTime: "1–3 munkanap",
+          image: null,
+        },
+        {
+          id: 77,
+          sku: "KG-VALID-BRONZ-GLD",
+          attributes: [
+            { name: "Anyag", taxonomy: "anyag", value: "Bronz", slug: "bronz" },
+            { name: "Szín", taxonomy: "pa_szin", value: "Goblin Arany", slug: "goblin-arany" },
+          ],
+          price: {
+            current: { amount: "12990", currency: "HUF", minorUnit: 0 },
+            regular: { amount: "12990", currency: "HUF", minorUnit: 0 },
+            onSale: false,
+            lowest30Days: null,
+          },
+          stockStatus: "in_stock",
+          inStock: true,
+          onBackorder: false,
+          purchasable: true,
+          lowStockRemaining: null,
+          deliveryTime: "1–3 munkanap",
+          image: null,
+        },
+      ],
+    };
+
+    render(
+      <CartProvider brandId="gamer">
+        <ProductDetails product={mismatchedProduct} />
+      </CartProvider>,
+    );
+
+    // Az Acél első attribútumként sem engedélyezhető, mert a variációjáról hiányzik a pa_szin bejegyzés.
+    // A kiválasztás nem egyezhet a hiányos 76-os variációval, csak a teljes 77-essel (Bronz + Goblin Arany).
+    expect(screen.getByText(/KG-VALID-BRONZ-GLD/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Acél" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Obszidián Fekete" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Goblin Arany" })).toBeEnabled();
+  });
 });

@@ -50,10 +50,15 @@ function variationMatchesOption(
   slug: string,
 ): boolean {
   const entry = variation.attributes.find((vAttr) => variationAttrMatchesProductAttr(vAttr, attr));
-  if (!entry || entry.slug === "") return true;
-  return entry.slug === slug;
+  if (!entry) return false;
+  return entry.slug === "" || entry.slug === slug;
 }
 
+/**
+ * Konkrét attribútum-egyezések száma. Az üres slug ("Any ...") alacsonyabb prioritást kap,
+ * így a konkrét variáció nyer a generikus ellen — megjegyzendő, hogy ez eltér a Woo
+ * sorrendfüggő "első egyezés" logikájától, ha elfogyott konkrét + készletes "Any" ütközik.
+ */
 function variationSpecificity(
   variation: ProductVariation,
   variationAttributes: ProductAttribute[],
@@ -120,11 +125,29 @@ function selectionFromVariation(
   return result;
 }
 
+function variationHasAllAttributes(
+  variation: ProductVariation,
+  variationAttributes: ProductAttribute[],
+): boolean {
+  return variationAttributes.every((attr) =>
+    variation.attributes.some((vAttr) => variationAttrMatchesProductAttr(vAttr, attr)),
+  );
+}
+
 function getInitialSelection(
   product: Product,
   variationAttributes: ProductAttribute[],
 ): Record<string, string> {
   const initialVariation =
+    product.variations.find(
+      (variation) =>
+        variation.inStock &&
+        variation.purchasable &&
+        variationHasAllAttributes(variation, variationAttributes),
+    ) ??
+    product.variations.find((variation) =>
+      variationHasAllAttributes(variation, variationAttributes),
+    ) ??
     product.variations.find((variation) => variation.inStock && variation.purchasable) ??
     product.variations[0];
   if (!initialVariation) return {};
@@ -152,16 +175,19 @@ export function ProductDetails({ product }: { product: Product }) {
 
   function handleSelectTerm(attrIndex: number, attr: ProductAttribute, slug: string) {
     const key = getAttributeKey(attr);
+    const completeVariations = product.variations.filter((variation) =>
+      variationHasAllAttributes(variation, variationAttributes),
+    );
     setSelected((prev) => {
       const next = { ...prev, [key]: slug };
-      const exactMatch = findMatchingVariation(product.variations, variationAttributes, next);
+      const exactMatch = findMatchingVariation(completeVariations, variationAttributes, next);
       if (exactMatch) return next;
 
       // Ha a későbbi attribútum korábbi választása nem létezik az új opcióval, ugorjunk az első érvényes variációra.
       const prefixAttrs = variationAttributes.slice(0, attrIndex + 1);
       const fallback =
-        findMatchingVariation(product.variations, prefixAttrs, next) ??
-        product.variations.find((variation) => variationMatchesOption(variation, attr, slug));
+        findMatchingVariation(completeVariations, prefixAttrs, next) ??
+        completeVariations.find((variation) => variationMatchesOption(variation, attr, slug));
 
       if (!fallback) return next;
       return selectionFromVariation(fallback, variationAttributes, next);
@@ -170,11 +196,16 @@ export function ProductDetails({ product }: { product: Product }) {
 
   function isOptionEnabled(attrIndex: number, attr: ProductAttribute, slug: string): boolean {
     if (attrIndex === 0) {
-      return product.variations.some((variation) => variationMatchesOption(variation, attr, slug));
+      return product.variations.some(
+        (variation) =>
+          variationHasAllAttributes(variation, variationAttributes) &&
+          variationMatchesOption(variation, attr, slug),
+      );
     }
     const previousAttrs = variationAttributes.slice(0, attrIndex);
     return product.variations.some(
       (variation) =>
+        variationHasAllAttributes(variation, variationAttributes) &&
         variationMatchesOption(variation, attr, slug) &&
         previousAttrs.every((prevAttr) => {
           const prevSlug = selected[getAttributeKey(prevAttr)];

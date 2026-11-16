@@ -54,6 +54,10 @@ test("katalógus attribútum-, készlet-, árszűrés, rendezés és lapozás", 
     });
   }
 
+  // Rendezés váltása
+  await main.getByRole("combobox", { name: "Rendezés" }).selectOption("ar-novekvo");
+  await expect(page).toHaveURL(/rendezes=ar-novekvo/);
+
   // Szűrők törlése üres találati listáról
   await page.goto("/termekek?min=900000");
   await expect(main.getByText("Nincs a szűrésnek megfelelő termék")).toBeVisible();
