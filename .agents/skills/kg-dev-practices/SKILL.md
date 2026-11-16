@@ -16,6 +16,10 @@ a git a `kg-git-workflow`-ban vannak; itt nincsenek megismételve.
   3. egy napnál nagyobb munkánál tervdokumentum vagy ADR: folyamatábra, döntések indokkal, rétegenkénti
      munkalista, peremesetek, és amit tudatosan kihagyunk;
   4. kód csak a döntések után. Kis, egyértelmű javításnál ez felesleges ceremónia.
+- **Állítás forrása.** Amit a repóról leírsz (fájl, szolgáltatás, konvenció, hibakód, „ez már megvan”), azt
+  `git grep`-pel vagy futtatással ellenőrizd, mielőtt dokumentumba, ADR-be vagy PR-leírásba kerül. A ticket
+  szövege sem tény: a repóval és az elfogadott ADR-ekkel vesd össze (`kg-ticket-refine`). Amit nem
+  ellenőriztél, azt írd ki „nem ellenőrzött”-ként.
 - **Scope.** „Csak redesign” → a működés nem változik. Ami túlmegy a kérésen, azt külön jelezd.
 - **Párhuzamosság.** Hosszú felderítést vagy független részfeladatokat subagent vihet, de csak kifejezett
   kérésre. Amíg dolgoznak, a session maradjon nyitva.
@@ -79,6 +83,10 @@ Egy feladat akkor kész, ha:
    storefront a Woo-val, ellenőrző táblázat, leállítás).
 5. **CI zöld** (GitHub Actions, ADR-0005): a quality gate és a Playwright e2e a PR-on. A CI nem indít Woo-t,
    ezért a 4. pont helyben marad.
+6. **AC → bizonyíték:** minden elfogadási kritériumhoz teszt vagy próba, vagy kimondott „nem ellenőrzött”. Ami
+   külső rendszer viselkedésére épül (Woo REST-hitelesítés HTTP/HTTPS és proxy mögött, gateway, Cloudflare),
+   azt MSW/fixture nem igazolja: valódi vagy sandbox ellen is le kell futnia, különben follow-up ticket és
+   kimondott kockázat.
 
 A skipelt teszt nem sikeres teszt.
 

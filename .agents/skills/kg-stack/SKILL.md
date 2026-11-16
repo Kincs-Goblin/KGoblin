@@ -111,7 +111,18 @@ shadcn-komponens hozzáadása), belső refaktor.
    - `AGENTS.md` „Stack röviden”, ha az érinti;
    - minden skill, amelyik a régi döntésre hivatkozik (`grep -ri "<régi név>" .agents AGENTS.md docs`).
 4. **PR**: a PR-leírás „Stack-változás” jelölőnégyzete legyen kipipálva, az ADR linkelve. A merge-hez adott
-   „mehet” (bármelyik fejlesztőé) itt a döntés jóváhagyása is.
+   „mehet” (bármelyik fejlesztőé) a döntést is megerősíti.
+5. **Jóváhagyás nyoma:** a döntést a 2. lépés opciós kérdése hozza meg, annak válasza az ADR „Jóváhagyás”
+   sorába kerül a PR nyitása előtt (ki, mikor, hol: kérdés válasza, Jira-komment vagy egy korábbi PR kommentje). A „Döntéshozók”
+   sorba csak az kerül, aki a döntést kifejezetten jóváhagyta; a sablon alapértelmezett két neve nem
+   jóváhagyás. A merge-„mehet” ezt megerősíti, nem pótolja. Ami még nincs jóváhagyva, `javasolt` státuszú.
+6. **Az ADR állításai igazak:** a repóra vonatkozó minden állítást (fájl, compose-szolgáltatás, konvenció)
+   `git grep`-pel ellenőrizz, mielőtt leírod; ami még nincs meg, jövő időben és a követő ticket megnevezésével
+   szerepel. Az ADR nem mondhat ellent önmagának (pl. „belső végpont” és „nyilvános végpont”), és egy elfogadott
+   ADR-nek sem, hacsak nem váltja fel kifejezetten (a régi ADR állapota ekkor `felváltva (ADR-NNNN)`, lásd
+   3.); önellentmondás esetén előbb a döntés pontosítása kell, nem a PR.
+7. **A ticket is frissül:** ha a döntés a ticket állításait érvényteleníti (vagy a ticket egy azóta elavult
+   döntésre épült), a `kg-ticket-refine` átfogalmazás-javaslatot ad a ticketre és a követő ticketekre.
 
 ### Nyitott döntés lezárása
 

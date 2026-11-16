@@ -10,6 +10,7 @@
 
 ## Ellenőrzés
 - <!-- parancs → eredmény (typecheck, lint, Steiger, test, build, e2e) -->
+- AC → bizonyíték: <!-- AC-nként: teszt/próba, vagy „nem ellenőrzött” (ok, követő ticket); külső rendszernél: valódi ellen futott-e -->
 - Érintett brandek: <!-- gamer / mind -->
 - Kézzel kipróbálva: igen/nem
 - Review: <!-- modell, szint, kör/keret, head SHA, x javítva, y elvetve -->
