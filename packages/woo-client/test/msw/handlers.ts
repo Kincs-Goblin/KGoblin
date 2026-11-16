@@ -1,9 +1,53 @@
 import { http, HttpResponse } from "msw";
 
-import { fixtureAttributes, fixtureCart, fixtureCategories, fixtureProducts } from "../fixtures";
+import type {
+  ProductAttributeFilter,
+  ProductQuery,
+  ProductStockStatus,
+} from "../../src/store/client";
+import {
+  filterAndPaginateFixtureProducts,
+  fixtureAttributes,
+  fixtureAttributeTerms,
+  fixtureCart,
+  fixtureCategories,
+  fixtureProducts,
+} from "../fixtures";
+
+function parseAttributeFilters(params: URLSearchParams): ProductAttributeFilter[] {
+  const filters: ProductAttributeFilter[] = [];
+  for (let i = 0; ; i++) {
+    const attribute = params.get(`attributes[${i}][attribute]`);
+    const slug = params.get(`attributes[${i}][slug]`);
+    if (!attribute || !slug) break;
+    const operator = params.get(`attributes[${i}][operator]`);
+    filters.push({
+      attribute,
+      slug,
+      ...(operator === "in" || operator === "and" ? { operator } : {}),
+    });
+  }
+  return filters;
+}
+
+function parseStockStatus(params: URLSearchParams): ProductQuery["stockStatus"] {
+  const single = params.get("stock_status");
+  if (single === "instock" || single === "outofstock" || single === "onbackorder") {
+    return single;
+  }
+  const list: ProductStockStatus[] = [];
+  for (let i = 0; ; i++) {
+    const val = params.get(`stock_status[${i}]`);
+    if (!val) break;
+    if (val === "instock" || val === "outofstock" || val === "onbackorder") {
+      list.push(val);
+    }
+  }
+  return list.length > 0 ? list : undefined;
+}
 
 /**
- * MSW handlerek a fő Store API végpontokra a KG-4 seedből rögzített valódi válaszokkal (`KG-41`).
+ * MSW handlerek a fő Store API végpontokra a KG-9 seedből rögzített valódi válaszokkal (`KG-41`).
  * Minden URL-prefixet támogat (`*` wildcard), így tetszőleges brand `baseUrl`-lel működik.
  */
 export function createStoreApiHandlers(baseUrlPattern = "*") {
@@ -18,17 +62,8 @@ export function createStoreApiHandlers(baseUrlPattern = "*") {
       HttpResponse.json(fixtureAttributes),
     ),
 
-    http.get(`${prefix}/wp-json/wc/store/v1/products/attributes/:id/terms`, () =>
-      HttpResponse.json([
-        {
-          id: 101,
-          name: "Lineáris Red",
-          slug: "linearis-red",
-          description: "",
-          menu_order: 1,
-          count: 2,
-        },
-      ]),
+    http.get(`${prefix}/wp-json/wc/store/v1/products/attributes/:id/terms`, ({ params }) =>
+      HttpResponse.json(fixtureAttributeTerms[String(params.id)] ?? []),
     ),
 
     http.get(`${prefix}/wp-json/wc/store/v1/products/:id`, ({ params }) => {
@@ -48,19 +83,43 @@ export function createStoreApiHandlers(baseUrlPattern = "*") {
       const slug = url.searchParams.get("slug");
       if (slug) {
         const match = fixtureProducts.filter((item) => item.slug === slug);
-        return HttpResponse.json(match);
+        return HttpResponse.json(match, {
+          headers: {
+            "X-WP-Total": String(match.length),
+            "X-WP-TotalPages": "1",
+          },
+        });
       }
 
-      let list = [...fixtureProducts];
-      const category = url.searchParams.get("category");
-      if (category) {
-        list = list.filter((item) => item.categories.some((c) => String(c.id) === category));
-      }
-      if (url.searchParams.get("on_sale") === "true") {
-        list = list.filter((item) => item.on_sale);
-      }
-      const perPage = Number(url.searchParams.get("per_page") ?? "24");
-      return HttpResponse.json(list.slice(0, Number.isFinite(perPage) ? perPage : 24));
+      const minPriceRaw = url.searchParams.get("min_price");
+      const maxPriceRaw = url.searchParams.get("max_price");
+      const pageRaw = url.searchParams.get("page");
+      const perPageRaw = url.searchParams.get("per_page");
+      const orderby = url.searchParams.get("orderby") as ProductQuery["orderby"] | null;
+      const order = url.searchParams.get("order") as ProductQuery["order"] | null;
+
+      const result = filterAndPaginateFixtureProducts(fixtureProducts, {
+        category: url.searchParams.get("category") ?? undefined,
+        search: url.searchParams.get("search") ?? undefined,
+        onSale: url.searchParams.get("on_sale") === "true" ? true : undefined,
+        featured: url.searchParams.get("featured") === "true" ? true : undefined,
+        tag: url.searchParams.get("tag") ?? undefined,
+        minPrice: minPriceRaw ? Number(minPriceRaw) : undefined,
+        maxPrice: maxPriceRaw ? Number(maxPriceRaw) : undefined,
+        stockStatus: parseStockStatus(url.searchParams),
+        attributes: parseAttributeFilters(url.searchParams),
+        orderby: orderby ?? undefined,
+        order: order ?? undefined,
+        page: pageRaw ? Number(pageRaw) : undefined,
+        perPage: perPageRaw ? Number(perPageRaw) : undefined,
+      });
+
+      return HttpResponse.json(result.products, {
+        headers: {
+          "X-WP-Total": String(result.total),
+          "X-WP-TotalPages": String(result.totalPages),
+        },
+      });
     }),
 
     http.get(`${prefix}/wp-json/wc/store/v1/cart`, () =>
@@ -74,23 +133,36 @@ export function createStoreApiHandlers(baseUrlPattern = "*") {
 
     http.post(`${prefix}/wp-json/wc/store/v1/cart/add-item`, async ({ request }) => {
       const body = (await request.json().catch(() => ({}))) as { id?: number; quantity?: number };
-      const product = fixtureProducts.find((p) => p.id === body.id);
+      const product = fixtureProducts.find(
+        (p) =>
+          p.id === body.id ||
+          p.extensions.kg_headless?.variations?.some((variation) => variation.id === body.id),
+      );
       if (!product) {
         return HttpResponse.json(
           { code: "woocommerce_rest_product_invalid_id", message: "Termék nem található." },
           { status: 400 },
         );
       }
+      const matchedVariation = product.extensions.kg_headless?.variations?.find(
+        (variation) => variation.id === body.id,
+      );
       const quantity = body.quantity ?? 1;
       const updated = structuredClone(fixtureCart);
       updated.items[0] = {
         ...updated.items[0]!,
-        id: product.id,
+        id: matchedVariation?.id ?? product.id,
         name: product.name,
         slug: product.slug,
-        sku: product.sku,
+        sku: matchedVariation?.sku ?? product.sku,
         quantity,
-        prices: product.prices,
+        prices: matchedVariation?.prices ?? product.prices,
+        variation: matchedVariation
+          ? matchedVariation.attributes.map((attr) => ({
+              attribute: attr.name,
+              value: attr.value,
+            }))
+          : [],
       };
       updated.items_count = quantity;
       return HttpResponse.json(updated, {

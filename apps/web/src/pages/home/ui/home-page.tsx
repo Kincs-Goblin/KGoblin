@@ -1,6 +1,7 @@
 import type { Brand } from "@kg/brand-config";
 import { isWooError, type WooErrorCode } from "@kg/woo-client";
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { CategoryCard, type Category } from "@/entities/category";
 import { getCategories } from "@/entities/category/index.server";
@@ -14,6 +15,7 @@ import { Reveal } from "@/shared/ui/motion";
 import { ProductGrid } from "@/widgets/product-grid";
 
 import { homeTexts } from "../config/texts";
+import { HomeSectionsSkeleton } from "./home-skeleton";
 
 type HomePageProps = {
   params: Promise<{ brand: string }>;
@@ -24,10 +26,14 @@ type HomeData =
 
 async function loadHome(brand: Brand): Promise<HomeData> {
   try {
-    const [featured, categories] = await Promise.all([
-      getProducts(brand, { perPage: 8, orderby: "menu_order", order: "asc" }),
+    const [featuredProducts, categories] = await Promise.all([
+      getProducts(brand, { featured: true, perPage: 8, orderby: "menu_order", order: "asc" }),
       getCategories(brand),
     ]);
+    const featured =
+      featuredProducts.length > 0
+        ? featuredProducts
+        : await getProducts(brand, { perPage: 8, orderby: "menu_order", order: "asc" });
     return { ok: true, featured, categories };
   } catch (error) {
     if (isWooError(error)) return { ok: false, code: error.code };
@@ -35,9 +41,56 @@ async function loadHome(brand: Brand): Promise<HomeData> {
   }
 }
 
+async function HomeCatalogSections({ brand }: { brand: Brand }) {
+  const data = await loadHome(brand);
+
+  if (!data.ok) {
+    return (
+      <section className="mx-auto max-w-7xl px-4 pt-14 sm:px-6">
+        <ErrorState code={data.code} title={homeTexts.errorTitle} />
+      </section>
+    );
+  }
+
+  return (
+    <>
+      <section aria-labelledby="kiemelt" className="mx-auto max-w-7xl px-4 pt-14 sm:px-6">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <h2 id="kiemelt" className="text-engraved text-2xl font-bold sm:text-3xl">
+            {homeTexts.featuredHeading}
+          </h2>
+          <Link
+            href={routes.products}
+            className="text-sm text-gold underline-offset-4 hover:underline"
+          >
+            {homeTexts.featuredMore}
+          </Link>
+        </div>
+        <div className="mt-6">
+          <ProductGrid products={data.featured} />
+        </div>
+      </section>
+
+      {data.categories.length > 0 ? (
+        <section aria-labelledby="kategoriak" className="mx-auto max-w-7xl px-4 pt-14 sm:px-6">
+          <h2 id="kategoriak" className="text-engraved text-2xl font-bold sm:text-3xl">
+            {homeTexts.categoriesHeading}
+          </h2>
+          <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {data.categories.map((category) => (
+              <li key={category.id}>
+                <CategoryCard category={category} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+    </>
+  );
+}
+
 export async function HomePage({ params }: HomePageProps) {
   const brand = getBrandOrNotFound((await params).brand);
-  const data = await loadHome(brand);
 
   return (
     <>
@@ -68,45 +121,9 @@ export async function HomePage({ params }: HomePageProps) {
         </Reveal>
       </section>
 
-      {data.ok ? (
-        <>
-          <section aria-labelledby="kiemelt" className="mx-auto max-w-7xl px-4 pt-14 sm:px-6">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <h2 id="kiemelt" className="text-engraved text-2xl font-bold sm:text-3xl">
-                {homeTexts.featuredHeading}
-              </h2>
-              <Link
-                href={routes.products}
-                className="text-sm text-gold underline-offset-4 hover:underline"
-              >
-                {homeTexts.featuredMore}
-              </Link>
-            </div>
-            <div className="mt-6">
-              <ProductGrid products={data.featured} />
-            </div>
-          </section>
-
-          {data.categories.length > 0 ? (
-            <section aria-labelledby="kategoriak" className="mx-auto max-w-7xl px-4 pt-14 sm:px-6">
-              <h2 id="kategoriak" className="text-engraved text-2xl font-bold sm:text-3xl">
-                {homeTexts.categoriesHeading}
-              </h2>
-              <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {data.categories.map((category) => (
-                  <li key={category.id}>
-                    <CategoryCard category={category} />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
-        </>
-      ) : (
-        <section className="mx-auto max-w-7xl px-4 pt-14 sm:px-6">
-          <ErrorState code={data.code} title={homeTexts.errorTitle} />
-        </section>
-      )}
+      <Suspense fallback={<HomeSectionsSkeleton />}>
+        <HomeCatalogSections brand={brand} />
+      </Suspense>
 
       <section aria-labelledby="ritkasag" className="mx-auto max-w-7xl px-4 pt-14 sm:px-6">
         <h2 id="ritkasag" className="text-engraved text-2xl font-bold sm:text-3xl">

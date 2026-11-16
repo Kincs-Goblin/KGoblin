@@ -10,6 +10,8 @@ export const productTexts = {
   lowest30Days: "Az elmúlt 30 nap legalacsonyabb ára:",
   inStock: "Raktáron",
   lowStock: (count: number) => `Már csak ${count} db`,
+  onBackorder: "Előrendelhető",
   outOfStock: "Elfogyott",
+  deliveryLabel: "Szállítás:",
   noImage: "Kép hamarosan",
 } as const;

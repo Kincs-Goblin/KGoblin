@@ -1,5 +1,8 @@
+"use client";
+
 import { GemIcon } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
 
 import { cn } from "@/shared/lib/utils";
 
@@ -28,9 +31,58 @@ type ProductArtProps = {
   priority?: boolean;
 };
 
+function ProductImageWithFallback({
+  image,
+  rarity,
+  sizes,
+  priority,
+}: {
+  image: ProductImage;
+  rarity: Rarity;
+  sizes?: string;
+  priority?: boolean;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return <ProductArtPlaceholder rarity={rarity} label={image.alt || productTexts.noImage} />;
+  }
+
+  return (
+    <Image
+      src={image.src}
+      alt={image.alt}
+      fill
+      sizes={sizes ?? "(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"}
+      priority={priority}
+      onError={() => setFailed(true)}
+      className="object-cover"
+    />
+  );
+}
+
+export function ProductArtPlaceholder({ rarity, label }: { rarity: Rarity; label?: string }) {
+  return (
+    <div
+      role="img"
+      aria-label={label ?? productTexts.noImage}
+      className={cn(
+        "surface-stone absolute inset-0 flex flex-col items-center justify-center gap-2 bg-radial to-transparent to-70%",
+        rarityGlow[rarity],
+      )}
+    >
+      <GemIcon
+        aria-hidden="true"
+        strokeWidth={1.25}
+        className={cn("size-1/3 drop-shadow-lg", rarityIcon[rarity])}
+      />
+    </div>
+  );
+}
+
 /**
- * A „kártyakép”: a termékfotó, vagy ha nincs, saját díszítő illusztráció a ritkaság színével.
- * A Woo-képek éles bekötése a KG-9-ben történik (Woo médiatár + Cloudflare CDN és IMAGES binding: ADR-0009, ADR-0013).
+ * A „kártyakép”: Next.js által optimalizált termékfotó (`remotePatterns`, Cloudflare CDN / IMAGES binding:
+ * ADR-0009, ADR-0013), vagy ha hiányzik / betöltési hiba történik, saját díszítő illusztráció a ritkaság színével.
  */
 export function ProductArt({ image, rarity, className, sizes, priority }: ProductArtProps) {
   return (
@@ -41,30 +93,15 @@ export function ProductArt({ image, rarity, className, sizes, priority }: Produc
       )}
     >
       {image ? (
-        <Image
-          src={image.src}
-          alt={image.alt}
-          fill
-          unoptimized
-          sizes={sizes ?? "(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"}
+        <ProductImageWithFallback
+          key={image.src}
+          image={image}
+          rarity={rarity}
+          sizes={sizes}
           priority={priority}
-          className="object-cover"
         />
       ) : (
-        <div
-          role="img"
-          aria-label={productTexts.noImage}
-          className={cn(
-            "absolute inset-0 flex items-center justify-center bg-radial to-transparent to-70%",
-            rarityGlow[rarity],
-          )}
-        >
-          <GemIcon
-            aria-hidden="true"
-            strokeWidth={1.25}
-            className={cn("size-1/3 drop-shadow-lg", rarityIcon[rarity])}
-          />
-        </div>
+        <ProductArtPlaceholder rarity={rarity} />
       )}
     </div>
   );

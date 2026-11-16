@@ -1,18 +1,29 @@
 [
   {
     "id": 1,
-    "name": "Switch típus",
-    "taxonomy": "pa_switch_tipus",
+    "name": "Kapcsoló",
+    "taxonomy": "pa_kapcsolo",
     "type": "select",
     "order": "menu_order",
-    "has_archives": false
+    "has_archives": false,
+    "count": 2
+  },
+  {
+    "id": 3,
+    "name": "Platform",
+    "taxonomy": "pa_platform",
+    "type": "select",
+    "order": "menu_order",
+    "has_archives": false,
+    "count": 2
   },
   {
     "id": 2,
-    "name": "Méret",
-    "taxonomy": "pa_meret",
+    "name": "Szín",
+    "taxonomy": "pa_szin",
     "type": "select",
     "order": "menu_order",
-    "has_archives": false
+    "has_archives": false,
+    "count": 3
   }
 ]

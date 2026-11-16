@@ -31,19 +31,63 @@ export const termSchema = z.object({
   slug: z.string(),
 });
 
+export const productAttributeTermRefSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  slug: z.string(),
+});
+
+export const productAttributeSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  taxonomy: z.string().default(""),
+  has_variations: z.boolean().default(false),
+  terms: z.array(productAttributeTermRefSchema).default([]),
+});
+
+export const kgHeadlessVariationAttributeSchema = z.object({
+  name: z.string(),
+  taxonomy: z.string(),
+  value: z.string(),
+  slug: z.string(),
+});
+
+export const kgHeadlessVariationSchema = z.object({
+  id: z.number().int().positive(),
+  sku: z.string().default(""),
+  attributes: z.array(kgHeadlessVariationAttributeSchema).default([]),
+  prices: priceSchema,
+  on_sale: z.boolean(),
+  lowest_price_30_days: z.number().int().nonnegative().nullable(),
+  is_in_stock: z.boolean(),
+  is_on_backorder: z.boolean().default(false),
+  is_purchasable: z.boolean().default(true),
+  low_stock_remaining: z.number().int().nullable(),
+  delivery_time: z.string().nullable().default(null),
+  image: imageSchema.nullable().default(null),
+});
+
 /** A saját `kg-headless` plugin Store API-kiterjesztése; régebbi backendnél hiányozhat. */
 export const kgHeadlessExtensionSchema = z
   .object({
     lowest_price_30_days: z.number().int().nonnegative().nullable(),
     is_on_sale: z.boolean(),
     currency_minor_unit: z.number().int().min(0).optional(),
+    delivery_time: z.string().nullable().optional(),
+    variations: z.array(kgHeadlessVariationSchema).default([]),
   })
   .partial();
+
+export const stockAvailabilitySchema = z.object({
+  text: z.string().default(""),
+  class: z.string().default(""),
+});
 
 export const productSchema = z.object({
   id: z.number(),
   name: z.string(),
   slug: z.string(),
+  type: z.string().default("simple"),
   sku: z.string().default(""),
   short_description: z.string().default(""),
   description: z.string().default(""),
@@ -52,9 +96,12 @@ export const productSchema = z.object({
   images: z.array(imageSchema),
   categories: z.array(termSchema),
   tags: z.array(termSchema),
+  attributes: z.array(productAttributeSchema).default([]),
   is_purchasable: z.boolean(),
   is_in_stock: z.boolean(),
+  is_on_backorder: z.boolean().default(false),
   low_stock_remaining: z.number().int().nullable(),
+  stock_availability: stockAvailabilitySchema.optional(),
   extensions: z
     .object({
       kg_headless: kgHeadlessExtensionSchema.optional(),
@@ -245,6 +292,10 @@ export const wooApiErrorBodySchema = z.object({
 
 export type StorePrice = z.infer<typeof priceSchema>;
 export type StoreImage = z.infer<typeof imageSchema>;
+export type StoreProductAttribute = z.infer<typeof productAttributeSchema>;
+export type StoreProductVariationAttribute = z.infer<typeof kgHeadlessVariationAttributeSchema>;
+export type StoreProductVariation = z.infer<typeof kgHeadlessVariationSchema>;
+export type StoreKgHeadlessExtension = z.infer<typeof kgHeadlessExtensionSchema>;
 export type StoreProduct = z.infer<typeof productSchema>;
 export type StoreCategory = z.infer<typeof categorySchema>;
 export type StoreAttribute = z.infer<typeof attributeSchema>;

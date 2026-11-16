@@ -24,6 +24,7 @@ define( 'KG_HEADLESS_VERSION', '0.1.0' );
 define( 'KG_HEADLESS_PATH', plugin_dir_path( __FILE__ ) );
 
 require_once KG_HEADLESS_PATH . 'includes/class-kg-omnibus.php';
+require_once KG_HEADLESS_PATH . 'includes/class-kg-product-extensions.php';
 require_once KG_HEADLESS_PATH . 'includes/class-kg-checkout-fields.php';
 
 /**
@@ -54,6 +55,7 @@ add_action(
 	'plugins_loaded',
 	function (): void {
 		\KG_Headless\Omnibus::init();
+		\KG_Headless\Product_Extensions::init();
 		\KG_Headless\Checkout_Fields::init();
 	}
 );
@@ -148,3 +150,22 @@ add_filter(
 	10,
 	1
 );
+
+/**
+ * 5. Lokális Docker fejlesztői környezetben (opt-in) a localhost / host.docker.internal webhook
+ *    célcímek engedélyezése a `wp_safe_remote_post` hívásokhoz. Élesben soha nincs bekapcsolva.
+ */
+if ( '1' === getenv( 'KG_ALLOW_LOCAL_WEBHOOKS' ) || 'yes' === get_option( 'kg_headless_allow_local_webhooks' ) ) {
+	add_filter(
+		'http_request_host_is_external',
+		static function ( bool $external, string $host ): bool {
+			if ( in_array( strtolower( $host ), array( 'host.docker.internal', 'localhost', '127.0.0.1' ), true ) ) {
+				return true;
+			}
+			return $external;
+		},
+		10,
+		2
+	);
+}
+

@@ -14,7 +14,14 @@ import { duration, spring } from "@/shared/ui/motion";
 import { addToCartTexts } from "../config/texts";
 
 type AddToCartButtonProps = {
-  product: { id: number; slug: string; name: string; price: MoneyParts };
+  product: {
+    id: number;
+    variationId?: number;
+    variantLabel?: string;
+    slug: string;
+    name: string;
+    price: MoneyParts;
+  };
   disabled?: boolean;
   size?: "default" | "lg";
   className?: string;
@@ -40,13 +47,19 @@ export function AddToCartButton({
       type: "add",
       line: {
         productId: product.id,
+        ...(product.variationId ? { variationId: product.variationId } : {}),
+        ...(product.variantLabel ? { variantLabel: product.variantLabel } : {}),
         slug: product.slug,
         name: product.name,
         unitPrice: product.price,
       },
     });
     setAdded(true);
-    toast.success(addToCartTexts.toast(product.name));
+    toast.success(
+      addToCartTexts.toast(
+        product.variantLabel ? `${product.name} (${product.variantLabel})` : product.name,
+      ),
+    );
   }
 
   return (

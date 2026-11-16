@@ -1,3 +1,3 @@
 import "server-only";
 
-export { getProduct, getProducts } from "./api/get-products";
+export { getCatalogAttributes, getProduct, getProducts, getProductsPage } from "./api/get-products";

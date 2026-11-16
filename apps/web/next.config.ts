@@ -1,4 +1,6 @@
+import { brands } from "@kg/brand-config";
 import type { NextConfig } from "next";
+import type { RemotePattern } from "next/dist/shared/lib/image-config";
 import { z } from "zod";
 
 import "./src/shared/config/env.client";
@@ -18,14 +20,83 @@ if (!buildEnvCheck.success) {
   throw new Error(`Érvénytelen szerveroldali környezeti változó (${issues})`);
 }
 
-const isNoIndex =
-  process.env.NEXT_PUBLIC_APP_ENV === "preview" || process.env.NEXT_PUBLIC_APP_ENV === "demo";
+const appEnv = process.env.NEXT_PUBLIC_APP_ENV || "local";
+const isLocalApp = appEnv === "local";
+const isNoIndex = appEnv === "preview" || appEnv === "demo";
+
+function isLoopbackHost(hostname: string): boolean {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1" ||
+    hostname === "[::1]"
+  );
+}
+
+function toRemotePattern(rawUrl: string): RemotePattern | null {
+  try {
+    const url = new URL(rawUrl);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+    const protocol = url.protocol === "https:" ? "https" : "http";
+    return {
+      protocol,
+      hostname: url.hostname,
+      ...(url.port ? { port: url.port } : {}),
+      pathname: "/**",
+    };
+  } catch {
+    return null;
+  }
+}
+
+function collectImageRemotePatterns(): {
+  remotePatterns: RemotePattern[];
+  hasLoopback: boolean;
+} {
+  const seen = new Set<string>();
+  const remotePatterns: RemotePattern[] = [];
+  let hasLoopback = false;
+
+  const pushPattern = (rawUrl: string | undefined) => {
+    if (!rawUrl) return;
+    const pattern = toRemotePattern(rawUrl.trim());
+    if (!pattern) return;
+    const key = `${pattern.protocol}://${pattern.hostname}:${pattern.port ?? ""}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    if (isLoopbackHost(pattern.hostname)) hasLoopback = true;
+    remotePatterns.push(pattern);
+  };
+
+  for (const brand of brands) {
+    pushPattern(process.env[brand.woo.baseUrlEnv]);
+  }
+
+  const extraHosts = process.env.KG_MEDIA_REMOTE_HOSTS?.split(",") ?? [];
+  for (const host of extraHosts) {
+    pushPattern(host);
+  }
+
+  // Lokális fejlesztéshez / fixture buildhez a Docker Woo (localhost:8080) kizárólag local környezetben engedélyezett.
+  if (isLocalApp) {
+    pushPattern("http://localhost:8080");
+    pushPattern("http://127.0.0.1:8080");
+  }
+
+  return { remotePatterns, hasLoopback };
+}
+
+const { remotePatterns, hasLoopback } = collectImageRemotePatterns();
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@kg/brand-config", "@kg/woo-client"],
   poweredByHeader: false,
   // A szabályforrás a gyökér AGENTS.md (ADR-0003, ADR-0006); a next dev ne generáljon saját AGENTS.md-t.
   agentRules: false,
+  images: {
+    remotePatterns,
+    ...(hasLoopback && isLocalApp ? { dangerouslyAllowLocalIP: true } : {}),
+  },
   async headers() {
     if (!isNoIndex) return [];
     return [

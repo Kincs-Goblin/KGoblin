@@ -2,13 +2,17 @@ import type { Brand } from "@kg/brand-config";
 
 import { resolveBrandWebhookSecret } from "./env";
 import {
+  wooCategoryWebhookTopicSchema,
   wooOrderWebhookTopicSchema,
   wooProductWebhookTopicSchema,
+  wooWebhookCategoryPayloadSchema,
   wooWebhookOrderSchema,
   wooWebhookPingSchema,
   wooWebhookProductSchema,
+  type WooCategoryWebhookTopic,
   type WooOrderWebhookTopic,
   type WooProductWebhookTopic,
+  type WooWebhookCategoryPayload,
   type WooWebhookOrderPayload,
   type WooWebhookPingPayload,
   type WooWebhookProductPayload,
@@ -128,6 +132,7 @@ export async function verifyWooWebhookSignature(options: {
 export type VerifiedWooWebhookEvent =
   | { topic: "ping"; payload: WooWebhookPingPayload }
   | { topic: WooProductWebhookTopic; payload: WooWebhookProductPayload }
+  | { topic: WooCategoryWebhookTopic; payload: WooWebhookCategoryPayload }
   | { topic: WooOrderWebhookTopic; payload: WooWebhookOrderPayload };
 
 export type VerifyWooWebhookSuccess = {
@@ -250,9 +255,10 @@ export async function verifyAndParseWooWebhook(options: {
   }
 
   const productTopic = wooProductWebhookTopicSchema.safeParse(topic);
+  const categoryTopic = wooCategoryWebhookTopicSchema.safeParse(topic);
   const orderTopic = wooOrderWebhookTopicSchema.safeParse(topic);
 
-  if (!productTopic.success && !orderTopic.success) {
+  if (!productTopic.success && !categoryTopic.success && !orderTopic.success) {
     return {
       ok: false,
       status: 400,
@@ -289,6 +295,25 @@ export async function verifyAndParseWooWebhook(options: {
       deliveryId,
       webhookId,
       event: { topic: productTopic.data, payload: parsed.data },
+    };
+  }
+
+  if (categoryTopic.success) {
+    const parsedCategory = wooWebhookCategoryPayloadSchema.safeParse(json);
+    if (!parsedCategory.success) {
+      return {
+        ok: false,
+        status: 400,
+        code: "WEBHOOK.INVALID_PAYLOAD",
+        message: "A kategória webhook payload nem felel meg a sémának.",
+      };
+    }
+    return {
+      ok: true,
+      brandId: options.brand.id,
+      deliveryId,
+      webhookId,
+      event: { topic: categoryTopic.data, payload: parsedCategory.data },
     };
   }
 

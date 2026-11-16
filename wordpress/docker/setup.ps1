@@ -42,6 +42,7 @@ $AdminUser     = if ($envVars["WP_${BrandUpper}_ADMIN_USER"]) { $envVars["WP_${B
 $AdminPassword = if ($envVars["WP_${BrandUpper}_ADMIN_PASSWORD"]) { $envVars["WP_${BrandUpper}_ADMIN_PASSWORD"] } elseif ($envVars["WP_GAMER_ADMIN_PASSWORD"]) { $envVars["WP_GAMER_ADMIN_PASSWORD"] } else { "admin123" }
 $AdminEmail    = if ($envVars["WP_${BrandUpper}_ADMIN_EMAIL"]) { $envVars["WP_${BrandUpper}_ADMIN_EMAIL"] } elseif ($envVars["WP_GAMER_ADMIN_EMAIL"]) { $envVars["WP_GAMER_ADMIN_EMAIL"] } else { "admin@kincsgoblin.local" }
 $FrontendUrl   = if ($envVars["WP_${BrandUpper}_FRONTEND_URL"]) { $envVars["WP_${BrandUpper}_FRONTEND_URL"] } else { $DefaultFeUrl }
+$WebhookSecret = if ($envVars["WOO_${BrandUpper}_WEBHOOK_SECRET"]) { $envVars["WOO_${BrandUpper}_WEBHOOK_SECRET"] } elseif ($envVars["KG_WEBHOOK_SECRET"]) { $envVars["KG_WEBHOOK_SECRET"] } else { "kg_local_${Brand}_webhook_secret" }
 $CliService    = "wpcli-$Brand"
 $WpService     = "wp-$Brand"
 
@@ -111,7 +112,7 @@ docker compose exec -T $CliService wp redis enable --path=/var/www/html >$null 2
 
 Write-Host "=== [5/6] kg-headless bővítmény aktiválása és gamer tesztadatok betöltése ===" -ForegroundColor Cyan
 docker compose exec -T $CliService wp plugin activate kg-headless --path=/var/www/html
-docker compose exec -T -e KG_BRAND=$Brand -e KG_FRONTEND_URL=$FrontendUrl $CliService wp eval-file /var/www/seed/seed-brand.php --path=/var/www/html
+docker compose exec -T -e KG_BRAND=$Brand -e KG_FRONTEND_URL=$FrontendUrl -e KG_WEBHOOK_SECRET=$WebhookSecret $CliService wp eval-file /var/www/seed/seed-brand.php --path=/var/www/html
 
 Write-Host "=== [6/6] Állapot ellenőrzése ===" -ForegroundColor Cyan
 docker compose exec -T $CliService wp plugin list --path=/var/www/html
@@ -122,4 +123,5 @@ Write-Host " KÉSZ! A KGoblin ($Brand) headless WooCommerce backend fut!" -Foreg
 Write-Host " - WP Admin:   http://localhost:$Port/wp-admin ($AdminUser / $AdminPassword)" -ForegroundColor Green
 Write-Host " - Store API:  http://localhost:$Port/wp-json/wc/store/v1/products" -ForegroundColor Green
 Write-Host " - Frontend redirect cél: $FrontendUrl" -ForegroundColor Green
+Write-Host " - Webhook titok (WOO_${BrandUpper}_WEBHOOK_SECRET): $WebhookSecret" -ForegroundColor Green
 Write-Host "==================================================================" -ForegroundColor Green

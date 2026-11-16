@@ -17,6 +17,8 @@ const storedCartSchema = z.object({
   lines: z.array(
     z.object({
       productId: z.number(),
+      variationId: z.number().optional(),
+      variantLabel: z.string().optional(),
       slug: z.string(),
       name: z.string(),
       unitPrice: z.object({ amount: z.string(), currency: z.string(), minorUnit: z.number() }),

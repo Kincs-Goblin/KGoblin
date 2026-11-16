@@ -44,4 +44,13 @@ describe("cartReducer", () => {
     const next = cartReducer(state, { type: "add", line: repriced });
     expect(next.lines[0]).toMatchObject({ quantity: 2, unitPrice: repriced.unitPrice });
   });
+
+  it("ugyanazon termék különböző variációit külön sorban tárolja", () => {
+    const varA = { ...line, variationId: 64, variantLabel: "Obszidián Fekete" };
+    const varB = { ...line, variationId: 65, variantLabel: "Goblin Arany" };
+    const once = cartReducer(empty, { type: "add", line: varA });
+    const twice = cartReducer(once, { type: "add", line: varB });
+    expect(twice.lines).toHaveLength(2);
+    expect(cartReducer(twice, { type: "remove", productId: 64 }).lines).toHaveLength(1);
+  });
 });

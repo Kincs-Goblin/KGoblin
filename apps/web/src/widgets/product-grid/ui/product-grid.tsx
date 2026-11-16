@@ -1,5 +1,9 @@
+import Link from "next/link";
+
 import { ProductCard, type Product } from "@/entities/product";
 import { AddToCartButton } from "@/features/add-to-cart";
+import { routes } from "@/shared/config";
+import { buttonVariants } from "@/shared/ui/button";
 import { Reveal, stagger } from "@/shared/ui/motion";
 
 import { productGridTexts } from "../config/texts";
@@ -23,15 +27,27 @@ export function ProductGrid({ products, className }: ProductGridProps) {
             <ProductCard
               product={product}
               action={
-                <AddToCartButton
-                  product={{
-                    id: product.id,
-                    slug: product.slug,
-                    name: product.name,
-                    price: product.price.current,
-                  }}
-                  disabled={!product.inStock || !product.purchasable}
-                />
+                product.type === "variable" || product.variations.length > 0 ? (
+                  <Link
+                    href={routes.product(product.slug)}
+                    className={buttonVariants({
+                      variant: "outline",
+                      className: "h-9 w-full border-gold/60 text-gold hover:bg-gold/10",
+                    })}
+                  >
+                    {productGridTexts.chooseVariant}
+                  </Link>
+                ) : (
+                  <AddToCartButton
+                    product={{
+                      id: product.id,
+                      slug: product.slug,
+                      name: product.name,
+                      price: product.price.current,
+                    }}
+                    disabled={!product.inStock || !product.purchasable}
+                  />
+                )
               }
             />
           </Reveal>

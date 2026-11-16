@@ -32,7 +32,6 @@ class Omnibus {
 	 */
 	public static function init(): void {
 		add_action( 'woocommerce_before_product_object_save', array( self::class, 'on_before_product_save' ), 10, 1 );
-		add_action( 'woocommerce_blocks_loaded', array( self::class, 'register_store_api_extension' ) );
 	}
 
 	/**
@@ -329,56 +328,5 @@ class Omnibus {
 
 		$decimals = function_exists( 'wc_get_price_decimals' ) ? wc_get_price_decimals() : 0;
 		return self::parse_price_to_int( $product->get_regular_price(), $decimals );
-	}
-
-	/**
-	 * Store API `/wp-json/wc/store/v1/products` kiterjesztése az Omnibus mezőkkel (`extensions.kg_headless`).
-	 */
-	public static function register_store_api_extension(): void {
-		if ( ! function_exists( 'woocommerce_store_api_register_endpoint_data' ) ) {
-			return;
-		}
-
-		if ( ! class_exists( \Automattic\WooCommerce\StoreApi\Schemas\V1\ProductSchema::class ) ) {
-			return;
-		}
-
-		woocommerce_store_api_register_endpoint_data(
-			array(
-				'endpoint'        => \Automattic\WooCommerce\StoreApi\Schemas\V1\ProductSchema::IDENTIFIER,
-				'namespace'       => 'kg_headless',
-				'data_callback'   => function ( \WC_Product $product ): array {
-					$decimals = function_exists( 'wc_get_price_decimals' ) ? wc_get_price_decimals() : 0;
-					return array(
-						'lowest_price_30_days' => self::get_lowest_price_for_product( $product ),
-						'is_on_sale'           => (bool) $product->is_on_sale(),
-						'currency_minor_unit'  => $decimals,
-					);
-				},
-				'schema_callback' => function (): array {
-					return array(
-						'lowest_price_30_days' => array(
-							'description' => __( 'Az akció kezdete előtti 30 nap legalacsonyabb ára minor unitban (EU Omnibus).', 'kg-headless' ),
-							'type'        => array( 'integer', 'null' ),
-							'context'     => array( 'view', 'edit' ),
-							'readonly'    => true,
-						),
-						'is_on_sale'           => array(
-							'description' => __( 'Jelzi, hogy a termék jelenleg akciós-e.', 'kg-headless' ),
-							'type'        => 'boolean',
-							'context'     => array( 'view', 'edit' ),
-							'readonly'    => true,
-						),
-						'currency_minor_unit'  => array(
-							'description' => __( 'A pénznem minor unit tizedesjegyeinek száma.', 'kg-headless' ),
-							'type'        => 'integer',
-							'context'     => array( 'view', 'edit' ),
-							'readonly'    => true,
-						),
-					);
-				},
-				'schema_type'     => ARRAY_A,
-			)
-		);
 	}
 }

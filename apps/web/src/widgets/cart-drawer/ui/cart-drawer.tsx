@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useState } from "react";
 
-import { MAX_QUANTITY_PER_LINE, useCart } from "@/entities/cart";
+import { getCartLineId, MAX_QUANTITY_PER_LINE, useCart } from "@/entities/cart";
 import { routes } from "@/shared/config";
 import { formatMoney } from "@/shared/lib/format";
 import { Button } from "@/shared/ui/button";
@@ -72,86 +72,99 @@ export function CartDrawer() {
           ) : (
             <ul className="flex flex-col gap-3">
               <AnimatePresence initial={false}>
-                {state.lines.map((line) => (
-                  <motion.li
-                    key={line.productId}
-                    layout
-                    initial={{ opacity: 0, x: 24 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 24 }}
-                    transition={{ duration: duration.base, ease: easing.out }}
-                    className="surface-wood rounded-lg border border-bronze/40 p-3"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <Link
-                        href={routes.product(line.slug)}
-                        onClick={() => setOpen(false)}
-                        className="font-heading text-sm leading-snug text-foreground hover:text-gold"
-                      >
-                        {line.name}
-                      </Link>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={cartDrawerTexts.remove(line.name)}
-                        onClick={() => dispatch({ type: "remove", productId: line.productId })}
-                      >
-                        <Trash2Icon />
-                      </Button>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between gap-3">
-                      <div
-                        className="flex items-center gap-1"
-                        role="group"
-                        aria-label={cartDrawerTexts.quantity}
-                      >
+                {state.lines.map((line) => {
+                  const lineId = getCartLineId(line);
+                  const displayName = line.variantLabel
+                    ? `${line.name} (${line.variantLabel})`
+                    : line.name;
+                  return (
+                    <motion.li
+                      key={lineId}
+                      layout
+                      initial={{ opacity: 0, x: 24 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 24 }}
+                      transition={{ duration: duration.base, ease: easing.out }}
+                      className="surface-wood rounded-lg border border-bronze/40 p-3"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <Link
+                            href={routes.product(line.slug)}
+                            onClick={() => setOpen(false)}
+                            className="font-heading text-sm leading-snug text-foreground hover:text-gold"
+                          >
+                            {line.name}
+                          </Link>
+                          {line.variantLabel ? (
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                              {line.variantLabel}
+                            </p>
+                          ) : null}
+                        </div>
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="icon-sm"
-                          aria-label={cartDrawerTexts.decrease(line.name)}
-                          onClick={() =>
-                            dispatch({
-                              type: "setQuantity",
-                              productId: line.productId,
-                              quantity: line.quantity - 1,
-                            })
-                          }
+                          aria-label={cartDrawerTexts.remove(displayName)}
+                          onClick={() => dispatch({ type: "remove", productId: lineId })}
                         >
-                          <MinusIcon />
-                        </Button>
-                        <span
-                          className="w-8 text-center font-heading tabular-nums"
-                          aria-live="polite"
-                        >
-                          {line.quantity}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="icon-sm"
-                          disabled={line.quantity >= MAX_QUANTITY_PER_LINE}
-                          aria-label={cartDrawerTexts.increase(line.name)}
-                          onClick={() =>
-                            dispatch({
-                              type: "setQuantity",
-                              productId: line.productId,
-                              quantity: line.quantity + 1,
-                            })
-                          }
-                        >
-                          <PlusIcon />
+                          <Trash2Icon />
                         </Button>
                       </div>
-                      <p className="text-right text-sm">
-                        <span className="block text-xs text-muted-foreground">
-                          {cartDrawerTexts.unitPrice}
-                        </span>
-                        <span className="font-heading text-gold">
-                          {formatMoney(line.unitPrice)}
-                        </span>
-                      </p>
-                    </div>
-                  </motion.li>
-                ))}
+                      <div className="mt-2 flex items-center justify-between gap-3">
+                        <div
+                          className="flex items-center gap-1"
+                          role="group"
+                          aria-label={cartDrawerTexts.quantity}
+                        >
+                          <Button
+                            variant="outline"
+                            size="icon-sm"
+                            aria-label={cartDrawerTexts.decrease(displayName)}
+                            onClick={() =>
+                              dispatch({
+                                type: "setQuantity",
+                                productId: lineId,
+                                quantity: line.quantity - 1,
+                              })
+                            }
+                          >
+                            <MinusIcon />
+                          </Button>
+                          <span
+                            className="w-8 text-center font-heading tabular-nums"
+                            aria-live="polite"
+                          >
+                            {line.quantity}
+                          </span>
+                          <Button
+                            variant="outline"
+                            size="icon-sm"
+                            disabled={line.quantity >= MAX_QUANTITY_PER_LINE}
+                            aria-label={cartDrawerTexts.increase(displayName)}
+                            onClick={() =>
+                              dispatch({
+                                type: "setQuantity",
+                                productId: lineId,
+                                quantity: line.quantity + 1,
+                              })
+                            }
+                          >
+                            <PlusIcon />
+                          </Button>
+                        </div>
+                        <p className="text-right text-sm">
+                          <span className="block text-xs text-muted-foreground">
+                            {cartDrawerTexts.unitPrice}
+                          </span>
+                          <span className="font-heading text-gold">
+                            {formatMoney(line.unitPrice)}
+                          </span>
+                        </p>
+                      </div>
+                    </motion.li>
+                  );
+                })}
               </AnimatePresence>
             </ul>
           )}

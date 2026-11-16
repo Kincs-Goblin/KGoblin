@@ -6,6 +6,8 @@ import type { MoneyParts } from "@/shared/lib/format";
  */
 export type CartLine = {
   productId: number;
+  variationId?: number;
+  variantLabel?: string;
   slug: string;
   name: string;
   unitPrice: MoneyParts;
@@ -24,6 +26,10 @@ export type CartAction =
 /** Egy sor felső korlátja; a valódi készlet- és darabszám-ellenőrzés a Woo-kosárban lesz. */
 export const MAX_QUANTITY_PER_LINE = 30;
 
+export function getCartLineId(line: Pick<CartLine, "productId" | "variationId">): number {
+  return line.variationId ?? line.productId;
+}
+
 const clamp = (quantity: number) =>
   Math.min(MAX_QUANTITY_PER_LINE, Math.max(0, Math.trunc(quantity)));
 
@@ -32,11 +38,12 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
     case "add": {
       const amount = clamp(action.quantity ?? 1);
       if (amount === 0) return state;
-      const existing = state.lines.find((line) => line.productId === action.line.productId);
+      const targetId = getCartLineId(action.line);
+      const existing = state.lines.find((line) => getCartLineId(line) === targetId);
       if (existing) {
         return {
           lines: state.lines.map((line) =>
-            line.productId === action.line.productId
+            getCartLineId(line) === targetId
               ? {
                   ...line,
                   // A friss Woo-ár felülírja a korábban tároltat; az ár így csak tájékoztató marad.
@@ -54,14 +61,14 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
       return {
         lines:
           quantity === 0
-            ? state.lines.filter((line) => line.productId !== action.productId)
+            ? state.lines.filter((line) => getCartLineId(line) !== action.productId)
             : state.lines.map((line) =>
-                line.productId === action.productId ? { ...line, quantity } : line,
+                getCartLineId(line) === action.productId ? { ...line, quantity } : line,
               ),
       };
     }
     case "remove":
-      return { lines: state.lines.filter((line) => line.productId !== action.productId) };
+      return { lines: state.lines.filter((line) => getCartLineId(line) !== action.productId) };
     case "clear":
       return { lines: [] };
     case "hydrate":
