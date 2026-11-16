@@ -30,9 +30,11 @@ változat mezői. Ami hiányzik, vagy nem ellenőrizhető („jól működik”)
 Előbb `git fetch origin`, aztán mindig a friss `origin/demo`-hoz (hotfixnél `origin/main`) mérj, ne a saját
 ághoz.
 
-1. **Ticket dátuma óta változott döntések:** `git log origin/demo --since=<ticket létrehozása> -- docs/adr
-   .agents/skills/kg-stack/SKILL.md AGENTS.md` (hotfixnél `origin/main`). Minden új ADR-t vesd össze a ticket állításaival (pl. a
-   ticket Vercelről beszél, közben egy ADR a Workersre váltott).
+1. **Ticket dátuma óta változott döntések:** `git log origin/demo --first-parent --since=<ticket létrehozása>
+   -m --name-status -- docs/adr .agents/skills/kg-stack/SKILL.md AGENTS.md` (hotfixnél `origin/main`). Az
+   elfogadás dátuma a merge commité (`--first-parent`), nem az ADR commitjáé: a ticket után merge-elt, de
+   előtte commitolt ADR is megjelenik. Minden új ADR-t vesd össze a ticket állításaival (pl. a ticket
+   Vercelről beszél, közben egy ADR a Workersre váltott).
 2. **A ticket állításai a kóddal:** minden fájlra, csomagra, hibakódra, parancsra, konvencióra, amit a
    ticket megnevez, `git grep` vagy fájlolvasás. Eltérés = finding (pl. a ticket egy hibakódot ír, a kód
    másikat használ).

@@ -15,7 +15,12 @@ lehet, és közben ellentmondhat a ticketnek, egy ADR-nek vagy a kódnak, amirő
 ## 1. Tárgy rögzítése
 
 1. `git fetch origin`; `gh pr list` / `gh pr view <n> --json headRefOid,baseRefOid,body,statusCheckRollup,mergeable`.
-2. Rögzítsd a base és head SHA-t (a verdikt ezekre szól). A diff a célághoz mér: `git diff origin/<base>...origin/<ág>`.
+2. Rögzítsd a base és head SHA-t (a verdikt ezekre szól). A base a friss `git rev-parse origin/<base>`, nem
+   a `baseRefOid` (az a PR indulásakori állapot, elavulhat). A diff a merge-base-hez mér:
+   `git diff origin/<base>...origin/<ág>`. Ha a merge-base ≠ `origin/<base>`, a célág azóta elmozdult, és ez a
+   diffben nem látszik: `git log --oneline <merge-base>..origin/<base> -- <a PR fájljai>`,
+   `git merge-tree --write-tree origin/<base> origin/<ág>` (ütközés), és a PR által érintett szabályfájlok
+   összevetése a friss célággal (`git show origin/<base>:<fájl>`).
 3. Ellenőrizd, nyitott-e még a PR, és a feje nincs-e már a célágban (pl. merge commit történt, de a PR
    nyitva maradt): `git merge-base --is-ancestor <head> origin/<base>`.
 4. Kockázati szint (`kg-ticket-to-pr` 5.): ADR, `kg-stack`, skill és `AGENTS.md` változása szabályt vagy
@@ -48,8 +53,9 @@ PR-leírás **tervezete** (az „Ellenőrzés” rész szövege) adja; a `gh`- �
   Új függőség vagy szolgáltatás = stack-változás: van-e ADR és `kg-stack`-frissítés.
 - **Frissesség:** a PR-leírás „nem futott” és „figyelni” állításai igazak-e még a Jira-kommentek és az új
   commitok alapján (utólag lefuttatott teszt után a leírás elavulhat). Eltérés = finding.
-- **ADR:** a „Döntéshozók” és a „Jóváhagyás” sor a PR-ben kitöltött-e: kik hagyták jóvá, hol látszik (az
-  opciós kérdés válasza, komment). A merge-hez adott „mehet” ezt megerősíti, nem pótolja (`kg-stack` 4-5.).
+- **ADR:** a „Döntéshozók” sor és a jóváhagyás nyoma (a „Jóváhagyás” vagy az „Állapot” sorban) a PR-ben
+  kitöltött-e: kik hagyták jóvá, hol látszik (az opciós kérdés válasza a PR-ban, komment). A merge-hez adott
+  „mehet” ezt megerősíti, nem pótolja (`kg-stack` 4-5.).
   Jóváhagyás nélküli ADR csak `javasolt` státuszú lehet.
 
 ## 4. Kód- és biztonsági szempontok

@@ -35,12 +35,12 @@ A saját preferenciák (nyelv, stílus, válaszhossz) a globális agent-fájlba 
 
 > Olvasd el az AGENTS.md-t, és sorold fel, milyen kg- skilleket látsz.
 
-Mind a 10 `kg-*` skillnek meg kell jelennie (`kg-stack`, `kg-architecture`, `kg-git-workflow`,
-`kg-ticket-to-pr`, `kg-release`, `kg-dev-practices`, `kg-knowledge`, `kg-full-stop`, `kg-babysit-pr`,
-`kg-council`).
+Mind a 12 `kg-*` skillnek meg kell jelennie (`kg-stack`, `kg-architecture`, `kg-git-workflow`,
+`kg-ticket-to-pr`, `kg-ticket-refine`, `kg-pr-review`, `kg-release`, `kg-dev-practices`, `kg-knowledge`,
+`kg-full-stop`, `kg-babysit-pr`, `kg-council`).
 
-- Antigravity: `/` leütésére látszanak a workflow-k (`ticket`, `release-cut`, `release-ship`, `demo-sync`,
-  `hotfix`, `stack-change`, `full-stop`, `local-test`).
+- Antigravity: `/` leütésére látszanak a workflow-k (`ticket`, `refine-ticket`, `pr-review`, `release-cut`,
+  `release-ship`, `demo-sync`, `hotfix`, `stack-change`, `full-stop`, `local-test`).
 - Gemini CLI: `/skills list`. Workflow-k itt nincsenek; a skilleket név szerint vagy feladattal hívod
   („vidd végig a KG-42-t”).
 

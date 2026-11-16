@@ -85,8 +85,8 @@ Egy feladat akkor kész, ha:
    ezért a 4. pont helyben marad.
 6. **AC → bizonyíték:** minden elfogadási kritériumhoz teszt vagy próba, vagy kimondott „nem ellenőrzött”. Ami
    külső rendszer viselkedésére épül (Woo REST-hitelesítés HTTP/HTTPS és proxy mögött, gateway, Cloudflare),
-   azt MSW/fixture nem igazolja: valódi vagy sandbox ellen is le kell futnia, különben follow-up ticket és
-   kimondott kockázat.
+   azt MSW/fixture nem igazolja: valódi vagy sandbox ellen is le kell futnia, különben follow-up ticket
+   (kulcs, vagy javasolt cím a PR-ban; a Jira-írás kifejezett kérésre) és kimondott kockázat.
 
 A skipelt teszt nem sikeres teszt.
 

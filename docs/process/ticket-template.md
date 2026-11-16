@@ -47,14 +47,15 @@ hacsak nem váltja fel őket kifejezetten (`kg-stack` 3.)>
 
 **Opciók:** <legalább 2, mindegyiknél költség, lock-in, üzemeltetés, a meglévő döntésekkel való viszony>
 
-**Döntéshozó:** <ki dönt, ki hagyja jóvá; az ADR „Döntéshozók” sorába csak ő kerülhet>
+**Döntéshozó:** <ki dönt, ki hagyja jóvá; az ADR „Döntéshozók” sorába csak az kerül, aki a döntést kifejezetten jóváhagyta>
 
 **Kész, ha:**
 
 - [ ] Opciós kérdés feltéve, a válasz (ki, hol) az ADR „Jóváhagyás” sorában.
 - [ ] ADR + `kg-stack` + `AGENTS.md` + érintett skillek frissítve (`kg-stack` folyamat).
 - [ ] Az ADR minden, a repóra vonatkozó állítása ellenőrizve (fájl, parancs), nincs benne ellentmondás.
-- [ ] A követő ticket(ek) (ahol az eredmény megvalósul) megnevezve.
+- [ ] A követő ticket(ek) (ahol az eredmény megvalósul) megnevezve: kulcs, vagy ha még nincs, javasolt cím
+  (a Jira-ticket létrehozása kifejezett kérésre).
 
 ## Frissesség
 
@@ -70,7 +71,7 @@ nem csendben a repónak ellentmondó megoldást építeni.
 - A quality gate zöld (typecheck, lint, Steiger, teszt, build), helyben és a CI-ban.
 - Minden elfogadási kritériumhoz bizonyíték vagy kimondott „nem ellenőrzött” a PR-ban (AC → bizonyíték).
 - Ami külső rendszer viselkedésére épül és nem futott valódi ellen, az nem „kész”: vagy lefut, vagy follow-up
-  ticket és kimondott kockázat.
+  ticket (kulcs, vagy javasolt cím a PR-ban; a létrehozás kifejezett kérésre) és kimondott kockázat.
 - UI-változásnál előtte-utána screenshot a PR-ban, minden érintett brandre.
 - Új hibakód a katalógusban.
 - Független AI review a kockázati szint szerint, és egy fejlesztő kifejezett „mehet”-je a merge-hez.

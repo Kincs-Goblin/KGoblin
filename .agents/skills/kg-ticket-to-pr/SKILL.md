@@ -42,6 +42,8 @@ mást mondanak, mint ez a skill, azok az irányadók; jelezd az eltérést.
    `kg-stack` kényszerei, a külső rendszerre épülő AC-k. Ha a ticket ellentmond a repónak vagy egy
    elfogadott döntésnek, **állj meg**: ne építs a ticket szövege szerint a repó ellenében, hanem jelezd az
    ellentmondást, és kérj átfogalmazást (javaslatot a `kg-ticket-refine` ad, a Jira-írás kifejezett kérésre).
+   Kis ticketnél a felelős válasza a sessionben („a javaslat szerint menj”) elég: a Jira átírása nem előfeltétel,
+   az eltérés és a választott értelmezés a PR-leírásba kerül.
 4. Foglald össze röviden: mit kér a ticket, mi nem része, mik az AC-k, mi a nyitott kérdés, mit találtál a
    frissességi kapun.
 5. **Stack-ellenőrzés:** ha a megoldás új szolgáltatást, könyvtár-kategóriát vagy integrációt igényelne,
@@ -99,8 +101,8 @@ fizetési változásnál végigkattintás a teszt-gatewayjel a lokális vagy a p
 
 ## 5. Review-ciklus (PR előtt)
 
-Független review egy **friss agent-sessionben**, amelyik nem látta a fejlesztést, csak a diffet és a
-szabályokat. Ajánlott, de nem feltétel, hogy **más modell** review-zzon, mint amelyik implementált; ha nincs
+Független review egy **friss agent-sessionben**, amelyik nem látta a fejlesztést; a diffet, a szabályokat, a
+repót és a ticketet olvassa (`kg-pr-review`). Ajánlott, de nem feltétel, hogy **más modell** review-zzon, mint amelyik implementált; ha nincs
 ilyen, ugyanaz a modell friss sessionben is megfelel, és ezt a PR-ban jelzed. Hogy ezt az eszközödben hogyan
 indítod: `docs/process/agent-adapters.md`. A review nem helyettesíti a tesztet.
 
@@ -151,7 +153,8 @@ Eredménysor a PR-ba: `Review: <modell>, friss session, normál - 2/3 kör, jóv
   próba igazolja, vagy kimondva „nem ellenőrzött” (ok, követő ticket). Külső rendszer viselkedésére épülő AC
   (pl. Woo REST-hitelesítés) fixture-zölddel nem igazolt; valódi ellen futott-e, azt külön írd ki.
 - **Repóra vonatkozó állítás** (PR-leírás, ADR, doc): minden állítás `git grep`-pel vagy futtatással
-  ellenőrzött; ami még nincs meg, jövő időben és követő ticketre hivatkozva szerepel.
+  ellenőrzött; ami még nincs meg, jövő időben és követő ticketre hivatkozva szerepel (kulcs, vagy ha még nincs:
+  javasolt cím a PR-leírásban; a Jira-ticket létrehozása kifejezett kérésre).
 - A **Stack-változás** jelölőnégyzetet pipáld, ha a PR ADR-t vagy `kg-stack` módosítást tartalmaz.
 - Reviewer: a másik fejlesztő (CODEOWNERS), opcionálisan; a merge-hez nem kell a jóváhagyása. WIP-limit:
   fejlesztőnként legfeljebb 2 nyitott PR.
