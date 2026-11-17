@@ -29,9 +29,13 @@ A `kg-headless` a KGoblin multi-brand platform saját WordPress / WooCommerce b�
      {
        "lowest_price_30_days": 18990,
        "is_on_sale": true,
-       "currency_minor_unit": 0
+       "currency_minor_unit": 0,
+       "delivery_time": "1–3 munkanap",
+       "variations": []
      }
      ```
+     - Változatos termékeknél a `variations` tömb tartalmazza az elérhető variációk `id`, `sku`, `attributes`, `prices`, `on_sale`, `lowest_price_30_days`, `is_in_stock`, `is_on_backorder`, `is_purchasable`, `low_stock_remaining`, `delivery_time` és `image` mezőit.
+     - Várható szállítási idő forrása: `_kg_delivery_time` (variáció vagy szülő) → `_kg_supplier_delivery_time` → előrendelés/alapértelmezett `kg_headless_default_delivery_time`.
 
 ## Kötelező harmadik féltől származó bővítmények (brandenként azonos verzióval)
 

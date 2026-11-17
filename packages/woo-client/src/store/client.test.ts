@@ -48,13 +48,91 @@ describe("createStoreClient", () => {
     expect(url.searchParams.get("per_page")).toBe("8");
   });
 
-  it("a kg-headless Omnibus-kiterjesztést megtartja", async () => {
+  it("a kg-headless Omnibus- és variáció-kiterjesztést megtartja", async () => {
     const client = createStoreClient({
       baseUrl: "http://woo.test",
       fetch: async () => jsonResponse(productsJson),
     });
-    const [first] = await client.getProducts();
-    expect(first?.extensions.kg_headless?.lowest_price_30_days).toEqual(expect.any(Number));
+    const products = await client.getProducts();
+    const saleSimple = products.find((p) => p.on_sale && p.type === "simple");
+    expect(saleSimple?.extensions.kg_headless?.lowest_price_30_days).toEqual(expect.any(Number));
+    expect(saleSimple?.extensions.kg_headless?.delivery_time).toEqual(expect.any(String));
+
+    const variable = products.find((p) => p.type === "variable");
+    expect(variable?.extensions.kg_headless?.variations?.length).toBeGreaterThan(0);
+  });
+
+  it("elfogadja a lokális attribútum null taxonomy-ját és az Any variáció üres slug-ját", async () => {
+    const base = structuredClone(productsJson.find((p) => p.type === "variable")!) as Record<
+      string,
+      unknown
+    >;
+    base.attributes = [
+      {
+        id: 0,
+        name: "Anyag",
+        taxonomy: null,
+        has_variations: true,
+        terms: [
+          { id: 0, name: "Acél", slug: "Acél" },
+          { id: 0, name: "Titán", slug: "Titán" },
+        ],
+      },
+    ];
+    const ext = structuredClone(
+      (base.extensions as { kg_headless: { variations: Array<Record<string, unknown>> } })
+        .kg_headless,
+    );
+    ext.variations = [
+      {
+        ...ext.variations[0]!,
+        attributes: [{ name: "Anyag", taxonomy: "anyag", value: "", slug: "" }],
+      },
+    ];
+    base.extensions = { kg_headless: ext };
+
+    const client = createStoreClient({
+      baseUrl: "http://woo.test",
+      fetch: async () => jsonResponse([base]),
+    });
+    const [parsed] = await client.getProducts();
+    expect(parsed?.attributes[0]?.taxonomy).toBe("");
+    expect(parsed?.extensions.kg_headless?.variations?.[0]?.attributes[0]?.slug).toBe("");
+  });
+
+  it("getProductsPage kiolvassa az X-WP-Total / X-WP-TotalPages fejléceket és szerializálja a szűrőket", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify(productsJson.slice(0, 2)), {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            "X-WP-Total": "12",
+            "X-WP-TotalPages": "6",
+          },
+        }),
+    );
+    const client = createStoreClient({ baseUrl: "http://woo.test", fetch: fetchMock });
+
+    const page = await client.getProductsPage({
+      featured: true,
+      page: 2,
+      perPage: 2,
+      stockStatus: "instock",
+      attributes: [{ attribute: "pa_szin", slug: "goblin-arany", operator: "in" }],
+    });
+
+    expect(page.total).toBe(12);
+    expect(page.totalPages).toBe(6);
+    expect(page.products).toHaveLength(2);
+
+    const url = new URL(String((fetchMock.mock.calls[0] as unknown[])[0]));
+    expect(url.searchParams.get("featured")).toBe("true");
+    expect(url.searchParams.get("page")).toBe("2");
+    expect(url.searchParams.get("stock_status")).toBe("instock");
+    expect(url.searchParams.get("attributes[0][attribute]")).toBe("pa_szin");
+    expect(url.searchParams.get("attributes[0][slug]")).toBe("goblin-arany");
+    expect(url.searchParams.get("attributes[0][operator]")).toBe("in");
   });
 
   it("slug és id alapján egy terméket ad, nem találatnál null-t", async () => {
@@ -178,16 +256,18 @@ describe("createWooClient(brand) + MSW Store API", () => {
     });
 
     const attributes = await client.getAttributes();
-    expect(attributes).toHaveLength(2);
-    const terms = await client.getAttributeTerms(attributes[0]!.id);
-    expect(terms[0]?.slug).toBe("linearis-red");
+    expect(attributes).toHaveLength(3);
+    const switchAttr = attributes.find((a) => a.taxonomy === "pa_kapcsolo")!;
+    const terms = await client.getAttributeTerms(switchAttr.id);
+    expect(terms.some((t) => t.slug === "linearis-red")).toBe(true);
 
     const cart1 = await client.getCart();
     expect(cart1.cartToken).toBe("msw-cart-token");
     expect(cart1.nonce).toBe("msw-nonce");
 
+    const simpleProd = productsJson.find((p) => p.type === "simple")!;
     const added = await client.addCartItem(
-      { id: productsJson[0]!.id, quantity: 2 },
+      { id: simpleProd.id, quantity: 2 },
       { cartToken: cart1.cartToken, nonce: cart1.nonce },
     );
     expect(added.cart.items_count).toBe(2);

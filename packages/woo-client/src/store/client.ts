@@ -36,6 +36,14 @@ export type WooClientOptions = {
   timeoutMs?: number;
 };
 
+export type ProductAttributeFilter = {
+  attribute: string;
+  slug: string;
+  operator?: "in" | "and";
+};
+
+export type ProductStockStatus = "instock" | "outofstock" | "onbackorder";
+
 export type ProductQuery = {
   category?: string;
   page?: number;
@@ -43,10 +51,19 @@ export type ProductQuery = {
   search?: string;
   minPrice?: number;
   maxPrice?: number;
-  stockStatus?: "instock" | "outofstock" | "onbackorder";
+  stockStatus?: ProductStockStatus | ProductStockStatus[];
   orderby?: "date" | "price" | "popularity" | "title" | "menu_order";
   order?: "asc" | "desc";
   onSale?: boolean;
+  featured?: boolean;
+  tag?: string;
+  attributes?: ProductAttributeFilter[];
+};
+
+export type ProductPageResult = {
+  products: StoreProduct[];
+  total: number;
+  totalPages: number;
 };
 
 export type CartSession = {
@@ -123,6 +140,7 @@ export type SubmitCheckoutInput = {
 
 export type StoreClient = {
   getProducts(query?: ProductQuery, cache?: FetchCacheOptions): Promise<StoreProduct[]>;
+  getProductsPage(query?: ProductQuery, cache?: FetchCacheOptions): Promise<ProductPageResult>;
   getProductById(id: number, cache?: FetchCacheOptions): Promise<StoreProduct | null>;
   getProductBySlug(slug: string, cache?: FetchCacheOptions): Promise<StoreProduct | null>;
   getCategories(cache?: FetchCacheOptions): Promise<StoreCategory[]>;
@@ -169,7 +187,7 @@ export function createStoreClient({
   async function rawRequest<T extends z.ZodType>(options: {
     method: "GET" | "POST";
     path: string;
-    params?: Record<string, string | number | boolean | undefined>;
+    params?: Record<string, string | number | boolean | undefined> | Array<[string, string]>;
     body?: unknown;
     session?: CartSession;
     schema: T;
@@ -180,8 +198,14 @@ export function createStoreClient({
   }): Promise<{ data: z.infer<T>; response: Response } | null> {
     const url = new URL(`${root}${options.path}`);
     if (options.params) {
-      for (const [key, value] of Object.entries(options.params)) {
-        if (value !== undefined) url.searchParams.set(key, String(value));
+      if (Array.isArray(options.params)) {
+        for (const [key, value] of options.params) {
+          url.searchParams.append(key, value);
+        }
+      } else {
+        for (const [key, value] of Object.entries(options.params)) {
+          if (value !== undefined) url.searchParams.set(key, String(value));
+        }
       }
     }
 
@@ -310,27 +334,69 @@ export function createStoreClient({
     };
   }
 
+  function buildProductParams(query: ProductQuery = {}): Array<[string, string]> {
+    const entries: Array<[string, string]> = [];
+    if (query.category !== undefined) entries.push(["category", query.category]);
+    if (query.page !== undefined) entries.push(["page", String(query.page)]);
+    entries.push(["per_page", String(query.perPage ?? 24)]);
+    if (query.search !== undefined) entries.push(["search", query.search]);
+    if (query.minPrice !== undefined) entries.push(["min_price", String(query.minPrice)]);
+    if (query.maxPrice !== undefined) entries.push(["max_price", String(query.maxPrice)]);
+    if (query.stockStatus !== undefined) {
+      if (Array.isArray(query.stockStatus)) {
+        query.stockStatus.forEach((status, index) => {
+          entries.push([`stock_status[${index}]`, status]);
+        });
+      } else {
+        entries.push(["stock_status", query.stockStatus]);
+      }
+    }
+    if (query.orderby !== undefined) entries.push(["orderby", query.orderby]);
+    if (query.order !== undefined) entries.push(["order", query.order]);
+    if (query.onSale !== undefined) entries.push(["on_sale", String(query.onSale)]);
+    if (query.featured !== undefined) entries.push(["featured", String(query.featured)]);
+    if (query.tag !== undefined) entries.push(["tag", query.tag]);
+    if (query.attributes?.length) {
+      query.attributes.forEach((filter, index) => {
+        entries.push([`attributes[${index}][attribute]`, filter.attribute]);
+        entries.push([`attributes[${index}][slug]`, filter.slug]);
+        if (filter.operator) {
+          entries.push([`attributes[${index}][operator]`, filter.operator]);
+        }
+      });
+    }
+    return entries;
+  }
+
+  async function fetchProductsPage(
+    query: ProductQuery = {},
+    cache?: FetchCacheOptions,
+  ): Promise<ProductPageResult> {
+    const result = await rawRequest({
+      method: "GET",
+      path: "/products",
+      params: buildProductParams(query),
+      schema: productListSchema,
+      cache,
+    });
+    const products = result!.data;
+    const totalHeader = result!.response.headers.get("X-WP-Total");
+    const totalPagesHeader = result!.response.headers.get("X-WP-TotalPages");
+    const parsedTotal = totalHeader ? Number.parseInt(totalHeader, 10) : Number.NaN;
+    const parsedTotalPages = totalPagesHeader ? Number.parseInt(totalPagesHeader, 10) : Number.NaN;
+    return {
+      products,
+      total: Number.isFinite(parsedTotal) && parsedTotal >= 0 ? parsedTotal : products.length,
+      totalPages: Number.isFinite(parsedTotalPages) && parsedTotalPages >= 1 ? parsedTotalPages : 1,
+    };
+  }
+
   return {
     async getProducts(query = {}, cache) {
-      const result = await rawRequest({
-        method: "GET",
-        path: "/products",
-        params: {
-          category: query.category,
-          page: query.page,
-          per_page: query.perPage ?? 24,
-          search: query.search,
-          min_price: query.minPrice,
-          max_price: query.maxPrice,
-          stock_status: query.stockStatus,
-          orderby: query.orderby,
-          order: query.order,
-          on_sale: query.onSale,
-        },
-        schema: productListSchema,
-        cache,
-      });
-      return result!.data;
+      return (await fetchProductsPage(query, cache)).products;
+    },
+    getProductsPage(query = {}, cache) {
+      return fetchProductsPage(query, cache);
     },
     async getProductById(id, cache) {
       const result = await rawRequest({

@@ -9,11 +9,10 @@ import type { Category } from "../model/types";
 
 const REVALIDATE_SECONDS = 600;
 
-/** A nem üres kategóriák, név szerint rendezve. */
 export async function getCategories(brand: Brand): Promise<Category[]> {
   const categories = await getStoreClient(brand).getCategories({
     revalidate: REVALIDATE_SECONDS,
-    tags: [cacheTags.categories(brand.id)],
+    tags: [cacheTags.catalog(brand.id)],
   });
   return categories
     .filter((category) => category.count > 0)

@@ -31,8 +31,13 @@ export function ProductCard({ product, action }: ProductCardProps) {
         </h3>
       </Link>
       <div className="mt-3 flex flex-col gap-2">
-        <ProductPrice price={product.price} />
-        <StockLabel inStock={product.inStock} lowStockRemaining={product.lowStockRemaining} />
+        <ProductPrice price={product.price} locale={product.locale} />
+        <StockLabel
+          stockStatus={product.stockStatus}
+          inStock={product.inStock}
+          onBackorder={product.onBackorder}
+          lowStockRemaining={product.lowStockRemaining}
+        />
         {action}
       </div>
     </CardMotion>

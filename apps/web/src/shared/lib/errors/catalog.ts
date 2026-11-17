@@ -8,6 +8,11 @@ export const errorCatalog = {
     retryable: false,
     message: "Ez a cím nem tartozik egyik boltunkhoz sem.",
   },
+  "BRAND.UNKNOWN_ID": {
+    status: 404,
+    retryable: false,
+    message: "Ismeretlen brand-azonosító.",
+  },
   "WOO.UNAVAILABLE": {
     status: 503,
     retryable: true,
@@ -67,6 +72,16 @@ export const errorCatalog = {
     status: 400,
     retryable: false,
     message: "Nem támogatott webhook topic.",
+  },
+  "WEBHOOK.PAYLOAD_TOO_LARGE": {
+    status: 413,
+    retryable: false,
+    message: "Túl nagy webhook kérés.",
+  },
+  "WEBHOOK.CONFIG_ERROR": {
+    status: 500,
+    retryable: false,
+    message: "Webhook konfigurációs hiba.",
   },
   "APP.UNEXPECTED": {
     status: 500,

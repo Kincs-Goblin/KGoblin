@@ -1,0 +1,64 @@
+{
+  "1": [
+    {
+      "id": 19,
+      "name": "Lineáris Red",
+      "slug": "linearis-red",
+      "description": "",
+      "parent": 0,
+      "count": 2
+    },
+    {
+      "id": 20,
+      "name": "Taktilis Brown",
+      "slug": "taktilis-brown",
+      "description": "",
+      "parent": 0,
+      "count": 1
+    }
+  ],
+  "2": [
+    {
+      "id": 22,
+      "name": "Goblin Arany",
+      "slug": "goblin-arany",
+      "description": "",
+      "parent": 0,
+      "count": 3
+    },
+    {
+      "id": 23,
+      "name": "Holdfény Fehér",
+      "slug": "holdfeny-feher",
+      "description": "",
+      "parent": 0,
+      "count": 1
+    },
+    {
+      "id": 21,
+      "name": "Obszidián Fekete",
+      "slug": "obszidian-fekete",
+      "description": "",
+      "parent": 0,
+      "count": 4
+    }
+  ],
+  "3": [
+    {
+      "id": 24,
+      "name": "PC / Mac",
+      "slug": "pc-mac",
+      "description": "",
+      "parent": 0,
+      "count": 8
+    },
+    {
+      "id": 25,
+      "name": "PS5 / Konzol",
+      "slug": "ps5-konzol",
+      "description": "",
+      "parent": 0,
+      "count": 2
+    }
+  ]
+}

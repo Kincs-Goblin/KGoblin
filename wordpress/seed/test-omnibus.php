@@ -43,7 +43,10 @@ function assert_same( mixed $expected, mixed $actual, string $label ): void {
 echo "=== 1. Float-mentes ár-konverzió tesztek ===\n";
 assert_same( 44990, Omnibus::parse_price_to_int( '44990', 0 ), 'Egész HUF sztring' );
 assert_same( 44990, Omnibus::parse_price_to_int( '44990.00', 0 ), 'Tizedes HUF sztring 0 decimállal' );
+assert_same( 12800, Omnibus::parse_price_to_int( '12799.6', 0 ), 'Kerekítés felfelé 0 decimálnál (12799.6 -> 12800)' );
+assert_same( 12799, Omnibus::parse_price_to_int( '12799.4', 0 ), 'Kerekítés lefelé 0 decimálnál (12799.4 -> 12799)' );
 assert_same( 1999, Omnibus::parse_price_to_int( '19.99', 2 ), 'EUR 2 tizedesjeggyel -> 1999 minor unit' );
+assert_same( 2000, Omnibus::parse_price_to_int( '19.995', 2 ), 'Kerekítés felfelé 2 decimálnál (19.995 -> 2000)' );
 assert_same( null, Omnibus::parse_price_to_int( '', 0 ), 'Üres sztring -> null' );
 assert_same( null, Omnibus::parse_price_to_int( '0', 0 ), 'Nulla ár -> null' );
 
@@ -181,12 +184,65 @@ $state7 = Omnibus::calculate_omnibus_state(
 assert_same( 0, $state7['sale_started_at'], 'Jövőbeli ütemezett akciónál (is_on_sale = false) a sale_started_at 0 marad' );
 assert_same( 44990, $state7['lowest_30_days'], 'Jövőbeli ütemezett akciónál a normál ár (44 990 Ft) kerül rögzítésre' );
 
+// Eset G (Variáció Omnibus-számítás: ugyanaz az árkövető függvény fut variációnál is)
+$var_state_1 = Omnibus::calculate_omnibus_state( array(), 46990, null, 0, $now - ( 20 * DAY_IN_SECONDS ) );
+$var_state_2 = Omnibus::calculate_omnibus_state( $var_state_1['history'], 46990, 41990, 0, $now - ( 12 * DAY_IN_SECONDS ) );
+$var_state_3 = Omnibus::calculate_omnibus_state( $var_state_2['history'], 46990, null, $var_state_2['sale_started_at'], $now - ( 5 * DAY_IN_SECONDS ) );
+$var_state_4 = Omnibus::calculate_omnibus_state( $var_state_3['history'], 46990, 39990, $var_state_3['sale_started_at'], $now );
+assert_same( 41990, $var_state_4['lowest_30_days'], 'Variáció új akciójánál az előző 30 napos akciós ár (41 990 Ft) marad az Omnibus referenciaár' );
+
 echo "\n=== 3. Magyar adószám validáció tesztek ===\n";
 assert_same( true, Checkout_Fields::is_valid_hungarian_tax_number( '12345678-2-42' ), 'Helyes kötőjeles adószám (12345678-2-42)' );
 assert_same( true, Checkout_Fields::is_valid_hungarian_tax_number( '12345678242' ), 'Helyes 11 jegyű adószám (12345678242)' );
 assert_same( false, Checkout_Fields::is_valid_hungarian_tax_number( '12345' ), 'Túl rövid adószám elutasítása' );
 assert_same( false, Checkout_Fields::is_valid_hungarian_tax_number( '12345678-9-42' ), 'Érvénytelen ÁFA-kód (9) elutasítása' );
 assert_same( false, Checkout_Fields::is_valid_hungarian_tax_number( '' ), 'Üres adószám elutasítása' );
+
+if ( function_exists( 'has_action' ) ) {
+	echo "\n=== 4. WooCommerce hook regisztráció és variáció-mentés tesztek ===\n";
+	assert_same( true, false !== has_action( 'woocommerce_before_product_object_save', array( Omnibus::class, 'on_before_product_save' ) ), 'Termék Omnibus save hook regisztrálva' );
+	assert_same( true, false !== has_action( 'woocommerce_before_product_variation_object_save', array( Omnibus::class, 'on_before_product_save' ) ), 'Variáció Omnibus save hook regisztrálva' );
+	assert_same( true, false !== has_filter( 'woocommerce_webhook_deliver_async' ), 'Lokális szinkron webhook filter regisztrálva' );
+
+	if ( class_exists( 'WC_Product_Variable' ) && class_exists( 'WC_Product_Variation' ) ) {
+		$suppress_webhooks = static fn (): bool => false;
+		add_filter( 'woocommerce_webhook_should_deliver', $suppress_webhooks, 999 );
+		$parent    = null;
+		$variation = null;
+		try {
+			$parent = new \WC_Product_Variable();
+			$parent->set_name( 'Omnibus Variacio Teszt Szulo' );
+			$parent->set_status( 'private' );
+			$parent_id = $parent->save();
+
+			$variation = new \WC_Product_Variation();
+			$variation->set_parent_id( $parent_id );
+			$variation->set_status( 'publish' );
+			$variation->set_regular_price( '50000' );
+			$variation_id = $variation->save();
+
+			$reloaded_1 = wc_get_product( $variation_id );
+			assert_same( true, $reloaded_1 instanceof \WC_Product_Variation, 'Teszt variáció betöltése mentés után' );
+			assert_same( '50000', (string) $reloaded_1->get_meta( Omnibus::META_LOWEST_30_DAYS, true ), 'Variáció első save() beállítja a _hu_lowest_price_30_days metát (50000)' );
+
+			$reloaded_1->set_sale_price( '39990' );
+			$reloaded_1->save();
+
+			$reloaded_2 = wc_get_product( $variation_id );
+			assert_same( 50000, Omnibus::get_lowest_price_for_product( $reloaded_2 ), 'Variáció akciós save() után a 30 napos minimum az előző ár (50000) marad, nem az akciós 39990' );
+			$saved_history = $reloaded_2->get_meta( Omnibus::META_HISTORY, true );
+			assert_same( true, is_array( $saved_history ) && count( $saved_history ) >= 2, 'Variáció _hu_price_history ártörténet tartalmazza mindkét árlépést' );
+		} finally {
+			if ( $variation instanceof \WC_Product_Variation && $variation->get_id() > 0 ) {
+				$variation->delete( true );
+			}
+			if ( $parent instanceof \WC_Product_Variable && $parent->get_id() > 0 ) {
+				$parent->delete( true );
+			}
+			remove_filter( 'woocommerce_webhook_should_deliver', $suppress_webhooks, 999 );
+		}
+	}
+}
 
 if ( $failures > 0 ) {
 	echo "\nÖSSZESÍTÉS: {$failures} teszt ELBUKOTT!\n";

@@ -38,8 +38,7 @@ külön belépési pontban, a REST v3 `server-only`.
 
 ## Cache és revalidálás
 
-- Cache-tagek **brand-előtaggal**: `product:<brand>:<id>`, `category:<brand>:<id>`, `products:<brand>`,
-  `menu:<brand>`. A tagképzés egy helyen van (`shared/api/cache-tags.ts`).
+- Cache-tagek **brand-előtaggal**: `<brand>:catalog`, `<brand>:product-slug:<slug>`, `<brand>:category:<id>`. A tagképzés egy helyen van (`shared/api/cache-tags.ts`). Jelenleg minden termék- vagy kategória-webhook a `<brand>:catalog`-ot is érvényteleníti; egyedi termék-ID szerinti célzott invalidálás és webhook-debounce a KG-14 tömeges feed-szinkron előtt készül el.
 - Katalógusoldal: ISR, alapból hosszú revalidate, a frissítést a webhook adja.
 - Webhook-route lépései: nyers body beolvasása → `X-WC-Webhook-Signature` ellenőrzése (base64 HMAC-SHA256 a
   brand webhook-titkával, időzítésbiztos összehasonlítással) → Zod → `revalidateTag` → nehéz munkánál
@@ -68,6 +67,8 @@ Más pluginhez nem nyúlunk; a harmadik féltől származó pluginek listája é
    - `lowest_price_30_days` (`int | null`): Az akció kezdete előtti 30 nap legalacsonyabb ára minor unitban (HUF esetén egész Ft, float nélkül számolva; az aktuális akciós ár nem számít bele).
    - `is_on_sale` (`boolean`): A termék jelenleg akciós-e.
    - `currency_minor_unit` (`int`): A pénznem tizedesjegyeinek száma (`0` HUF esetén).
+   - `delivery_time` (`string | null`): Szállítási idő szöveg (`_kg_delivery_time` → szülő → `_kg_supplier_delivery_time` → előrendelés/alapértelmezett fallback).
+   - `variations` (`array`): Változatos termékeknél az összes publikált variáció (`id`, `sku`, `attributes`, `prices`, `on_sale`, `lowest_price_30_days`, `is_in_stock`, `is_on_backorder`, `is_purchasable`, `low_stock_remaining`, `delivery_time`, `image`).
 
 2. **Checkout végpont (`POST /wp-json/wc/store/v1/checkout` → `extensions.kg_headless` vagy `additional_fields`):**
    - `is_company` (`boolean`): Céges számla igénylése.

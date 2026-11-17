@@ -226,4 +226,40 @@ describe("verifyAndParseWooWebhook", () => {
       expect(result.status).toBe(401);
     }
   });
+
+  it("elfogadja a Woo action.*_product_cat és category.* kategória webhookokat valamint a variáció parent_id mezőt", async () => {
+    const secret = "whsec_cat_test";
+
+    const catActionBody = JSON.stringify({ action: "edited_product_cat", arg: 16 });
+    const catActionSig = await computeWooWebhookSignature(catActionBody, secret);
+    const catActionResult = await verifyAndParseWooWebhook({
+      brand: gamerBrand,
+      rawBody: catActionBody,
+      headers: {
+        "x-wc-webhook-topic": "action.edited_product_cat",
+        "x-wc-webhook-signature": catActionSig,
+      },
+      env: { WOO_GAMER_WEBHOOK_SECRET: secret },
+    });
+    expect(catActionResult.ok).toBe(true);
+    if (catActionResult.ok && catActionResult.event.topic === "action.edited_product_cat") {
+      expect(catActionResult.event.payload.categoryId).toBe(16);
+    }
+
+    const varBody = JSON.stringify({ id: 64, parent_id: 63, slug: "runakard-red-black" });
+    const varSig = await computeWooWebhookSignature(varBody, secret);
+    const varResult = await verifyAndParseWooWebhook({
+      brand: gamerBrand,
+      rawBody: varBody,
+      headers: {
+        "x-wc-webhook-topic": "product.updated",
+        "x-wc-webhook-signature": varSig,
+      },
+      env: { WOO_GAMER_WEBHOOK_SECRET: secret },
+    });
+    expect(varResult.ok).toBe(true);
+    if (varResult.ok && varResult.event.topic === "product.updated") {
+      expect(varResult.event.payload.parent_id).toBe(63);
+    }
+  });
 });

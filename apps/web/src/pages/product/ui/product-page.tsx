@@ -3,21 +3,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import {
-  ProductArt,
-  ProductPrice,
-  RarityBadge,
-  StockLabel,
-  type Product,
-} from "@/entities/product";
 import { getProduct } from "@/entities/product/index.server";
-import { AddToCartButton } from "@/features/add-to-cart";
 import { routes } from "@/shared/config";
 import { getBrandOrNotFound } from "@/shared/config/index.server";
 import { ErrorState } from "@/shared/ui/error-state";
-import { Reveal } from "@/shared/ui/motion";
 
 import { productPageTexts } from "../config/texts";
+import { ProductDetails } from "./product-details";
 
 type ProductPageProps = {
   params: Promise<{ brand: string; slug: string }>;
@@ -54,11 +46,7 @@ export async function ProductPage({ params }: ProductPageProps) {
   }
   if (!result.product) notFound();
 
-  return <ProductDetails product={result.product} />;
-}
-
-function ProductDetails({ product }: { product: Product }) {
-  const category = product.categories[0];
+  const category = result.product.categories[0];
 
   return (
     <article className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
@@ -75,66 +63,10 @@ function ProductDetails({ product }: { product: Product }) {
           </>
         ) : null}
         <span aria-hidden="true"> / </span>
-        <span aria-current="page">{product.name}</span>
+        <span aria-current="page">{result.product.name}</span>
       </nav>
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-2 lg:gap-12">
-        <Reveal className="frame-gold rounded-2xl p-3">
-          <ProductArt
-            image={product.image}
-            rarity={product.rarity}
-            priority
-            sizes="(min-width: 1024px) 50vw, 100vw"
-          />
-        </Reveal>
-
-        <div className="flex flex-col gap-5">
-          <RarityBadge rarity={product.rarity} className="self-start" />
-          <h1 className="text-engraved text-3xl font-bold text-balance sm:text-4xl">
-            {product.name}
-          </h1>
-          {product.summary.length > 0 ? (
-            <div className="space-y-2 text-foreground/85">
-              {product.summary.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
-            </div>
-          ) : null}
-
-          <div className="surface-wood flex flex-col gap-4 rounded-xl border border-bronze/40 p-5">
-            <ProductPrice price={product.price} size="lg" />
-            <StockLabel inStock={product.inStock} lowStockRemaining={product.lowStockRemaining} />
-            <AddToCartButton
-              size="lg"
-              product={{
-                id: product.id,
-                slug: product.slug,
-                name: product.name,
-                price: product.price.current,
-              }}
-              disabled={!product.inStock || !product.purchasable}
-            />
-          </div>
-          {product.sku ? (
-            <p className="text-xs text-muted-foreground">
-              {productPageTexts.sku}: {product.sku}
-            </p>
-          ) : null}
-        </div>
-      </div>
-
-      {product.description.length > 0 ? (
-        <section className="mt-12 max-w-3xl">
-          <h2 className="text-engraved text-2xl font-bold">
-            {productPageTexts.descriptionHeading}
-          </h2>
-          <div className="mt-4 space-y-3 text-foreground/85">
-            {product.description.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
-          </div>
-        </section>
-      ) : null}
+      <ProductDetails product={result.product} />
     </article>
   );
 }

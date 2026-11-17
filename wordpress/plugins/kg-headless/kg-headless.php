@@ -24,6 +24,7 @@ define( 'KG_HEADLESS_VERSION', '0.1.0' );
 define( 'KG_HEADLESS_PATH', plugin_dir_path( __FILE__ ) );
 
 require_once KG_HEADLESS_PATH . 'includes/class-kg-omnibus.php';
+require_once KG_HEADLESS_PATH . 'includes/class-kg-product-extensions.php';
 require_once KG_HEADLESS_PATH . 'includes/class-kg-checkout-fields.php';
 
 /**
@@ -54,6 +55,7 @@ add_action(
 	'plugins_loaded',
 	function (): void {
 		\KG_Headless\Omnibus::init();
+		\KG_Headless\Product_Extensions::init();
 		\KG_Headless\Checkout_Fields::init();
 	}
 );
@@ -148,3 +150,79 @@ add_filter(
 	10,
 	1
 );
+
+/**
+ * 5. Lokális Docker fejlesztői környezetben (opt-in) a localhost / host.docker.internal webhook
+ *    célcímek és dev portok engedélyezése a `wp_safe_remote_post` hívásokhoz. Élesben soha nincs bekapcsolva.
+ */
+function kg_headless_allows_local_webhooks(): bool {
+	return '1' === getenv( 'KG_ALLOW_LOCAL_WEBHOOKS' )
+		|| 'yes' === get_option( 'kg_headless_allow_local_webhooks' );
+}
+
+function kg_headless_is_local_webhook_host( string $host ): bool {
+	return in_array(
+		strtolower( trim( $host ) ),
+		array( 'host.docker.internal', 'localhost', '127.0.0.1' ),
+		true
+	);
+}
+
+add_filter(
+	'http_request_host_is_external',
+	static function ( mixed $external, mixed $host = '' ): bool {
+		if ( ! kg_headless_allows_local_webhooks() || ! is_string( $host ) ) {
+			return (bool) $external;
+		}
+		if ( kg_headless_is_local_webhook_host( $host ) ) {
+			return true;
+		}
+		return (bool) $external;
+	},
+	10,
+	2
+);
+
+add_filter(
+	'http_allowed_safe_ports',
+	static function ( mixed $ports, mixed $host = '' ): mixed {
+		if ( ! is_array( $ports ) || ! kg_headless_allows_local_webhooks() ) {
+			return $ports;
+		}
+		if ( ! is_string( $host ) || ! kg_headless_is_local_webhook_host( $host ) ) {
+			return $ports;
+		}
+		$dev_ports = array( 3000, 3001 );
+		$fe_port   = wp_parse_url( kg_headless_get_frontend_url(), PHP_URL_PORT );
+		if ( is_int( $fe_port ) && $fe_port > 0 ) {
+			$dev_ports[] = $fe_port;
+		}
+		foreach ( $dev_ports as $port ) {
+			if ( ! in_array( $port, $ports, true ) ) {
+				$ports[] = $port;
+			}
+		}
+		return $ports;
+	},
+	10,
+	2
+);
+
+add_filter(
+	'woocommerce_webhook_deliver_async',
+	static function ( mixed $async, mixed $webhook = null ): bool {
+		if ( ! kg_headless_allows_local_webhooks() ) {
+			return (bool) $async;
+		}
+		if ( $webhook instanceof \WC_Webhook ) {
+			$host = wp_parse_url( $webhook->get_delivery_url(), PHP_URL_HOST );
+			if ( is_string( $host ) && kg_headless_is_local_webhook_host( $host ) ) {
+				return false;
+			}
+		}
+		return (bool) $async;
+	},
+	10,
+	2
+);
+

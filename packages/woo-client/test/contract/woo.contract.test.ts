@@ -16,24 +16,47 @@ describe("WooCommerce lokális Docker contract-teszt", () => {
   it("Store API: products, categories, attributes, cart és add-item megfelel a Zod sémáknak", async () => {
     const client = createStoreClient({ baseUrl });
 
-    const products = await client.getProducts({ perPage: 20 });
-    expect(products.length).toBeGreaterThan(0);
+    const page = await client.getProductsPage({ perPage: 20 });
+    expect(page.products.length).toBeGreaterThan(0);
+    expect(page.total).toBeGreaterThanOrEqual(page.products.length);
 
-    const first = products[0]!;
-    const bySlug = await client.getProductBySlug(first.slug);
+    const first =
+      page.products.find((p) => p.type === "simple" && p.is_in_stock) ?? page.products[0]!;
+    const saleSimple = page.products.find((p) => p.type === "simple" && p.on_sale);
+    const variableProduct = page.products.find((p) => p.type === "variable");
+
+    expect(first.extensions.kg_headless).toBeDefined();
+    expect(typeof first.extensions.kg_headless?.delivery_time).toBe("string");
+    if (saleSimple) {
+      expect(saleSimple.extensions.kg_headless?.lowest_price_30_days).toEqual(expect.any(Number));
+    }
+    expect(variableProduct).toBeDefined();
+    const variations = variableProduct?.extensions.kg_headless?.variations ?? [];
+    expect(variations.length).toBeGreaterThan(0);
+    expect(variations[0]?.attributes.length).toBeGreaterThan(0);
+    expect(Number(variations[0]?.prices.price)).toBeGreaterThan(0);
+    expect(variations[0]?.lowest_price_30_days).toEqual(expect.any(Number));
+    expect(
+      variations.some((v) => typeof v.delivery_time === "string" && v.delivery_time.length > 0),
+    ).toBe(true);
+
+    const [bySlug, byId, categories, attributes, initialCart] = await Promise.all([
+      client.getProductBySlug(first.slug),
+      client.getProductById(first.id),
+      client.getCategories(),
+      client.getAttributes(),
+      client.getCart(),
+    ]);
     expect(bySlug?.id).toBe(first.id);
-
-    const byId = await client.getProductById(first.id);
     expect(byId?.slug).toBe(first.slug);
-
-    const categories = await client.getCategories();
     expect(Array.isArray(categories)).toBe(true);
-
-    const attributes = await client.getAttributes();
     expect(Array.isArray(attributes)).toBe(true);
-
-    const initialCart = await client.getCart();
     expect(initialCart.cartToken).toBeTruthy();
+
+    if (attributes[0]) {
+      const terms = await client.getAttributeTerms(attributes[0].id);
+      expect(Array.isArray(terms)).toBe(true);
+    }
 
     const added = await client.addCartItem(
       { id: first.id, quantity: 1 },

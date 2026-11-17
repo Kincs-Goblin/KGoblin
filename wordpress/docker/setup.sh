@@ -36,6 +36,7 @@ USER_VAR="WP_${BRAND_UPPER}_ADMIN_USER"
 PASS_VAR="WP_${BRAND_UPPER}_ADMIN_PASSWORD"
 EMAIL_VAR="WP_${BRAND_UPPER}_ADMIN_EMAIL"
 FE_VAR="WP_${BRAND_UPPER}_FRONTEND_URL"
+WH_SECRET_VAR="WOO_${BRAND_UPPER}_WEBHOOK_SECRET"
 
 PORT="${!PORT_VAR:-$DEFAULT_PORT}"
 TITLE="${!TITLE_VAR:-KincsGoblin (${BRAND}) Backend}"
@@ -43,6 +44,7 @@ ADMIN_USER="${!USER_VAR:-${WP_GAMER_ADMIN_USER:-admin}}"
 ADMIN_PASSWORD="${!PASS_VAR:-${WP_GAMER_ADMIN_PASSWORD:-admin123}}"
 ADMIN_EMAIL="${!EMAIL_VAR:-${WP_GAMER_ADMIN_EMAIL:-admin@kincsgoblin.local}}"
 FRONTEND_URL="${!FE_VAR:-$DEFAULT_FE_URL}"
+WEBHOOK_SECRET="${!WH_SECRET_VAR:-${KG_WEBHOOK_SECRET:-kg_local_${BRAND}_webhook_secret}}"
 CLI_SERVICE="wpcli-${BRAND}"
 WP_SERVICE="wp-${BRAND}"
 
@@ -86,7 +88,7 @@ docker compose exec -T "$CLI_SERVICE" wp redis enable --path=/var/www/html >/dev
 
 echo "=== [5/6] kg-headless bővítmény aktiválása és gamer tesztadatok betöltése ==="
 docker compose exec -T "$CLI_SERVICE" wp plugin activate kg-headless --path=/var/www/html
-docker compose exec -T -e KG_BRAND="$BRAND" -e KG_FRONTEND_URL="$FRONTEND_URL" "$CLI_SERVICE" wp eval-file /var/www/seed/seed-brand.php --path=/var/www/html
+docker compose exec -T -e KG_BRAND="$BRAND" -e KG_FRONTEND_URL="$FRONTEND_URL" -e KG_WEBHOOK_SECRET="$WEBHOOK_SECRET" "$CLI_SERVICE" wp eval-file /var/www/seed/seed-brand.php --path=/var/www/html
 
 echo "=== [6/6] Állapot ellenőrzése ==="
 docker compose exec -T "$CLI_SERVICE" wp plugin list --path=/var/www/html
@@ -96,4 +98,5 @@ echo " KÉSZ! A KGoblin ($BRAND) headless WooCommerce backend fut!"
 echo " - WP Admin:   http://localhost:${PORT}/wp-admin (${ADMIN_USER} / ${ADMIN_PASSWORD})"
 echo " - Store API:  http://localhost:${PORT}/wp-json/wc/store/v1/products"
 echo " - Frontend redirect cél: ${FRONTEND_URL}"
+echo " - Webhook titok (WOO_${BRAND_UPPER}_WEBHOOK_SECRET): ${WEBHOOK_SECRET}"
 echo "=================================================================="
