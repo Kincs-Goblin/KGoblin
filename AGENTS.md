@@ -31,7 +31,8 @@ A teljes, státuszos döntésnapló a `kg-stack` skillben van; ütközésnél az
 - **Commerce:** WooCommerce brandenként külön példányban. Store API a katalógushoz, kosárhoz és
   checkouthoz; REST v3 csak szerveroldalon. Minden Woo-válasz Zod-dal validálva.
 - **Háttérjobok:** Trigger.dev (`apps/jobs`): beszállítói feed-szinkron, rendelés-továbbítás, újrapróba.
-- **Fizetés:** Stripe, Barion, SimplePay (Woo gateway pluginek). **Számlázás:** Billingo.
+- **Fizetés:** Stripe, Barion, SimplePay (Woo gateway pluginek). **Számlázás:** Billingo (Trigger.dev
+  `issue-invoice` task, API v3; ADR-0015).
 - **Auth:** Woo customer + vendég checkout, token httpOnly cookie-ban.
 - **Keresés:** Meilisearch (saját Docker a VPS-en, Cloudflare Tunnel mögött; ADR-0012). **Képek:** Woo médiatár +
   Cloudflare CDN és Images binding (ADR-0009, ADR-0013). **Email:** Resend + React Email.

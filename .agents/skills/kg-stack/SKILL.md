@@ -14,7 +14,7 @@ visszafordíthatatlanul) · **nyitott** (dönteni kell, mielőtt ráépül valam
 
 ## Döntésnapló
 
-Utolsó módosítás: 2026-11-20 (ADR-0014 demo/staging Woo brandenként külön konténerben, seed/snapshot resettel; korábban ADR-0012, ADR-0013, ADR-0011, ADR-0009, ADR-0008, ADR-0010).
+Utolsó módosítás: 2026-11-20 (ADR-0015 Billingo-bekötés Trigger.dev `issue-invoice` taskkal és Billingo API v3-mal; ADR-0014 demo/staging Woo brandenként külön konténerben, seed/snapshot resettel; korábban ADR-0012, ADR-0013, ADR-0011, ADR-0009, ADR-0008, ADR-0010).
 
 ### Architektúra és frontend
 
@@ -59,7 +59,7 @@ Utolsó módosítás: 2026-11-20 (ADR-0014 demo/staging Woo brandenként külön
 | Beszállítók | Port + adapter + fake mintában, beszállítónként egy adapter | elfogadva | 0001 |
 | Fizetés | Stripe, Barion, SimplePay a Woo gateway pluginjeivel, Store API checkouton át | elfogadva | 0001 |
 | Számlázás | Billingo (NAV Online Számla) | elfogadva | 0001 |
-| Számlázás bekötése | Woo Billingo plugin vagy Trigger.dev task a Billingo API-val | nyitott | - |
+| Számlázás bekötése | Trigger.dev `issue-invoice` task a Billingo API v3-mal (`apps/jobs`), `vendor_id` idempotenciával és `kg-headless` céges mezőkkel | elfogadva (2026-11-15, frissítve: 2026-11-20) | 0015 |
 | Keresés | Meilisearch, brandenként külön index, jobokból és webhookból táplálva | elfogadva | 0001 |
 | Keresés hosting | Saját Docker konténer a backend VPS-en (Cloudflare Tunnel mögött), kizárólag szerveroldali BFF-eléréssel, index-korlátozott keresőkulccsal | elfogadva (2026-11-15, frissítve: 2026-11-16) | 0012 |
 | Email | Resend + React Email; a Woo saját vásárlói emailjei kikapcsolva vagy felülírva | elfogadva | 0001 |

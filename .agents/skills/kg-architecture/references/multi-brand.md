@@ -30,6 +30,7 @@ Brandenként egy típusos objektum (Zod-dal validálva build időben):
 | `payments` | `["stripe", "barion", "simplepay"]` | csak megjelenítési sorrend és engedélyezés; a forrás a Woo |
 | `analytics` | Meta pixel ID, PostHog projekt, GA/Merchant ID | publikus ID-k; a CAPI-token env-ben. Még nincs a sémában: a mérés bekötésekor kerül be |
 | `search` | Meilisearch index neve | `products_<brand>` |
+| `billingo` | `{ apiKeyEnv: "BILLINGO_GAMER_API_KEY", blockId }` | a kulcs értéke csak Trigger.dev env-ben; még nincs a sémában: a `KG-16` számlázás bekötésekor kerül be (ADR-0015) |
 
 ## Elkülönítés (kockázatos terület)
 
@@ -50,8 +51,8 @@ Brandenként egy típusos objektum (Zod-dal validálva build időben):
 ## Új brand bevezetése (checklist)
 
 1. ADR, ha a brand eltér a mintától (pl. más pénznem vagy nyelv) - különben elég a ticket.
-2. Woo-példány (ADR-0008: a VPS-en, Docker Compose-zal, Cloudflare mögött), HPOS, `kg-headless` plugin, gateway pluginek, Billingo.
-3. `packages/brand-config`: új bejegyzés; env-változók a Workers Buildsben, a `wrangler.jsonc`-ben (nem titok) vagy Worker-secretként, és a Trigger.dev-ben.
+2. Woo-példány (ADR-0008: a VPS-en, Docker Compose-zal, Cloudflare mögött), HPOS, `kg-headless` plugin, gateway pluginek.
+3. `packages/brand-config`: új bejegyzés; env-változók a Workers Buildsben, a `wrangler.jsonc`-ben (nem titok) vagy Worker-secretként, és a Trigger.dev-ben (beleértve a brand `billingo.blockId` és `billingo.apiKeyEnv` bejegyzését a configban és a Billingo V3 API kulcs értékét a Trigger.dev env-ben, ADR-0015, `KG-16`-tól).
 4. Domain a Cloudflare Workerhez (custom domain) és a brand-config `domains` listájába; demo-domain.
 5. Meilisearch-index, Merchant feed, Meta pixel és CAPI, PostHog projekt.
 6. Beszállítói adapterek hozzárendelése a brandhez (`apps/jobs`).
