@@ -14,7 +14,7 @@ visszafordíthatatlanul) · **nyitott** (dönteni kell, mielőtt ráépül valam
 
 ## Döntésnapló
 
-Utolsó módosítás: 2026-11-20 (ADR-0016 headless customer auth a `kg-headless` pluginban; korábban ADR-0015, ADR-0014, ADR-0012, ADR-0013, ADR-0011, ADR-0009, ADR-0008, ADR-0010).
+Utolsó módosítás: 2026-11-20 (ADR-0017 fizetési gateway pluginek: Stripe, Barion, SimplePay + `@stripe/stripe-js`; ADR-0016 headless customer auth a `kg-headless` pluginban; korábban ADR-0015, ADR-0014, ADR-0012, ADR-0013, ADR-0011, ADR-0009, ADR-0008, ADR-0010).
 
 ### Architektúra és frontend
 
@@ -57,7 +57,7 @@ Utolsó módosítás: 2026-11-20 (ADR-0016 headless customer auth a `kg-headless
 | Üzleti modell | Dropshipping: beszállítói feed → Woo termék; fizetett rendelés → beszállító | elfogadva | 0001 |
 | Háttérjobok | Trigger.dev (`apps/jobs`): feed-szinkron, rendelés-továbbítás, újrapróba, ütemezés | elfogadva | 0001 |
 | Beszállítók | Port + adapter + fake mintában, beszállítónként egy adapter | elfogadva | 0001 |
-| Fizetés | Stripe, Barion, SimplePay a Woo gateway pluginjeivel, Store API checkouton át | elfogadva | 0001 |
+| Fizetés | Stripe (`woocommerce-gateway-stripe` + `@stripe/stripe-js`), Barion (`pay-via-barion-for-woocommerce`), SimplePay (`wpxpert-payment-gateway-for-simplepay`, v2.1) Store API checkouton át (tervezett megvalósítás és élő sandbox-teszt: `KG-13`) | elfogadva (2026-11-15: pluginek, frissítve: 2026-11-20) | 0001, 0017 |
 | Számlázás | Billingo (NAV Online Számla) | elfogadva | 0001 |
 | Számlázás bekötése | Trigger.dev `issue-invoice` task a Billingo API v3-mal (`apps/jobs`), `vendor_id` idempotenciával és `kg-headless` céges mezőkkel | elfogadva (2026-11-15, frissítve: 2026-11-20) | 0015 |
 | Keresés | Meilisearch, brandenként külön index, jobokból és webhookból táplálva | elfogadva | 0001 |

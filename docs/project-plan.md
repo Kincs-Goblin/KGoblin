@@ -52,7 +52,7 @@ A mérföldkövek sorrendje irányadó, a verziószámok a kiadáskor dőlnek el
 
 | Kockázat | Hatás | Kezelés |
 |---|---|---|
-| A gateway pluginek nem (teljesen) támogatják a Store API checkoutot | a 2. mérföldkő csúszik | spike-ticket az 1. mérföldkő alatt mindhárom gatewayre |
+| A gateway pluginek nem (teljesen) támogatják a Store API checkoutot | a 2. mérföldkő csúszik | a KG-32 spike (ADR-0017) igazolta a 3 ingyenes plugin Store API- és HPOS-kompatibilitását; az élő sandbox kulcsos végpontteszt és a `kg-headless` átirányítási fix a `KG-13`-ban fut |
 | Beszállítói feed minősége, hiányzó EAN/SKU | hibás vagy duplikált termékek | Zod-validálás, futási riport, kézi jóváhagyás az első importnál |
 | Brandenként külön Woo = több üzemeltetés | frissítési és biztonsági teher | közös plugin-lista és -verzió, frissítési runbook, hosting: VPS + Docker (ADR-0008) |
 | Bizonytalan beszállítói rendelés-API (dupla rendelés) | pénzügyi kár | idempotencia-kulcs, nincs vak újrapróba (`jobs-and-suppliers.md`) |

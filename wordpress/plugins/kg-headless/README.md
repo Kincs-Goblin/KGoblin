@@ -39,7 +39,12 @@ A `kg-headless` a KGoblin multi-brand platform saját WordPress / WooCommerce b�
 
 ## Kötelező harmadik féltől származó bővítmények (brandenként azonos verzióval)
 
-| Bővítmény | Slug | Szerep |
-|---|---|---|
-| WooCommerce | `woocommerce` | Alap kereskedelmi motor, Store API, REST v3, HPOS |
-| Redis Object Cache | `redis-cache` | Object cache a gyors Store API és REST válaszokhoz |
+| Bővítmény | Slug | Tesztelt verzió | Státusz | Szerep |
+|---|---|---|---|---|
+| WooCommerce | `woocommerce` | `11.3.0` | aktív (`setup.ps1`/`setup.sh`) | Alap kereskedelmi motor, Store API, REST v3, HPOS |
+| Redis Object Cache | `redis-cache` | `3.0.0` | aktív (`setup.ps1`/`setup.sh`) | Object cache a gyors Store API és REST válaszokhoz |
+| WooCommerce Stripe Gateway | `woocommerce-gateway-stripe` | `11.2.0` | tervezett (`KG-13`, ADR-0017) | Stripe UPE (kártya, Wallet) Store API-val és `@stripe/stripe-js`-szel |
+| Pay via Barion for WooCommerce | `pay-via-barion-for-woocommerce` | `3.10.2` | tervezett (`KG-13`, ADR-0017) | Barion átirányításos fizetés és IPN (`/?wc-api=wc_gateway_barion`) |
+| Payment Gateway for SimplePay | `wpxpert-payment-gateway-for-simplepay` | `0.2.1` | tervezett (`KG-13`, ADR-0017) | OTP SimplePay v2.1 kártya (`simplepay`) és azonnali átutalás (`simplepay_wire`) |
+
+> **KG-13 TODO:** A Stripe és a SimplePay visszatéréskor `wp_safe_redirect($this->get_return_url($order))`-t hív, ezért a `KG_FRONTEND_URL` hostját fel kell venni az `allowed_redirect_hosts` filterbe, valamint a sikertelen/megszakított visszatérés `wc_add_notice` hibáit (pl. SimplePay `transactionId`) query paraméterrel kell továbbítani a storefront felé.
