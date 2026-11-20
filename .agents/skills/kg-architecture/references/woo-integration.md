@@ -7,7 +7,7 @@
 | Termék, kategória, attribútum, keresés listázása | Store API `/wp-json/wc/store/v1/products…` | RSC, ISR-rel | nincs |
 | Kosár olvasása és módosítása | Store API `/cart`, `/cart/add-item`, `/cart/update-item`, `/cart/apply-coupon` | server action | `Cart-Token` header (httpOnly cookie-ból) |
 | Checkout | Store API `/checkout` | server action | `Cart-Token` |
-| Bejelentkezett vásárló adatai, rendelései | REST v3 vagy auth plugin endpoint | server | vásárlói token (httpOnly cookie) |
+| Bejelentkezett vásárló adatai, rendelései | `kg-headless` `/wp-json/kg/v1/auth/*` (tervezett: `KG-15`) és REST v3 | server | vásárlói Access/Refresh JWT (httpOnly cookie) |
 | Termék-upsert, készlet, rendelés-státusz, rendelés-megjegyzés | REST v3 `/wp-json/wc/v3/…` | csak `apps/jobs` vagy server | consumer key/secret |
 | Változásértesítés | Woo webhook → `app/api/webhooks/woo/[brand]` | route handler | HMAC-aláírás |
 
@@ -21,8 +21,9 @@ külön belépési pontban, a REST v3 `server-only`.
 - **Ár:** a Store API `prices` objektuma minor unitban adja az árat (`currency_minor_unit`). A formázást a
   `shared/lib/format` végzi; összeadás, kedvezményszámítás a kliensen tilos.
 - **Kosár:** az első kosárművelet `Cart-Token`-t ad; ezt brandenként külön, httpOnly, Secure, SameSite=Lax
-  cookie-ban tároljuk. A kosár nem cache-elt (`no-store`). Bejelentkezéskor a vendégkosár összevonásának
-  módja az auth plugin döntésétől függ (nyitott).
+  cookie-ban tároljuk. A kosár nem cache-elt (`no-store`). A `KG-15` megvalósítása után bejelentkezéskor és
+  regisztrációkor a `kg-headless` `/wp-json/kg/v1/auth/*` végpont a kapott vendég `Cart-Token` tételeit
+  szerveroldalon egyesíti majd a customer sessionjével (ADR-0016), és visszaadja a customer `Cart-Token`-t.
 - **Checkout és fizetés:** a Store API `/checkout` `payment_method` + `payment_data` mezőkkel megy.
   Átirányításos gatewaynél (Barion, SimplePay) a válasz `payment_result.redirect_url`-jére irányítunk, a
   visszatérés a rendelés-visszaigazoló oldalra jön, és a **státuszt mindig a Woo-tól kérdezzük le**, nem
@@ -78,4 +79,9 @@ Más pluginhez nem nyúlunk; a harmadik féltől származó pluginek listája é
    - `accept_payment_obligation` (`boolean`, kötelezően `true`): Fizetési kötelezettség tudomásulvétele.
    - **Store API 400 hibakódok:** `kg_terms_not_accepted`, `kg_payment_obligation_not_accepted`, `kg_missing_company_name`, `kg_missing_tax_number`, `kg_invalid_tax_number`.
    - **HPOS rendelés-metaadatok:** `_billing_is_company`, `_billing_company_name`, `_billing_tax_number`, `_hu_accepted_terms_privacy`, `_hu_accepted_payment_obligation`, `_hu_legal_accepted_at`.
+
+### `kg-headless` tervezett auth végpontok (ADR-0016, `KG-15`)
+
+- Tervezett végpontok (`/wp-json/kg/v1/auth/*`): `POST /login`, `POST /register` (csak `customer` szerepkör), `POST /refresh` (kötelező rotáció), `POST /logout` (refresh törlése + `jti` élesben kötelező Redis tiltólistára vétele), `POST /lost-password` (kizárólag szerveroldali BFF-hitelesítéssel hívható; a nyers kulcs soha nem kerül kliensválaszba, az emailt a `KG-17` Resend task küldi majd) és `POST /reset-password`.
+- Tokenek: `HS256` Access JWT (`15 perc`, `jti`, `sub`, `iss`) a WooCommerce beépített `JsonWebToken` osztályával + `30 napos` Refresh Token (`SHA-256` hash). Belépéskor/regisztrációnál a vendég `guest_cart_token` tételei szerveroldalon egyesítésre kerülnek majd a customer sessionjébe.
 

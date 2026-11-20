@@ -14,7 +14,7 @@ visszafordíthatatlanul) · **nyitott** (dönteni kell, mielőtt ráépül valam
 
 ## Döntésnapló
 
-Utolsó módosítás: 2026-11-20 (ADR-0015 Billingo-bekötés Trigger.dev `issue-invoice` taskkal és Billingo API v3-mal; ADR-0014 demo/staging Woo brandenként külön konténerben, seed/snapshot resettel; korábban ADR-0012, ADR-0013, ADR-0011, ADR-0009, ADR-0008, ADR-0010).
+Utolsó módosítás: 2026-11-20 (ADR-0016 headless customer auth a `kg-headless` pluginban; korábban ADR-0015, ADR-0014, ADR-0012, ADR-0013, ADR-0011, ADR-0009, ADR-0008, ADR-0010).
 
 ### Architektúra és frontend
 
@@ -45,7 +45,7 @@ Utolsó módosítás: 2026-11-20 (ADR-0015 Billingo-bekötés Trigger.dev `issue
 | Validálás | Zod 4 minden Woo-válaszon és webhook-payloadon (`packages/woo-client`) | elfogadva | 0001 |
 | Cache | ISR + `revalidateTag`; Woo webhook (`product.updated` stb.) → aláírt Next endpoint | elfogadva | 0001 |
 | Auth | Woo customer az identitás + vendég checkout; token httpOnly, Secure, SameSite cookie-ban | elfogadva | 0001 |
-| Auth plugin | Melyik WP JWT/headless auth plugin | nyitott | - |
+| Auth plugin | Saját JWT auth végpontok a `kg-headless` pluginban (`wp-json/kg/v1/auth/*`, tervezett: `KG-15`): 15p Access JWT (`jti`) + rotált 30n Refresh Token + Redis tiltás + Store API kosárösszevonás (külső WP auth plugin nélkül) | elfogadva (2026-11-15, frissítve: 2026-11-20) | 0016 |
 | WordPress hosting | Saját VPS + Docker Compose (a lokális compose éles változata), Cloudflare mögött; brandenként `api.<domain>` | elfogadva | 0008 |
 | VPS-szolgáltató | Melyik VPS-szolgáltató | nyitott | - |
 | Demo/staging Woo | Brandenként külön demo-Woo Docker konténer (`demo-api.<domain>`) külön demo DB-vel, sandbox kulcsokkal és SQL-snapshot / tiszta DB + `seed-brand.php` resettel | elfogadva (2026-11-15, frissítve: 2026-11-20) | 0014 |
