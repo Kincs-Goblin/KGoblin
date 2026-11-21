@@ -22,12 +22,15 @@ elif [[ -f "$REPO_ROOT/.env.example" ]]; then
   set +a
 fi
 
+# A setup lokális fejlesztői környezetet épít; a compose alapérték nélkül kéri a változót.
+export WP_ENVIRONMENT_TYPE="${WP_ENVIRONMENT_TYPE:-local}"
+
 BRAND_UPPER="$(echo "$BRAND" | tr '[:lower:]' '[:upper:]' | sed 's/[^A-Z0-9]/_/g')"
 DEFAULT_PORT="8081"
-DEFAULT_FE_URL="http://localhost:3001"
+# Egy next dev szolgálja ki az összes brandet; a brandet a `<brand>.localhost` host választja.
+DEFAULT_FE_URL="http://${BRAND}.localhost:3000"
 if [[ "$BRAND" == "gamer" ]]; then
   DEFAULT_PORT="8080"
-  DEFAULT_FE_URL="http://localhost:3000"
 fi
 
 PORT_VAR="WP_${BRAND_UPPER}_PORT"
@@ -82,7 +85,15 @@ fi
 
 echo "=== [4/6] Magyar nyelv, WooCommerce és Redis Object Cache telepítése ==="
 docker compose exec -T "$CLI_SERVICE" wp language core install hu_HU --activate --path=/var/www/html
-docker compose exec -T "$CLI_SERVICE" wp plugin install woocommerce --activate --path=/var/www/html
+# A kg-headless fejlécének „WC tested up to” értéke ehhez a verzióhoz igazodik (ADR-0016, ADR-0017).
+WOO_VERSION="${WOO_VERSION:-11.3.0}"
+CURRENT_WOO="$(docker compose exec -T "$CLI_SERVICE" wp plugin get woocommerce --field=version --path=/var/www/html 2>/dev/null | tr -d '\r' || true)"
+if [[ "$CURRENT_WOO" != "$WOO_VERSION" ]]; then
+  # Eltérő verziónál felülírja (a már migrált DB-t nem állítja vissza; újabbról ne lépj vissza éles adaton).
+  docker compose exec -T "$CLI_SERVICE" wp plugin install woocommerce --version="$WOO_VERSION" --force --activate --path=/var/www/html
+else
+  docker compose exec -T "$CLI_SERVICE" wp plugin activate woocommerce --path=/var/www/html
+fi
 docker compose exec -T "$CLI_SERVICE" wp plugin install redis-cache --activate --path=/var/www/html
 docker compose exec -T "$CLI_SERVICE" wp redis enable --path=/var/www/html >/dev/null 2>&1 || true
 

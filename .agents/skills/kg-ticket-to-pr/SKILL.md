@@ -85,10 +85,15 @@ a helyi release-teszt a `kg-release` 1-3. lépése.
 Fusson előbb célzott teszt, aztán a teljes ellenőrzés (a parancsok az `AGENTS.md` „Parancsok” részében):
 
 ```bash
+pnpm format:check
 pnpm turbo run typecheck lint test build --filter=...[origin/demo]   # hotfixnél [origin/main]
 pnpm --filter @kg/web lint:fsd      # Steiger (a web lintje is futtatja)
 pnpm --filter @kg/web test:e2e      # Playwright smoke, UI-változásnál
 ```
+
+PHP-változásnál (`wordpress/`) a CI `PHP (kg-headless)` jobjának megfelelője (ugyanaz az image):
+`docker run --rm -v "$PWD:/repo" -w /repo php:8.2-cli php -l <fájl>`, majd ugyanígy
+`php wordpress/seed/test-omnibus.php` és `php wordpress/seed/test-headless-guards.php`.
 
 Woo-, kosár-, checkout- vagy redirect-változásnál a lokális Docker-Woo-val is próbáld ki:
 `kg-dev-practices` → `references/local-stack.md`. A `demo` és a `main` PR-on ugyanezt a quality gate-et és az

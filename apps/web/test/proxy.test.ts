@@ -1,7 +1,8 @@
+import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
 import { NextRequest } from "next/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { proxy } from "../proxy";
+import { config, proxy } from "../proxy";
 
 describe("proxy", () => {
   afterEach(() => {
@@ -60,5 +61,22 @@ describe("proxy", () => {
     const prodRes = proxy(prodReq);
     expect(prodRes.status).toBe(404);
     expect(await prodRes.text()).toBe("BRAND.UNKNOWN_HOST");
+  });
+
+  it("a matcher csak az /api/ alatti és a statikus útvonalakat hagyja ki", () => {
+    const matches = (url: string) => unstable_doesMiddlewareMatch({ config, url });
+
+    expect(matches("/")).toBe(true);
+    expect(matches("/termekek")).toBe(true);
+    expect(matches("/apiary")).toBe(true);
+    expect(matches("/kategoria/api-kiegeszitok")).toBe(true);
+    expect(matches("/robots.txt.bak")).toBe(true);
+
+    expect(matches("/api/webhooks/woo/gamer")).toBe(false);
+    expect(matches("/_next/static/chunks/main.js")).toBe(false);
+    expect(matches("/_next/image")).toBe(false);
+    expect(matches("/favicon.ico")).toBe(false);
+    expect(matches("/robots.txt")).toBe(false);
+    expect(matches("/sitemap.xml")).toBe(false);
   });
 });

@@ -21,6 +21,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 $Failures = 0
+# A compose kötelezőként kéri; egy régebbi .env-ben még hiányozhat (lokális teszt-stack).
+if (-not $env:WP_ENVIRONMENT_TYPE) { $env:WP_ENVIRONMENT_TYPE = "local" }
 
 function Pass($msg) { Write-Host "[PASS] $msg" -ForegroundColor Green }
 function Fail($msg) { Write-Host "[FAIL] $msg" -ForegroundColor Red; $script:Failures++ }

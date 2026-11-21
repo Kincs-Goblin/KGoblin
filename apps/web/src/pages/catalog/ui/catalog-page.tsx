@@ -2,6 +2,7 @@ import { isWooError, type WooErrorCode } from "@kg/woo-client";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 
 import type { Category } from "@/entities/category";
 import { getCategories, getCategoryBySlug } from "@/entities/category/index.server";
@@ -75,19 +76,30 @@ async function loadCatalog(
   }
 }
 
+/**
+ * Kérésenként egyszer fut a metadata és az oldal között. A Woo-fetchek `AbortSignal` miatt a Next
+ * fetch-memoizációján kívül esnek, így enélkül kiesésnél kétszer várnánk a timeoutot. A kulcs a
+ * szerializált query, mert a searchParams objektum-azonossága nem garantált.
+ */
+const loadCatalogOnce = cache((brandId: string, slug: string | undefined, queryKey: string) =>
+  loadCatalog(brandId, slug, JSON.parse(queryKey) as CatalogSearchParams),
+);
+
 export async function generateCatalogMetadata({
   params,
-}: Pick<CatalogPageProps, "params">): Promise<Metadata> {
+  searchParams,
+}: CatalogPageProps): Promise<Metadata> {
   const { brand: brandId, slug } = await params;
-  if (!slug) return { title: catalogTexts.allTitle };
-  const category = await getCategoryBySlug(getBrandOrNotFound(brandId), slug).catch(() => null);
-  return { title: category?.name ?? catalogTexts.allTitle };
+  // Ugyanaz a betöltés, mint az oldalé: bármelyik Woo-hívás hibájánál a 200-as hibaállapot
+  // `noindex`-et kap a `<head>`-ben.
+  const data = await loadCatalogOnce(brandId, slug, JSON.stringify(await searchParams));
+  if (!data.ok) return { title: catalogTexts.allTitle, robots: { index: false } };
+  return { title: data.category?.name ?? catalogTexts.allTitle };
 }
 
 export async function CatalogPage({ params, searchParams }: CatalogPageProps) {
   const { brand: brandId, slug } = await params;
-  const rawSearchParams = await searchParams;
-  const data = await loadCatalog(brandId, slug, rawSearchParams);
+  const data = await loadCatalogOnce(brandId, slug, JSON.stringify(await searchParams));
 
   if (!data.ok) {
     return (

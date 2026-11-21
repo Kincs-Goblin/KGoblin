@@ -23,5 +23,5 @@ Tervezett szerkezet:
   [legal]/                → src/pages/legal (ÁSZF, adatkezelés, szállítás)
 api/
   webhooks/woo/[brand]/   Woo webhook: aláírás, Zod, revalidateTag, Trigger.dev task
-  revalidate/             kézi revalidálás, titokkal védve
+                          (kézi revalidáló végpont nincs, ADR-0014)
 ```

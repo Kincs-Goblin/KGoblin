@@ -31,6 +31,10 @@
   GitHub-beállítás a KG-23 része.
 - Frissítve: `ci.yml`, ADR-0005 és ADR-0007 állapota, ADR-0010 megjegyzése, `kg-babysit-pr`, `kg-stack` (CI sor), `AGENTS.md` (merge-kapu,
   Parancsok), `kg-git-workflow`, `kg-ticket-to-pr`, `kg-release`, `docs/process/infrastructure.md`.
+- *Frissítés (2026-11-21):* harmadik job: `PHP (kg-headless)` (`php -l`, `test-omnibus.php`,
+  `test-headless-guards.php`, `php:8.2-cli` image). A `demo` mindhárom checket kötelezőként kéri; a `main`-en
+  a PHP-check az első olyan `demo` → `main` kiadás után lesz kötelező, amely már tartalmazza a jobot
+  (addig egy hotfix-PR várakozna rá). A branch protection `enforce_admins` mellett él.
 
 ## Mérlegelt alternatívák
 

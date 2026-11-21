@@ -17,6 +17,8 @@ permissions:
 # A CI nem indít Woo-t: a katalógus a mentett Store API-fixture-ökből épül és fut (ADR-0005).
 env:
   KG_STORE_FIXTURES: "1"
+  # Pipeline-buildben kötelező (next.config.ts); a CI fixture-katalógusa lokális környezetnek számít.
+  NEXT_PUBLIC_APP_ENV: local
 
 jobs:
   quality:
@@ -42,6 +44,21 @@ jobs:
             !apps/web/.next/cache
           include-hidden-files: true
           retention-days: 1
+
+  # A kg-headless plugin és a seed WordPress nélkül ellenőrizhető része: szintaxis, a tiszta függvényes
+  # unit-tesztek (Omnibus, adószám) és a fail-closed őrök. A plugin minimum PHP-ján fut (`Requires PHP: 8.2`),
+  # rögzített Docker-image-ben, nem a runner változó PHP-ján.
+  php:
+    name: PHP (kg-headless)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      PHP_IMAGE: php:8.2-cli
+    steps:
+      - uses: actions/checkout@v7
+      - run: git ls-files -z 'wordpress/*.php' | docker run --rm -i -v "$PWD:/repo" -w /repo "$PHP_IMAGE" xargs -0 -n1 php -l
+      - run: docker run --rm -v "$PWD:/repo" -w /repo "$PHP_IMAGE" php wordpress/seed/test-omnibus.php
+      - run: docker run --rm -v "$PWD:/repo" -w /repo "$PHP_IMAGE" php wordpress/seed/test-headless-guards.php
 
   e2e:
     name: E2E (Playwright)

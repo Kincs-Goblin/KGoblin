@@ -1,1 +1,1 @@
-export { HomePage } from "./ui/home-page";
+export { generateHomeMetadata, HomePage } from "./ui/home-page";

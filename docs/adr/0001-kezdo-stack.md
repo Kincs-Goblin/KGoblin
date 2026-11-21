@@ -31,7 +31,8 @@
 | Keresés | Meilisearch, index brandenként |
 | Email | Resend + React Email |
 | Mérés | Sentry, PostHog, Meta Conversions API, Google Merchant Center feed |
-| Javasolt (még nem kötelező) | Node aktuális LTS, ESLint + Prettier + Steiger, Vitest + MSW + Playwright, `DOMAIN.REASON` hibakódok, `next-intl` a 2. nyelvnél |
+| Elfogadva (2026-11-21, korábban javasolt) | Node aktuális LTS, ESLint + Prettier + Steiger, Vitest + MSW + Playwright, `DOMAIN.REASON` hibakódok |
+| Javasolt (még nem kötelező) | `next-intl` a 2. nyelvnél |
 | Nyitott | WordPress hosting, demo/staging Woo, auth plugin, Billingo-bekötés módja, Meilisearch hosting, kép-CDN |
 
 ## Következmények
@@ -42,6 +43,9 @@
 - Az FSD 3. szint több mappát jelent az elején, cserébe 4+ domain mellett is kezelhető marad a kód.
 - A gateway pluginek Store API-támogatását korán ellenőrizni kell (spike).
 - A döntésnapló a `kg-stack` skillben él; minden későbbi változás új ADR + `kg-stack` frissítés.
+- *Frissítés (2026-11-21):* a Runtime (Node 26), a Lint és formázás (ESLint, Prettier, Steiger), a Tesztek
+  (Vitest, MSW, Playwright) és a Hibakódok (`DOMAIN.REASON`) sora „javasolt”-ból „elfogadva” lett: a CI és a
+  branch protection azóta kötelezővé teszi őket (fejlesztői döntés, `kg-stack`).
 
 ## Mérlegelt alternatívák
 

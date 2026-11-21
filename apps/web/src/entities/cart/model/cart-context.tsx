@@ -3,7 +3,13 @@
 import { createContext, useContext, useEffect, useMemo, useReducer } from "react";
 import { z } from "zod";
 
-import { cartReducer, countItems, type CartAction, type CartState } from "./cart-reducer";
+import {
+  cartReducer,
+  countItems,
+  MAX_QUANTITY_PER_LINE,
+  type CartAction,
+  type CartState,
+} from "./cart-reducer";
 
 type CartContextValue = {
   state: CartState;
@@ -22,7 +28,12 @@ const storedCartSchema = z.object({
       slug: z.string(),
       name: z.string(),
       unitPrice: z.object({ amount: z.string(), currency: z.string(), minorUnit: z.number() }),
-      quantity: z.number().int().positive(),
+      // Soronként a plafonra vágjuk: egy hibás sor ne dobja el a teljes tárolt kosarat.
+      quantity: z
+        .number()
+        .int()
+        .positive()
+        .transform((quantity) => Math.min(quantity, MAX_QUANTITY_PER_LINE)),
     }),
   ),
 });

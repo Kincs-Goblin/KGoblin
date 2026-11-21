@@ -8,7 +8,7 @@
  * Requires at least: 6.4
  * Requires PHP: 8.2
  * WC requires at least: 8.5
- * WC tested up to: 9.6
+ * WC tested up to: 11.3
  * Text Domain: kg-headless
  *
  * @package KG_Headless
@@ -80,7 +80,13 @@ function kg_headless_get_frontend_url(): string {
 		return untrailingslashit( trim( $opt_url ) );
 	}
 
-	return 'http://localhost:3000';
+	// Nincs csendes `localhost` fallback: konfiguráció nélkül a vásárló nem kerülhet rossz hostra.
+	static $logged = false; // kérésenként egyszer naplóz
+	if ( ! $logged ) {
+		$logged = true;
+		error_log( '[kg-headless] KG_FRONTEND_URL nincs beállítva: a frontend-kérések 503-at kapnak, a Woo-linkek a WordPress saját URL-jei maradnak.' );
+	}
+	return '';
 }
 
 add_action(
@@ -113,7 +119,10 @@ add_action(
 		}
 
 		$target_base = kg_headless_get_frontend_url();
-		$target_url  = esc_url_raw( $target_base . $request_uri );
+		if ( '' === $target_base ) {
+			wp_die( 'KG_FRONTEND_URL nincs beállítva.', 'Konfigurációs hiba', array( 'response' => 503 ) );
+		}
+		$target_url = esc_url_raw( $target_base . $request_uri );
 
 		wp_redirect( $target_url, 302, 'KGoblin-Headless' );
 		exit;
@@ -128,6 +137,9 @@ add_filter(
 	'woocommerce_get_checkout_order_received_url',
 	function ( string $url, \WC_Order $order ): string {
 		$frontend = kg_headless_get_frontend_url();
+		if ( '' === $frontend ) {
+			return $url;
+		}
 		return sprintf(
 			'%s/rendeles-visszaigazolas/%d?key=%s',
 			$frontend,
@@ -142,10 +154,11 @@ add_filter(
 add_filter(
 	'lostpassword_url',
 	function ( string $lostpassword_url ): string {
-		if ( is_admin() ) {
+		$frontend = kg_headless_get_frontend_url();
+		if ( is_admin() || '' === $frontend ) {
 			return $lostpassword_url;
 		}
-		return kg_headless_get_frontend_url() . '/elfelejtett-jelszo';
+		return $frontend . '/elfelejtett-jelszo';
 	},
 	10,
 	1
@@ -156,6 +169,10 @@ add_filter(
  *    célcímek és dev portok engedélyezése a `wp_safe_remote_post` hívásokhoz. Élesben soha nincs bekapcsolva.
  */
 function kg_headless_allows_local_webhooks(): bool {
+	// A WP SSRF-védelmét csak lokális WP-környezetben lazítjuk, egy ottmaradt opció máshol hatástalan.
+	if ( 'local' !== wp_get_environment_type() ) {
+		return false;
+	}
 	return '1' === getenv( 'KG_ALLOW_LOCAL_WEBHOOKS' )
 		|| 'yes' === get_option( 'kg_headless_allow_local_webhooks' );
 }

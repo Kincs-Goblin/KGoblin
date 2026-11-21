@@ -182,4 +182,29 @@ describe("handleWooWebhookRequest", () => {
     expect(await res.json()).toMatchObject({ ok: false, code: "WEBHOOK.PAYLOAD_TOO_LARGE" });
     expect(revalidate).not.toHaveBeenCalled();
   });
+
+  it("nem lokális környezetben a seed nyilvános kg_local_ titkát elutasítja, lokálisan elfogadja", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const body = JSON.stringify({ id: 1, slug: "x", categories: [] });
+    const secret = "kg_local_gamer_webhook_secret";
+    const signature = await computeWooWebhookSignature(body, secret);
+    const send = (appEnv: string) =>
+      handleWooWebhookRequest(
+        new Request("http://localhost:3000/api/webhooks/woo/gamer", {
+          method: "POST",
+          headers: { "X-WC-Webhook-Topic": "product.updated", "X-WC-Webhook-Signature": signature },
+          body,
+        }),
+        "gamer",
+        { revalidate: vi.fn(), resolveBrand, appEnv, env: { WOO_GAMER_WEBHOOK_SECRET: secret } },
+      );
+
+    const demoRes = await send("demo");
+    expect(demoRes.status).toBe(500);
+    expect(await demoRes.json()).toMatchObject({ code: "WEBHOOK.CONFIG_ERROR" });
+    expect(JSON.stringify(errorSpy.mock.calls)).not.toContain(secret);
+
+    expect((await send("local")).status).toBe(200);
+    errorSpy.mockRestore();
+  });
 });

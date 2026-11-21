@@ -31,10 +31,14 @@ if ($envFile) {
     }
 }
 
+# A setup lokális fejlesztői környezetet épít; a compose alapérték nélkül kéri a változót.
+$env:WP_ENVIRONMENT_TYPE = if ($envVars["WP_ENVIRONMENT_TYPE"]) { $envVars["WP_ENVIRONMENT_TYPE"] } elseif ($env:WP_ENVIRONMENT_TYPE) { $env:WP_ENVIRONMENT_TYPE } else { "local" }
+
 $Brand         = $Brand.ToLowerInvariant().Trim()
 $BrandUpper    = ($Brand -replace '[^a-z0-9]', '_').ToUpperInvariant()
 $DefaultPort   = if ($Brand -eq "gamer") { "8080" } else { "8081" }
-$DefaultFeUrl  = if ($Brand -eq "gamer") { "http://localhost:3000" } else { "http://localhost:3001" }
+# Egy next dev szolgálja ki az összes brandet; a brandet a `<brand>.localhost` host választja.
+$DefaultFeUrl  = "http://${Brand}.localhost:3000"
 
 $Port          = if ($envVars["WP_${BrandUpper}_PORT"]) { $envVars["WP_${BrandUpper}_PORT"] } else { $DefaultPort }
 $Title         = if ($envVars["WP_${BrandUpper}_TITLE"]) { $envVars["WP_${BrandUpper}_TITLE"] } else { "KincsGoblin ($Brand) Backend" }
@@ -106,7 +110,15 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host "=== [4/6] Magyar nyelv, WooCommerce és Redis Object Cache telepítése ===" -ForegroundColor Cyan
 docker compose exec -T $CliService wp language core install hu_HU --activate --path=/var/www/html
-docker compose exec -T $CliService wp plugin install woocommerce --activate --path=/var/www/html
+# A kg-headless fejlécének „WC tested up to” értéke ehhez a verzióhoz igazodik (ADR-0016, ADR-0017).
+$WooVersion = if ($env:WOO_VERSION) { $env:WOO_VERSION } else { "11.3.0" }
+$CurrentWoo = (docker compose exec -T $CliService wp plugin get woocommerce --field=version --path=/var/www/html 2>$null | Out-String).Trim()
+if ($CurrentWoo -ne $WooVersion) {
+    # Eltérő verziónál felülírja (a már migrált DB-t nem állítja vissza; újabbról ne lépj vissza éles adaton).
+    docker compose exec -T $CliService wp plugin install woocommerce --version=$WooVersion --force --activate --path=/var/www/html
+} else {
+    docker compose exec -T $CliService wp plugin activate woocommerce --path=/var/www/html
+}
 docker compose exec -T $CliService wp plugin install redis-cache --activate --path=/var/www/html
 docker compose exec -T $CliService wp redis enable --path=/var/www/html >$null 2>&1
 

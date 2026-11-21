@@ -17,7 +17,7 @@ külön belépési pontban, a REST v3 `server-only`.
 ## Szabályok
 
 - **Minden válasz Zod-sémán megy át.** Ismeretlen mező nem hiba (`passthrough` helyett `strip`), hiányzó
-  kötelező mező viszont `WOO.CONTRACT_MISMATCH` hiba, Sentry-eseménnyel.
+  kötelező mező viszont `WOO.CONTRACT_MISMATCH` hiba (a Sentry-esemény az M5-ben jön, addig szerveroldali log).
 - **Ár:** a Store API `prices` objektuma minor unitban adja az árat (`currency_minor_unit`). A formázást a
   `shared/lib/format` végzi; összeadás, kedvezményszámítás a kliensen tilos.
 - **Kosár:** az első kosárművelet `Cart-Token`-t ad; ezt brandenként külön, httpOnly, Secure, SameSite=Lax
@@ -47,7 +47,14 @@ külön belépési pontban, a REST v3 `server-only`.
 ## Hibák és kiesés
 
 - Woo-időtúllépés vagy 5xx: `WOO.UNAVAILABLE`, a katalógus a cache-ből szolgál ki, a kosár és a checkout
-  érthető hibaüzenetet ad.
+  érthető hibaüzenetet ad. Oldalszinten: ISR-oldal (főoldal) futáskor továbbdobja a hibát, így a legutóbbi jó
+  oldal marad a cache-ben (hibaállapotot csak buildkor renderel); dinamikus oldal (katalógus, termék) inline
+  `ErrorState`-et renderel, és a `generateMetadata` Woo-hibánál `robots: { index: false }`-t ad.
+  (A „hiba után a stale oldal marad” viselkedést `next start` igazolta; az OpenNext/Workers incremental
+  cache-en a demo-Worker beüzemelésekor kell kikapcsolt Woo mellett kipróbálni.)
+- A webhook ma csak `revalidateTag`-et vált ki, ezért az újrajátszás ártalmatlan. Az `order.*` topicok
+  feldolgozásakor (rendelés-továbbítás) kötelező a delivery-ID alapú idempotencia, és a mellékhatás csak
+  Trigger.dev taskban futhat.
 - 4xx a Store API-tól (pl. készlethiány, érvénytelen kupon): a Woo hibakódját saját kódra képezzük
   (`CART.OUT_OF_STOCK`, `CART.COUPON_INVALID`), a felhasználó emberi szöveget lát.
 - Próbahívással derülnek ki a furcsaságok; ezeket a `packages/woo-client/README.md` „Ismert furcsaságok”

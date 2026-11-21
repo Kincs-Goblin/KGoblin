@@ -125,8 +125,14 @@ class Product_Extensions {
 			return array();
 		}
 
+		$children = array_map( 'intval', $product->get_children() );
+		// N+1 helyett egy lekérdezés: a variációk postjai és metái előre a cache-be kerülnek.
+		if ( function_exists( '_prime_post_caches' ) && array() !== $children ) {
+			_prime_post_caches( $children, false, true );
+		}
+
 		$out = array();
-		foreach ( $product->get_children() as $child_id ) {
+		foreach ( $children as $child_id ) {
 			$variation = wc_get_product( (int) $child_id );
 			if ( ! ( $variation instanceof \WC_Product_Variation ) ) {
 				continue;

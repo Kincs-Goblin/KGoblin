@@ -11,9 +11,11 @@ pages/          szándékosan üres (lásd pages/README.md)
 proxy.ts        domain → brand rewrite; ismeretlen host: 404 BRAND.UNKNOWN_HOST
 src/
   app/          FSD app-réteg: root- és brand-layout, providerek, globális stílus, brand-téma, fontok
-  pages/        oldalak kompozíciója (home, not-found, error)
-  widgets/      header, footer
-  shared/       ui (shadcn + motion), lib (cn, hibakódok), config (brand, útvonalak)
+  pages/        oldalak kompozíciója (home, catalog, product, not-found, error)
+  widgets/      header, footer, cart-drawer, product-grid
+  features/     felhasználói akciók (add-to-cart)
+  entities/     üzleti entitások (product, category, cart)
+  shared/       ui (shadcn + motion), lib (cn, hibakódok, formázás), config (brand, env, útvonalak), api (Woo-kliens, webhook)
 e2e/            Playwright smoke (desktop + mobil, reduced motion)
 ```
 

@@ -43,8 +43,9 @@ Rétegek felülről lefelé: `app → pages → widgets → features → entitie
 - Szegmensek: `ui/`, `model/`, `api/`, `lib/`, `config/`. A `shared` szegmensei: `ui`, `lib`, `api`, `config`.
 - A Next `apps/web/app/` mappája **csak routing**: a `page.tsx` a `src/pages/<szelet>`-ből re-exportál, a
   `route.ts` vékony (validál, meghív egy függvényt, választ ad). Üzleti logika nem lehet benne.
-- Ellenőrzés: Steiger (minden szabály `error`) és ESLint import-szabály. Szintváltás csak `kg-stack`
-  folyamattal.
+- Ellenőrzés: Steiger (`fsd.configs.recommended`, a `src/`-en) és az `apps/web/eslint.config.js`
+  `no-restricted-imports` szabálya (szeleten kívülről csak `index.ts` / `index.server.ts`, az `app/`-ban
+  is). A `server-only` határt az `index.server.ts` első sora védi. Szintváltás csak `kg-stack` folyamattal.
 
 ## 3. Új kód tervezése - kimenet kódolás előtt
 

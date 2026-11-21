@@ -21,6 +21,10 @@ a nem commitolt munkádat ne kapcsold át.
 
 1. `.env` a `.env.example`-ből, a frontend-céllal a host-alapú brandhez:
    `WP_GAMER_FRONTEND_URL=http://gamer.localhost:3000` (a `localhost:3000` nálunk 404 `BRAND.UNKNOWN_HOST`).
+   2026-11-21 óta ez a `.env.example`, a `docker-compose.yml` és a setup alapértéke is; egy régebbi `.env`-ben
+   maradt `localhost:3000` értéket írd át, majd futtasd újra a setupot (a seed a WP-opciót is frissíti).
+   A `docker-compose.yml` a `WP_ENVIRONMENT_TYPE`-ot kötelezőként kéri: a setup-szkriptek `local`-t adnak, kézi
+   `docker compose up`-hoz a `.env`-ben legyen `WP_ENVIRONMENT_TYPE=local`.
 2. Telepítés és seed: `powershell -ExecutionPolicy Bypass -File .\wordpress\docker\setup.ps1`
    (Linux/macOS: `./wordpress/docker/setup.sh`). Idempotens, újrafuttatható.
 3. Backend-tesztek: `powershell -ExecutionPolicy Bypass -File .\wordpress\docker\test-store-api.ps1` -

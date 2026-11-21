@@ -2,6 +2,7 @@ import { isWooError } from "@kg/woo-client";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 
 import { getProduct } from "@/entities/product/index.server";
 import { routes } from "@/shared/config";
@@ -15,19 +16,22 @@ type ProductPageProps = {
   params: Promise<{ brand: string; slug: string }>;
 };
 
-async function loadProduct(brandId: string, slug: string) {
+/** Kérésenként egyszer (metadata + oldal); a Woo-fetchek `AbortSignal` miatt nem memoizáltak. */
+const loadProduct = cache(async (brandId: string, slug: string) => {
   try {
     return { ok: true as const, product: await getProduct(getBrandOrNotFound(brandId), slug) };
   } catch (error) {
     if (isWooError(error)) return { ok: false as const, code: error.code };
     throw error;
   }
-}
+});
 
 export async function generateProductMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { brand, slug } = await params;
   const result = await loadProduct(brand, slug);
-  const product = result.ok ? result.product : null;
+  // A dinamikus oldal Woo-hibánál 200-as hibaállapotot renderel; a metadata a `<head>`-be kerül, így nem indexelhető.
+  if (!result.ok) return { robots: { index: false } };
+  const product = result.product;
   return product
     ? { title: product.name, description: product.summary.join(" ").slice(0, 160) }
     : {};
