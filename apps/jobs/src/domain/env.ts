@@ -1,4 +1,5 @@
 import { getBrandById, type Brand } from "@kg/brand-config";
+import { getBrandEnvPrefix, isWooError, resolveBrandBaseUrl } from "@kg/woo-client";
 import { z } from "zod";
 
 import { AppError } from "./errors";
@@ -53,22 +54,17 @@ export function getBrandWooCredentials(
     });
   }
 
-  const prefix = `WOO_${brand.id.toUpperCase().replace(/-/g, "_")}`;
-  const urlKey = brand.woo.baseUrlEnv;
+  const prefix = getBrandEnvPrefix(brand);
   const consumerKeyName = `${prefix}_CONSUMER_KEY`;
   const consumerSecretName = `${prefix}_CONSUMER_SECRET`;
 
-  const baseUrlRaw = raw[urlKey]?.trim();
-  if (!baseUrlRaw) {
-    throw new AppError("JOB.CONFIG_MISSING", {
-      internalReason: `Hiányzó kötelező környezeti változó: ${urlKey}`,
-    });
-  }
-  const baseUrlParsed = z.string().url().safeParse(baseUrlRaw);
-  if (!baseUrlParsed.success) {
-    throw new AppError("JOB.CONFIG_MISSING", {
-      internalReason: `Érvénytelen URL a(z) ${urlKey} környezeti változóban.`,
-    });
+  let baseUrl: string;
+  try {
+    baseUrl = resolveBrandBaseUrl(brand, raw);
+  } catch (error) {
+    // A Woo-cím hiánya a jobban konfigurációs hiba, nem újrapróbálható Woo-kiesés.
+    if (!isWooError(error)) throw error;
+    throw new AppError("JOB.CONFIG_MISSING", { internalReason: error.message });
   }
 
   const consumerKey = raw[consumerKeyName]?.trim();
@@ -86,7 +82,7 @@ export function getBrandWooCredentials(
   }
 
   return {
-    baseUrl: baseUrlParsed.data,
+    baseUrl,
     consumerKey,
     consumerSecret,
   };

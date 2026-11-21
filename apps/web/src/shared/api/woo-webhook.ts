@@ -1,9 +1,11 @@
 import "server-only";
 
 import { getBrandById, type Brand } from "@kg/brand-config";
+import { getBrandEnvPrefix } from "@kg/woo-client";
 import { verifyAndParseWooWebhook, type VerifiedWooWebhookEvent } from "@kg/woo-client/webhooks";
 import { NextResponse } from "next/server";
 
+import { serverEnv } from "../config/env";
 import type { ErrorCode } from "../lib/errors";
 import { cacheTags } from "./cache-tags";
 
@@ -11,7 +13,14 @@ export type WooWebhookDependencies = {
   revalidate: (tag: string) => void;
   env?: Record<string, string | undefined>;
   resolveBrand?: (brandId: string) => Brand | undefined;
+  /** Alapból a buildkor beégetett `NEXT_PUBLIC_APP_ENV`. */
+  appEnv?: string;
 };
+
+/** A seed lokális alapértelmezett titka nyilvános, ezért nem lokális környezetben nem fogadható el. */
+const LOCAL_DEFAULT_SECRET_PREFIX = "kg_local_";
+/** Izolátumonként egyszer naplózunk, hogy aláíratlan kérésekkel ne lehessen teleírni a logot. */
+let loggedLocalSecretMisconfig = false;
 
 function webhookError(code: ErrorCode, status: number, message: string) {
   return NextResponse.json({ ok: false, code, message }, { status });
@@ -99,6 +108,20 @@ export async function handleWooWebhookRequest(
     return webhookError("BRAND.UNKNOWN_ID", 404, "Ismeretlen brand-azonosító.");
   }
 
+  const env = deps.env ?? process.env;
+  const appEnv = deps.appEnv ?? serverEnv.NEXT_PUBLIC_APP_ENV;
+  const secret = env[`${getBrandEnvPrefix(brand)}_WEBHOOK_SECRET`]?.trim() ?? "";
+  if (appEnv !== "local" && secret.startsWith(LOCAL_DEFAULT_SECRET_PREFIX)) {
+    if (!loggedLocalSecretMisconfig) {
+      loggedLocalSecretMisconfig = true;
+      console.error("[woo-webhook] konfigurációs hiba", {
+        brandId: brand.id,
+        message: "Lokális alapértelmezett webhook-titok nem lokális környezetben.",
+      });
+    }
+    return webhookError("WEBHOOK.CONFIG_ERROR", 500, "Webhook konfigurációs hiba.");
+  }
+
   const bodyResult = await readBoundedBody(request, MAX_WEBHOOK_BODY_BYTES);
   if (!bodyResult.ok) {
     return webhookError("WEBHOOK.PAYLOAD_TOO_LARGE", 413, "Túl nagy webhook kérés.");
@@ -111,7 +134,7 @@ export async function handleWooWebhookRequest(
       brand,
       rawBody,
       headers: request.headers,
-      env: deps.env,
+      env,
     });
   } catch (error) {
     console.error("[woo-webhook] konfigurációs hiba", {

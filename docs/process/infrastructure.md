@@ -10,18 +10,19 @@ Ez a dokumentum a `KG-6` (0. mérföldkő) infrastruktúra-beállításait és a
 - **A `demo` PR-ok kapuja:** a zöld CI, mellette a helyi release-teszt (`kg-release` 1-3. lépés), amelynek eredményét a PR leírásának „Ellenőrzés” blokkjában rögzítjük.
 - **Jobok:**
   1. `Quality gate`: `pnpm install --frozen-lockfile` (pnpm store cache-sel), `pnpm format:check`, majd `pnpm turbo run typecheck lint test build` (benne az ESLint, a Steiger FSD-ellenőrzés és a Vitest unit-tesztek minden csomagra, beleértve a `@kg/web` és `@kg/jobs` alkalmazásokat).
-  2. `E2E (Playwright)`: a `Quality gate` által épített `.next` artifactból futtatja a Chromium smoke teszteket (desktop + mobil). Hibánál a `playwright-report` és `test-results` 7 napig artifactként elérhető.
+  2. `PHP (kg-headless)`: verziótaggel rögzített `php:8.2-cli` Docker-image-ben (a plugin minimum PHP-ja, nem a runner változó PHP-ja) `php -l` minden verziókezelt `wordpress/**/*.php` fájlra, majd a WordPress nélküli unit-tesztek: `wordpress/seed/test-omnibus.php` (Omnibus, adószám) és `wordpress/seed/test-headless-guards.php` (frontend URL és lokális webhook-kapu fail-closed őrei). Helyben ugyanez: `docker run --rm -v "$PWD:/repo" -w /repo php:8.2-cli php wordpress/seed/<teszt>.php`.
+  3. `E2E (Playwright)`: a `Quality gate` által épített `.next` artifactból futtatja a Chromium smoke teszteket (desktop + mobil), két `next start` szerverrel: a fixture-össel a smoke-tesztek, a Woo és fixture nélküliével az `e2e/outage.spec.ts` (a hibaállapot `noindex` a `<head>`-ben, a főoldal a buildkori jó oldalt adja). Hibánál a `playwright-report` és `test-results` 7 napig artifactként elérhető.
 
 ---
 
 ## 2. Branch Protection (GitHub Settings → Branches)
 
-Az ADR-0007 és a `kg-git-workflow` szerint a GitHubon beállítandó szabályok:
+Az ADR-0007 és a `kg-git-workflow` szerinti szabályok; 2026-11-21 óta mindkét ágon beállítva, adminokra is (`enforce_admins`):
 
 | Ág | Kötelező PR | Kötelező jóváhagyás | Kötelező status checkek | Force push és törlés | Merge módok |
 |---|---|---|---|---|---|
-| `main` | Igen | `0` (a kapu bármelyik fejlesztő „mehet”-je, a GitHub pedig a saját PR jóváhagyását nem engedi) | `Quality gate`, `E2E (Playwright)` | Tiltva | Squash (`demo` → `main`, hotfix → `main`) |
-| `demo` | Igen | `0` | `Quality gate`, `E2E (Playwright)` (ADR-0011) | Tiltva | Merge commit (`KG-<n>` → `demo`, `version/*` → `demo`, `main` → `demo`) |
+| `main` | Igen | `0` (a kapu bármelyik fejlesztő „mehet”-je, a GitHub pedig a saját PR jóváhagyását nem engedi) | `Quality gate`, `E2E (Playwright)`; `PHP (kg-headless)` a jobot tartalmazó első kiadás után (ADR-0011) | Tiltva | Squash (`demo` → `main`, hotfix → `main`) |
+| `demo` | Igen | `0` | `Quality gate`, `E2E (Playwright)`, `PHP (kg-headless)` (ADR-0011) | Tiltva | Merge commit (`KG-<n>` → `demo`, `version/*` → `demo`, `main` → `demo`) |
 
 ---
 
@@ -34,12 +35,12 @@ Az ADR-0007 és a `kg-git-workflow` szerint a GitHubon beállítandó szabályok
 
 ### Workers Builds (Cloudflare dashboard → Worker → Settings → Build)
 - **Repó:** `Kincs-Goblin/KGoblin`, Root directory: `/`.
-- **Build command:** `pnpm --filter @kg/web build:cf` · **Deploy command:** `pnpm --filter @kg/web deploy:cf`.
+- **Build command:** `pnpm --filter @kg/web build:cf` · **Deploy command:** `pnpm --filter @kg/web deploy:cf`. Mindkettő előtt a `scripts/require-app-env.mjs` fut: `NEXT_PUBLIC_APP_ENV` nélkül vagy `local` értékkel leáll (helyi Cloudflare-próbához is `preview`/`demo` kell). Nem lokális, fixture nélküli buildnél a brandek `WOO_<BRAND>_URL`-je is kötelező (`next.config.ts`).
 - **Ág:** a demo Workernél a figyelt (production) ág a `demo`; a nem-production ágak buildje (preview) kikapcsolva, amíg nincs brand-host stratégia a preview-hostokra.
-- **Build-változók:** `NODE_VERSION=26.13.0`, `PNPM_VERSION=12.16.1`, plusz a build időben olvasott `NEXT_PUBLIC_APP_ENV` és `KG_STORE_FIXTURES` (lásd a táblázatot). A `noindex` fejléc build időben dől el: ha a build-változóból hiányzik a `NEXT_PUBLIC_APP_ENV`, a demo `noindex` nélkül megy ki, hiába `demo` a `wrangler.jsonc` futásidejű értéke.
+- **Build-változók:** `NODE_VERSION=26.13.0`, `PNPM_VERSION=12.16.1`, plusz a build időben olvasott `NEXT_PUBLIC_APP_ENV` és `KG_STORE_FIXTURES` (lásd a táblázatot). A `noindex` fejléc build időben dől el, ezért a `NEXT_PUBLIC_APP_ENV` hiányában a build hibával leáll (`next.config.ts`, a Workers Builds `WORKERS_CI` változója alapján), nem megy ki csendben `local` módban. A `production` + `KG_STORE_FIXTURES=1` kombinációt a build és a futás is elutasítja.
 - **Környezetek:**
   - **Demo:** a `kincsgoblin` Worker a `demo` ágról, `https://kincsgoblin.devdemos.workers.dev` (egyelőre a személyes fiókon).
-  - **Production:** a `main`-ről, saját domainnel a KGoblin-fiókon - külön ticket.
+  - **Production:** a `main`-ről, saját domainnel a KGoblin-fiókon - külön ticket. Saját wrangler-konfig kell, a demo `vars`-a (`KG_STORE_FIXTURES=1`, `NEXT_PUBLIC_APP_ENV=demo`) nélkül, `NEXT_PUBLIC_APP_ENV=production` build-változóval (ekkor a fixture-mód build- és futásidőben is tiltott).
   - **PR-preview:** most nincs; a preview-hostokat a `proxy.ts` nem ismeri (fail-closed 404), brand-host stratégia kell hozzá.
 - **Keresőmotor-tiltás (`noindex`):** ha `NEXT_PUBLIC_APP_ENV=preview` vagy `demo`, a `next.config.ts` `headers()` konfigurációja `X-Robots-Tag: noindex, nofollow` fejlécet ad minden válaszra.
 - **Titkok:** Worker-secretként (`wrangler secret put` vagy dashboard → Variables and Secrets), soha nem a `wrangler.jsonc`-be.

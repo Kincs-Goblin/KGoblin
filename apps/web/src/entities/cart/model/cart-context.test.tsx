@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { StrictMode } from "react";
 
 import { CartProvider, useCart } from "./cart-context";
+import { MAX_QUANTITY_PER_LINE } from "./cart-reducer";
 
 const stored = {
   lines: [
@@ -21,6 +22,18 @@ function Count() {
 
 describe("CartProvider", () => {
   beforeEach(() => localStorage.clear());
+
+  it("a plafon feletti tárolt darabszámot soronként levágja, a kosarat nem dobja el", async () => {
+    const oversized = { lines: [{ ...stored.lines[0], quantity: 999 }] };
+    localStorage.setItem("kg-cart:gamer", JSON.stringify(oversized));
+    render(
+      <CartProvider brandId="gamer">
+        <Count />
+      </CartProvider>,
+    );
+
+    expect(await screen.findByText(String(MAX_QUANTITY_PER_LINE))).toBeInTheDocument();
+  });
 
   it("StrictMode dupla effect-futása mellett sem üríti ki a tárolt kosarat", async () => {
     localStorage.setItem("kg-cart:gamer", JSON.stringify(stored));

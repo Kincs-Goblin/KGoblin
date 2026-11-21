@@ -132,12 +132,21 @@ eredménye mellette a PR „Ellenőrzés” részébe kerül.
    „mehet”-jével, squash.
 3. Patch-kiadás (`kg-release` „Hotfix kiadás”), majd `main` → `demo` szinkron PR.
 
-## Branch protection (GitHubon kézzel kell beállítani)
+## Branch protection (GitHubon beállítva)
 
 | Ág | Beállítás |
 |---|---|
-| `main` | PR kötelező, jóváhagyás nem kötelező (0), kötelező checkek: „Quality gate” és „E2E (Playwright)”, force push és törlés tiltva |
-| `demo` | PR kötelező, jóváhagyás nem kötelező (0), force push és törlés tiltva |
+| `main` | PR kötelező, jóváhagyás nem kötelező (0), kötelező checkek: „Quality gate”, „E2E (Playwright)”, és a PHP-jobot tartalmazó első `demo` → `main` kiadás után „PHP (kg-headless)” is (ADR-0011), force push és törlés tiltva |
+| `demo` | PR kötelező, jóváhagyás 0, kötelező checkek: „Quality gate”, „E2E (Playwright)”, „PHP (kg-headless)”, force push és törlés tiltva |
+
+Állapot (2026-11-21): mindkét ágon beállítva (`gh api … /branches/<ág>/protection`), adminokra is
+(`enforce_admins`), így közvetlen push és piros CI-s merge senkinek nem megy át. A kötelező checkek a GitHub
+Actions apphoz kötöttek (`app_id` 15368), más forrás azonos nevű státusza nem számít. Tudatos döntés: a
+„branch legyen naprakész” (`strict`) kikapcsolva, mert több ticket együttes próbája a helyi release-ág
+(`kg-release`); a merge-mód (`demo`: merge commit, `main`: squash) konvenció, a GitHub nem kényszeríti.
+Kiadás után, ha a `main` már tartalmazza a PHP-jobot, a „PHP (kg-headless)” checket a `main`-en is kötelezővé kell tenni.
+Átmenet: a `demo` már kéri ezt a checket, ezért a PHP-jobot behozó PR-nak kell elsőként a `demo`-ra kerülnie; az
+előtte leágazott ágak a friss `origin/demo` behúzása után kapják meg a jobot (addig „Expected - waiting”).
 
 A jóváhagyás azért 0, mert a merge-kapu bármelyik fejlesztő „mehet”-je (`AGENTS.md`), a GitHub pedig a
 szerző saját jóváhagyását nem számolja.

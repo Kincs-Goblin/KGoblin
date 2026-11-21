@@ -20,7 +20,7 @@ brandeket; minden brand mögött saját WordPress + WooCommerce backend van.
 - Ticketek: Jira, `KG` projekt. Link: `https://kincsgoblin.atlassian.net/browse/KG-123`.
 - Terv: `docs/project-plan.md` · Döntések: `docs/adr/` · Ticket-sablon: `docs/process/ticket-template.md` ·
   Első lépések: `docs/process/onboarding.md`.
-- Állapot: 0. mérföldkő. Kész: monorepo-váz, `apps/web` váz és gamer téma, `packages/brand-config`, CI (KG-5).
+- Állapot: 0. mérföldkő kiadva (v0.1.0), az 1. (katalógus) folyamatban; részletek: `docs/project-plan.md`.
 
 ## Stack röviden
 
@@ -60,7 +60,7 @@ Stack-változást csendben, „mellékesen” bevezetni tilos. Részletek: `kg-s
 | Hely | Mi |
 |---|---|
 | `apps/web/` | Next.js storefront. Next-routing: `app/`; FSD-rétegek: `src/` |
-| `apps/jobs/` | Trigger.dev taskok (lapos szerkezet: `trigger/`, `domain/`, `adapters/`) |
+| `apps/jobs/` | Trigger.dev taskok (lapos szerkezet: `src/trigger/`, `src/domain/`, `src/adapters/`) |
 | `packages/woo-client/` | Store API + REST v3 kliens, Zod-sémák, webhook-aláírás |
 | `packages/brand-config/` | brandek: domainek, tokenek, Woo-végpontok, fizetési módok |
 | `packages/config/` | közös tsconfig, ESLint, Prettier presetek |
@@ -121,12 +121,17 @@ Node a `.nvmrc` szerint (26; a 22.12 alatti Node-dal a Tailwind 4 build elbukik)
 ```bash
 pnpm install
 pnpm dev                                   # apps/web: http://gamer.localhost:3000 (a host választ brandet)
+pnpm format:check                          # Prettier (a CI is futtatja)
 pnpm turbo run typecheck lint test build   # quality gate; a web lintje a Steigert is futtatja
+# CI=1 mellett (CI, sok agent-harness) a build, a dev és a start is kéri: helyben NEXT_PUBLIC_APP_ENV=local
 pnpm --filter @kg/web test:e2e             # Playwright smoke (desktop + mobil)
 ```
 
 A CI (GitHub Actions, `.github/workflows/ci.yml`) ugyanezt futtatja minden `main`-re és `demo`-ra menő PR-on
-(ADR-0011); a helyi release-teszt a több ticket együttes próbája marad.
+(ADR-0011), plusz egy PHP-jobot `php:8.2-cli` image-ben: `php -l`, `wordpress/seed/test-omnibus.php` és
+`wordpress/seed/test-headless-guards.php`. Helyben ugyanez:
+`docker run --rm -v "$PWD:/repo" -w /repo php:8.2-cli php wordpress/seed/<teszt>.php`. A helyi release-teszt a
+több ticket együttes próbája marad.
 
 ## Git röviden
 

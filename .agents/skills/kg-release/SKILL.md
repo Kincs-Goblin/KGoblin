@@ -77,8 +77,9 @@ gh pr create --base demo --head version/v0.3.0 --title "chore(release): v0.3.0"
   beszállítóval, éles PII nélkül; amíg nincs beüzemelve, a demo Worker `KG_STORE_FIXTURES=1`-gyel fut, a
   kézi Woo-teszt pedig a helyi release-ágon történik). Ügyfélteszt vagy kiadás előtt a tiszta visszaállítás
   elsődleges útja a tiszta SQL-snapshot visszatöltése vagy üres DB + `wp core install` + a
-  `wordpress/seed/seed-brand.php` futtatása (`KG_FRONTEND_URL` és `KG_WEBHOOK_SECRET` demo értékekkel; a
-  seed önmagában csak idempotens katalógus- és beállítás-upsert, rendeléseket nem töröl). Ezután a
+  `wordpress/seed/seed-brand.php` futtatása (`KG_FRONTEND_URL` és saját, nem `kg_local_` előtagú
+  `KG_WEBHOOK_SECRET` demo értékekkel, a demo-Woo-n `WP_ENVIRONMENT_TYPE=staging` mellett, különben a seed nem
+  indul el; a seed önmagában csak idempotens katalógus- és beállítás-upsert, rendeléseket nem töröl). Ezután a
   keresés-reindex (`KG-10` után) és a demo Worker cache-frissítése következik (újraseedelés aláírt Woo
   webhookokkal vagy külön KV/D1 cache-ürítés a beüzemelési ticket szerint).
 
@@ -103,6 +104,8 @@ gh release create v0.3.0 --target main --generate-notes --notes "<rövid magyar 
 - Élő ellenőrzés brandenként: főoldal, egy termékoldal, kosárba tétel, checkout-oldal betölt, Sentryben nincs
   új hiba, a webhook-endpoint 2xx-et ad. Valódi fizetést élesben csak kérésre teszünk.
 - Jira: a kiadott ticketek „Done” állapota a felhasználó kérésére; a verzió neve `v0.3.0`.
+- **Branch protection:** ha ez az első kiadás, amely a `PHP (kg-headless)` CI-jobot a `main`-re viszi, tedd
+  kötelezővé a checket a `main`-en is (`kg-git-workflow` → Branch protection, ADR-0011).
 - **`main` → `demo` szinkron PR** (merge commit), mert a squash commit nincs a `demo` történetében; enélkül a
   következő `demo` → `main` PR ütközhet.
 - A helyi release-ág és a kiadott ticketágak törölhetők (a törlés előtti ellenőrzés: `kg-git-workflow` →

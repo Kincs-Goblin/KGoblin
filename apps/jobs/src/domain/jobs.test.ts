@@ -94,4 +94,27 @@ describe("jobs domain: parseJobsEnv & getBrandWooCredentials", () => {
       }
     }
   });
+
+  it("hiányzó vagy érvénytelen Woo-címnél JOB.CONFIG_MISSING-et dob a változó nevével, az érték nélkül", () => {
+    const secretLikeInvalidUrl = "not-a-valid-url-with-secret-token-12345";
+    for (const url of [undefined, secretLikeInvalidUrl]) {
+      try {
+        getBrandWooCredentials("gamer", {
+          NODE_ENV: "test",
+          WOO_GAMER_URL: url,
+          WOO_GAMER_CONSUMER_KEY: "ck_test",
+          WOO_GAMER_CONSUMER_SECRET: "cs_test",
+        });
+        expect.unreachable("Hibát kellett volna dobnia");
+      } catch (error) {
+        expect(isAppError(error)).toBe(true);
+        if (isAppError(error)) {
+          expect(error.code).toBe("JOB.CONFIG_MISSING");
+          expect(error.retryable).toBe(false);
+          expect(error.internalReason).toMatch(/WOO_GAMER_URL/);
+          expect(error.internalReason).not.toContain(secretLikeInvalidUrl);
+        }
+      }
+    }
+  });
 });

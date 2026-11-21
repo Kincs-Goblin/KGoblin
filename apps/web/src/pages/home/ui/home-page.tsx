@@ -1,7 +1,9 @@
 import type { Brand } from "@kg/brand-config";
 import { isWooError, type WooErrorCode } from "@kg/woo-client";
+import type { Metadata } from "next";
+import { PHASE_PRODUCTION_BUILD } from "next/constants";
 import Link from "next/link";
-import { Suspense } from "react";
+import { cache, Suspense } from "react";
 
 import { CategoryCard, type Category } from "@/entities/category";
 import { getCategories } from "@/entities/category/index.server";
@@ -24,7 +26,8 @@ type HomePageProps = {
 type HomeData =
   { ok: true; featured: Product[]; categories: Category[] } | { ok: false; code: WooErrorCode };
 
-async function loadHome(brand: Brand): Promise<HomeData> {
+/** Kérésenként egyszer (metadata + oldal); a Woo-fetchek `AbortSignal` miatt nem memoizáltak. */
+const loadHome = cache(async (brand: Brand): Promise<HomeData> => {
   try {
     const [featuredProducts, categories] = await Promise.all([
       getProducts(brand, { featured: true, perPage: 8, orderby: "menu_order", order: "asc" }),
@@ -36,9 +39,19 @@ async function loadHome(brand: Brand): Promise<HomeData> {
         : await getProducts(brand, { perPage: 8, orderby: "menu_order", order: "asc" });
     return { ok: true, featured, categories };
   } catch (error) {
-    if (isWooError(error)) return { ok: false, code: error.code };
+    // Csak buildkor rendereljük a hibaállapotot (a `revalidate` úgyis lecseréli). Futáskor a hiba
+    // továbbmegy: az ISR-újragenerálás elbukik, és a legutóbbi jó oldal marad a cache-ben.
+    if (isWooError(error) && process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
+      return { ok: false, code: error.code };
+    }
     throw error;
   }
+});
+
+/** A buildkor renderelt hibaállapot (ISR, legfeljebb a `revalidate` idejéig) ne kerüljön indexbe. */
+export async function generateHomeMetadata({ params }: HomePageProps): Promise<Metadata> {
+  const data = await loadHome(getBrandOrNotFound((await params).brand));
+  return data.ok ? {} : { robots: { index: false } };
 }
 
 async function HomeCatalogSections({ brand }: { brand: Brand }) {

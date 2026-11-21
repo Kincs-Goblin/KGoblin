@@ -26,7 +26,33 @@ require_once ABSPATH . 'wp-admin/includes/file.php';
 require_once ABSPATH . 'wp-admin/includes/media.php';
 
 $brand        = strtolower( trim( (string) ( getenv( 'KG_BRAND' ) ?: 'gamer' ) ) );
-$frontend_url = getenv( 'KG_FRONTEND_URL' ) ?: 'http://localhost:3000';
+$frontend_url = untrailingslashit( trim( (string) ( getenv( 'KG_FRONTEND_URL' ) ?: "http://{$brand}.localhost:3000" ) ) );
+
+/**
+ * Lokális frontend-host: loopback vagy `<brand>.localhost` aldomain (ADR-0014: a demo nem ilyen).
+ */
+function kg_seed_is_local_host( string $host ): bool {
+	$host = strtolower( $host );
+	return in_array( $host, array( 'localhost', '127.0.0.1' ), true ) || str_ends_with( $host, '.localhost' );
+}
+
+$fe_host_check = (string) ( wp_parse_url( $frontend_url, PHP_URL_HOST ) ?? '' );
+
+// A seed felülírja a bolt beállításait és a jogi oldalakat: éles példányon soha nem fut.
+if ( 'production' === wp_get_environment_type() ) {
+	fwrite( STDERR, "[KGoblin Seed] HIBA: production környezetben (WP_ENVIRONMENT_TYPE) a seed nem futtatható.\n" );
+	exit( 1 );
+}
+
+// A `kg_local_` titok nyilvános: csak teljesen lokális környezetben (lokális frontend és
+// `WP_ENVIRONMENT_TYPE=local`) fogadható el, máshol (pl. demo) saját titok kötelező (ADR-0014). A setup-
+// szkriptek mindig átadják az alapértelmezést, ezért az előtagot is vizsgáljuk, nem csak az üres értéket.
+$seed_secret = trim( (string) getenv( 'KG_WEBHOOK_SECRET' ) );
+$fully_local = kg_seed_is_local_host( $fe_host_check ) && 'local' === wp_get_environment_type();
+if ( ! $fully_local && ( '' === $seed_secret || str_starts_with( $seed_secret, 'kg_local_' ) ) ) {
+	fwrite( STDERR, "[KGoblin Seed] HIBA: nem lokális környezetben saját KG_WEBHOOK_SECRET kötelező (a kg_local_ alapérték nyilvános).\n" );
+	exit( 1 );
+}
 $brand_upper  = strtoupper( preg_replace( '/[^a-z0-9]/i', '', $brand ) );
 $sku_prefix   = 'gamer' === $brand ? 'KG-GMR' : 'KG-' . substr( $brand_upper, 0, 4 );
 $shop_label   = 'gamer' === $brand ? 'KincsGoblin Gamer Webáruház' : 'KincsGoblin (' . ucfirst( $brand ) . ') Webáruház';
@@ -976,7 +1002,8 @@ if ( '' !== $custom_wh_url ) {
 	$parsed_fe = wp_parse_url( $frontend_url );
 	$fe_host   = strtolower( (string) ( $parsed_fe['host'] ?? 'localhost' ) );
 	$fe_port   = isset( $parsed_fe['port'] ) ? ':' . $parsed_fe['port'] : '';
-	if ( in_array( $fe_host, array( 'localhost', '127.0.0.1' ), true ) ) {
+	if ( kg_seed_is_local_host( $fe_host ) ) {
+		// A konténerből a `*.localhost` a saját loopbackre oldódna fel, ezért a hostgépre küldjük.
 		$delivery_url = "http://host.docker.internal{$fe_port}/api/webhooks/woo/{$brand}";
 	} else {
 		$delivery_url = untrailingslashit( $frontend_url ) . "/api/webhooks/woo/{$brand}";
@@ -984,8 +1011,12 @@ if ( '' !== $custom_wh_url ) {
 }
 
 $wh_host = strtolower( (string) ( wp_parse_url( $delivery_url, PHP_URL_HOST ) ?? '' ) );
-if ( in_array( $wh_host, array( 'host.docker.internal', 'localhost', '127.0.0.1' ), true ) ) {
+// A lokális webhook-lazítás opciója csak teljesen lokális környezetben kerül be (máshol a plugin úgyis
+// figyelmen kívül hagyja, de ne maradjon félrevezető beállítás).
+if ( $fully_local && in_array( $wh_host, array( 'host.docker.internal', 'localhost', '127.0.0.1' ), true ) ) {
 	update_option( 'kg_headless_allow_local_webhooks', 'yes' );
+} else {
+	delete_option( 'kg_headless_allow_local_webhooks' );
 }
 
 $admin_users = get_users( array( 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ) );

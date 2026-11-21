@@ -2,17 +2,18 @@
 
 ## Next.js + FSD összekötése (`apps/web`)
 
+Mai és tervezett szerkezet (a ténylegeset az `apps/web/app/README.md` mutatja):
+
 ```
 apps/web/
   app/                    Next App Router - CSAK routing
     [brand]/              a proxy a domainből ide írja át a kérést
-      (shop)/page.tsx     export { HomePage as default } from "@/pages/home"
-      termek/[slug]/page.tsx
-      kategoria/[...slug]/page.tsx
-      kosar/  penztar/  fiok/  kereses/  rendeles/[id]/
+      page.tsx            export { HomePage as default } from "@/pages/home"
+      termekek/  termek/[slug]/  kategoria/[slug]/
+      kosar/  penztar/  fiok/  kereses/  rendeles/[id]/   (tervezett)
     api/
       webhooks/woo/[brand]/route.ts   vékony: aláírás, Zod, revalidateTag, task indítása
-      revalidate/route.ts             kézi revalidálás (titokkal védve)
+                                      (kézi revalidáló végpont nincs, ADR-0014)
   pages/README.md         üres mappa: megakadályozza, hogy a Next a src/pages-t Pages Routernek vegye
   proxy.ts                domain → brand rewrite (Next 16 előtt: middleware.ts)
   src/                    FSD-rétegek

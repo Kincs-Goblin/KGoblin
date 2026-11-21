@@ -48,7 +48,7 @@ chmod +x ./wordpress/docker/setup.sh
 - **WP Admin:** `http://localhost:8080/wp-admin` (`admin` / `admin123`)
 - **Store API (Termékek):** `http://localhost:8080/wp-json/wc/store/v1/products`
 - **Store API (Kosár / Checkout):** `http://localhost:8080/wp-json/wc/store/v1/checkout`
-- **Nem-admin frontend kérések (`http://localhost:8080/`):** automatikus `302` átirányítás a Next.js storefrontra (`http://localhost:3000`).
+- **Nem-admin frontend kérések (`http://localhost:8080/`):** automatikus `302` átirányítás a Next.js storefrontra (`http://gamer.localhost:3000`).
 
 ---
 
@@ -62,8 +62,9 @@ A teljes automatizált tesztcsomag futtatása:
 powershell -ExecutionPolicy Bypass -File .\wordpress\docker\test-store-api.ps1
 ```
 
-Csak az Omnibus és adószám PHP unit-tesztek futtatása:
+A WordPress nélküli PHP unit-tesztek (Omnibus, adószám, a plugin fail-closed őrei), a CI-vel azonos image-ben:
 
 ```bash
-docker compose exec -T wpcli-gamer php /var/www/seed/test-omnibus.php
+docker run --rm -v "$PWD:/repo" -w /repo php:8.2-cli php wordpress/seed/test-omnibus.php
+docker run --rm -v "$PWD:/repo" -w /repo php:8.2-cli php wordpress/seed/test-headless-guards.php
 ```

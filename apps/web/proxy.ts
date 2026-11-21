@@ -25,6 +25,7 @@ export function proxy(request: NextRequest) {
   return NextResponse.rewrite(url);
 }
 
+// A kizárás perjelre vagy pontos fájlnévre illeszkedik, így pl. a `/apiary` slug is brand-rewrite-ot kap.
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)"],
+  matcher: ["/((?!api/|_next/static/|_next/image|favicon\\.ico$|robots\\.txt$|sitemap\\.xml$).*)"],
 };

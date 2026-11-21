@@ -1,7 +1,11 @@
 # KGoblin - projektterv
 
-- Állapot: tervezés, alkalmazáskód még nincs
-- Utolsó módosítás: 2026-11-12
+- Állapot: a 0. mérföldkő kiadva (v0.1.0), az 1. folyamatban. Kész: élő Woo-katalógus Store API-val és
+  REST v3 klienssel (KG-8), webhook-revalidálás (KG-9), `kg-headless` plugin (Omnibus, checkout-validáció),
+  Docker-Woo seeddel, Cloudflare Workers demo-konfiguráció (ADR-0009), az ADR-0008-0017 döntések.
+  Még nincs: keresés, SEO, Store API kosár és checkout, fizetés, Trigger.dev integrációk. A branch
+  protection 2026-11-21 óta él a `main`-en és a `demo`-n (`kg-git-workflow`).
+- Utolsó módosítás: 2026-11-21
 - Csapat: SMark2256, ricsmond12 (+ AI agentek: Claude Code, Antigravity)
 
 ## Cél
