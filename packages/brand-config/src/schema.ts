@@ -74,6 +74,8 @@ export const brandSchema = z.object({
   id: z.string().regex(/^[a-z][a-z0-9-]*$/),
   name: z.string().min(1),
   domains: z.array(z.string().min(1)).min(1),
+  /** Opcionális elsődleges kanonikus domain (több éles domain esetén). */
+  canonicalDomain: z.string().min(1).optional(),
   woo: z.object({
     /** Az env-változó neve, nem az értéke. */
     baseUrlEnv: z.string().regex(/^[A-Z][A-Z0-9_]*$/),
@@ -83,6 +85,8 @@ export const brandSchema = z.object({
   theme: themeSchema,
   texts: z.object({
     tagline: z.string().min(1),
+    titleTemplate: z.string().min(1),
+    defaultDescription: z.string().min(1),
     heroTitle: z.string().min(1),
     heroSubtitle: z.string().min(1),
     heroCta: z.string().min(1),

@@ -230,12 +230,25 @@ class Product_Extensions {
 				'data_callback'   => function ( \WC_Product $product ): array {
 					$decimals = function_exists( 'wc_get_price_decimals' ) ? wc_get_price_decimals() : 0;
 					$currency = function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'HUF';
+					$gtin     = '';
+					if ( method_exists( $product, 'get_global_unique_id' ) ) {
+						$gtin = trim( (string) $product->get_global_unique_id() );
+					}
+					if ( '' === $gtin ) {
+						$gtin = trim( (string) $product->get_meta( '_kg_ean', true ) );
+					}
+					if ( '' === $gtin ) {
+						$gtin = trim( (string) $product->get_meta( '_ean', true ) );
+					}
+					$modified = $product->get_date_modified();
 					return array(
 						'lowest_price_30_days' => Omnibus::get_lowest_price_for_product( $product ),
 						'is_on_sale'           => (bool) $product->is_on_sale(),
 						'currency_minor_unit'  => $decimals,
 						'delivery_time'        => self::resolve_delivery_time( $product ),
 						'variations'           => self::get_variations_data( $product, $decimals, $currency ),
+						'gtin'                 => '' !== $gtin ? $gtin : null,
+						'date_modified_gmt'    => $modified ? gmdate( 'c', $modified->getTimestamp() ) : null,
 					);
 				},
 				'schema_callback' => function (): array {
@@ -267,6 +280,18 @@ class Product_Extensions {
 						'variations'           => array(
 							'description' => __( 'Változatos termékek variációinak részletes adatai.', 'kg-headless' ),
 							'type'        => 'array',
+							'context'     => array( 'view', 'edit' ),
+							'readonly'    => true,
+						),
+						'gtin'                 => array(
+							'description' => __( 'Termék GTIN/EAN azonosítója (ha meg van adva).', 'kg-headless' ),
+							'type'        => array( 'string', 'null' ),
+							'context'     => array( 'view', 'edit' ),
+							'readonly'    => true,
+						),
+						'date_modified_gmt'    => array(
+							'description' => __( 'Termék utolsó módosítási ideje ISO-8601 UTC formátumban.', 'kg-headless' ),
+							'type'        => array( 'string', 'null' ),
 							'context'     => array( 'view', 'edit' ),
 							'readonly'    => true,
 						),

@@ -80,6 +80,16 @@ describe("parseCatalogQuery", () => {
     );
     expect(parsed.attributes).toEqual([{ attribute: "pa_szin", slug: "goblin-arany" }]);
   });
+
+  it("átveszi a q / kereses paramétert és továbbítja a Store API search mezőjébe", () => {
+    const byQ = parseCatalogQuery({ q: "  billentyűzet  " });
+    expect(byQ.search).toBe("billentyűzet");
+    expect(toProductQuery(byQ)).toMatchObject({ search: "billentyűzet" });
+    expect(catalogHref("/termekek", byQ)).toBe("/termekek?q=billenty%C5%B1zet");
+
+    const byKereses = parseCatalogQuery({ kereses: "egér" });
+    expect(byKereses.search).toBe("egér");
+  });
 });
 
 describe("catalogHref", () => {

@@ -11,6 +11,7 @@ import {
   checkoutResponseSchema,
   productListSchema,
   productSchema,
+  slugRedirectSchema,
   wooApiErrorBodySchema,
   type StoreAttribute,
   type StoreAttributeTerm,
@@ -143,6 +144,11 @@ export type StoreClient = {
   getProductsPage(query?: ProductQuery, cache?: FetchCacheOptions): Promise<ProductPageResult>;
   getProductById(id: number, cache?: FetchCacheOptions): Promise<StoreProduct | null>;
   getProductBySlug(slug: string, cache?: FetchCacheOptions): Promise<StoreProduct | null>;
+  resolveSlugRedirect(
+    type: "product",
+    slug: string,
+    cache?: FetchCacheOptions,
+  ): Promise<string | null>;
   getCategories(cache?: FetchCacheOptions): Promise<StoreCategory[]>;
   getAttributes(cache?: FetchCacheOptions): Promise<StoreAttribute[]>;
   getAttributeTerms(attributeId: number, cache?: FetchCacheOptions): Promise<StoreAttributeTerm[]>;
@@ -417,6 +423,42 @@ export function createStoreClient({
         cache,
       });
       return result!.data[0] ?? null;
+    },
+    async resolveSlugRedirect(type, slug, cache) {
+      const trimmed = slug.trim();
+      if (!trimmed) return null;
+
+      const url = new URL(`${normalizedBase}/wp-json/kg/v1/redirects`);
+      url.searchParams.set("type", type);
+      url.searchParams.set("slug", trimmed);
+
+      let response: Response;
+      try {
+        response = await fetchImpl(url, {
+          method: "GET",
+          headers: { Accept: "application/json" },
+          signal: AbortSignal.timeout(timeoutMs),
+          ...(cache ? { next: cache } : {}),
+        });
+      } catch {
+        // Fail-open: a redirect-feloldó kiesése nem törheti el a 404-kezelést.
+        return null;
+      }
+
+      if (!response.ok) return null;
+
+      let json: unknown;
+      try {
+        json = await response.json();
+      } catch {
+        return null;
+      }
+
+      const parsed = slugRedirectSchema.safeParse(json);
+      if (!parsed.success || !parsed.data.found || !parsed.data.to || parsed.data.to === trimmed) {
+        return null;
+      }
+      return parsed.data.to;
     },
     async getCategories(cache) {
       const result = await rawRequest({

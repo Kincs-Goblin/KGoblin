@@ -26,6 +26,7 @@ define( 'KG_HEADLESS_PATH', plugin_dir_path( __FILE__ ) );
 require_once KG_HEADLESS_PATH . 'includes/class-kg-omnibus.php';
 require_once KG_HEADLESS_PATH . 'includes/class-kg-product-extensions.php';
 require_once KG_HEADLESS_PATH . 'includes/class-kg-checkout-fields.php';
+require_once KG_HEADLESS_PATH . 'includes/class-kg-slug-redirects.php';
 
 /**
  * 1. WooCommerce HPOS (High-Performance Order Storage) kompatibilitás deklarálása.
@@ -57,6 +58,7 @@ add_action(
 		\KG_Headless\Omnibus::init();
 		\KG_Headless\Product_Extensions::init();
 		\KG_Headless\Checkout_Fields::init();
+		\KG_Headless\Slug_Redirects::init();
 	}
 );
 

@@ -27,7 +27,10 @@ export function validateBrands(rawBrands: readonly Brand[]): readonly Brand[] {
     }
     seenIds.add(brand.id);
 
-    for (const rawDomain of brand.domains) {
+    const brandDomains = brand.canonicalDomain
+      ? [...brand.domains, brand.canonicalDomain]
+      : brand.domains;
+    for (const rawDomain of brandDomains) {
       const normalized = normalizeDomain(rawDomain);
       const canonical = stripWww(normalized);
       for (const key of [normalized, canonical]) {
@@ -66,6 +69,21 @@ export function resolveBrandByHost(host: string | null | undefined): Brand | und
       return normalized === hostname || normalized === bare;
     }),
   );
+}
+
+/**
+ * A brand elsődleges, kanonikus originje (`https://...`, csak helyi `.localhost` domain esetén `http://...`).
+ * Elsősorban a `canonicalDomain`, egyébként az első nem-localhost domain a `domains` listából.
+ */
+export function getBrandCanonicalOrigin(brand: Brand): string {
+  const isLocalHost = (host: string) => host === "localhost" || host.endsWith(".localhost");
+  const candidate =
+    brand.canonicalDomain ??
+    brand.domains.find((domain) => !isLocalHost(normalizeDomain(domain))) ??
+    brand.domains[0]!;
+  const normalized = normalizeDomain(candidate);
+  const protocol = isLocalHost(normalized) ? "http" : "https";
+  return `${protocol}://${normalized}`;
 }
 
 /** A téma CSS-változói (`--background`, `--radius` …), a Tailwind `@theme` ezekre hivatkozik. */

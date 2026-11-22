@@ -1,6 +1,8 @@
 import { WooError } from "@kg/woo-client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type * as SharedConfig from "@/shared/config";
+
 const mocks = vi.hoisted(() => ({
   getCategories: vi.fn(),
   getCategoryBySlug: vi.fn(),
@@ -17,6 +19,13 @@ vi.mock("@/entities/product/index.server", () => ({
   getProductsPage: mocks.getProductsPage,
   getStoreMinorUnit: vi.fn().mockResolvedValue(0),
 }));
+vi.mock("@/shared/config", async (importOriginal) => {
+  const actual = await importOriginal<typeof SharedConfig>();
+  return {
+    ...actual,
+    clientEnv: { ...actual.clientEnv, NEXT_PUBLIC_APP_ENV: "production" },
+  };
+});
 
 import { generateCatalogMetadata } from "./catalog-page";
 
@@ -47,8 +56,15 @@ describe("generateCatalogMetadata", () => {
   });
 
   it("elérhető Woo mellett a kategória nevét adja, indexelhető", async () => {
-    expect(await generateCatalogMetadata(props("billentyuzet"))).toEqual({
-      title: "Billentyűzetek",
-    });
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "production");
+    try {
+      expect(await generateCatalogMetadata(props("billentyuzet"))).toMatchObject({
+        title: "Billentyűzetek",
+        alternates: { canonical: expect.stringMatching(/\/kategoria\/billentyuzet$/) },
+        robots: { index: true, follow: true },
+      });
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 });

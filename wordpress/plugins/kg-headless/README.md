@@ -31,11 +31,19 @@ A `kg-headless` a KGoblin multi-brand platform saját WordPress / WooCommerce b�
        "is_on_sale": true,
        "currency_minor_unit": 0,
        "delivery_time": "1–3 munkanap",
+       "gtin": "5999887766554",
+       "date_modified_gmt": "2026-04-20T12:00:00Z",
        "variations": []
      }
      ```
      - Változatos termékeknél a `variations` tömb tartalmazza az elérhető variációk `id`, `sku`, `attributes`, `prices`, `on_sale`, `lowest_price_30_days`, `is_in_stock`, `is_on_backorder`, `is_purchasable`, `low_stock_remaining`, `delivery_time` és `image` mezőit.
      - Várható szállítási idő forrása: `_kg_delivery_time` (variáció vagy szülő) → `_kg_supplier_delivery_time` → előrendelés/alapértelmezett `kg_headless_default_delivery_time`.
+     - A `gtin` a WooCommerce beépített `global_unique_id` (vagy `_kg_ean` / `_ean` meta) értékét adja vissza strukturált adat (`Product` JSON-LD) számára; a `date_modified_gmt` az ISO-8601 UTC módosítási idő a `sitemap.xml` `<lastmod>` mezőjéhez.
+4. **Régi termék-slug átirányítás (`GET /wp-json/kg/v1/redirects`):**
+   - Publikus, csak olvasó végpont (`type=product`, `slug=<regi-slug>`), amely a WordPress `_wp_old_slug` postmeta bejegyzése alapján feloldja az átnevezett publikus termékek új slugját:
+     - Találat esetén: `{"found": true, "type": "product", "from": "regi-slug", "to": "uj-slug", "status": 301}`
+     - Ha nincs találat: `{"found": false, "type": "product", "from": "regi-slug", "to": null, "status": null}`
+   - A Next.js termékoldal csak akkor hívja meg, ha az aktuális slug nem található, így normál betöltésnél nincs extra kérés.
 
 ## Kötelező harmadik féltől származó bővítmények (brandenként azonos verzióval)
 

@@ -2,10 +2,19 @@ import { WooError } from "@kg/woo-client";
 import { PHASE_PRODUCTION_BUILD } from "next/constants";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type * as SharedConfig from "@/shared/config";
+
 const mocks = vi.hoisted(() => ({ getProducts: vi.fn(), getCategories: vi.fn() }));
 
 vi.mock("@/entities/product/index.server", () => ({ getProducts: mocks.getProducts }));
 vi.mock("@/entities/category/index.server", () => ({ getCategories: mocks.getCategories }));
+vi.mock("@/shared/config", async (importOriginal) => {
+  const actual = await importOriginal<typeof SharedConfig>();
+  return {
+    ...actual,
+    clientEnv: { ...actual.clientEnv, NEXT_PUBLIC_APP_ENV: "production" },
+  };
+});
 
 import { generateHomeMetadata } from "./home-page";
 
@@ -30,8 +39,12 @@ describe("generateHomeMetadata", () => {
   });
 
   it("elérhető Woo mellett indexelhető", async () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "production");
     mocks.getProducts.mockResolvedValue([{ id: 1 }]);
     mocks.getCategories.mockResolvedValue([]);
-    expect(await generateHomeMetadata(props)).toEqual({});
+    expect(await generateHomeMetadata(props)).toMatchObject({
+      alternates: { canonical: expect.stringMatching(/\/$/) },
+      robots: { index: true, follow: true },
+    });
   });
 });

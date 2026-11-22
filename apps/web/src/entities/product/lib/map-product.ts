@@ -79,12 +79,21 @@ export function mapProduct(raw: StoreProduct, brand: Brand): Product {
     lowStockRemaining: raw.low_stock_remaining,
   });
 
+  const ratingValue = Number(raw.average_rating);
+  const rating =
+    raw.review_count > 0 && Number.isFinite(ratingValue) && ratingValue > 0
+      ? { value: ratingValue, count: raw.review_count }
+      : null;
+
   return {
     id: raw.id,
     slug: raw.slug,
     type: raw.type,
     name,
     sku: raw.sku,
+    gtin: extension?.gtin ?? null,
+    updatedAt: extension?.date_modified_gmt ?? null,
+    rating,
     summary: htmlToParagraphs(raw.short_description),
     description: htmlToParagraphs(raw.description),
     image: images[0] ?? null,

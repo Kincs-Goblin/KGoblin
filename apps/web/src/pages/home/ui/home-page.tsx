@@ -11,6 +11,12 @@ import { RarityBadge, rarities, type Product } from "@/entities/product";
 import { getProducts } from "@/entities/product/index.server";
 import { routes } from "@/shared/config";
 import { getBrandOrNotFound } from "@/shared/config/index.server";
+import {
+  JsonLd,
+  buildOrganizationJsonLd,
+  buildPageMetadata,
+  buildWebSiteJsonLd,
+} from "@/shared/lib/seo";
 import { buttonVariants } from "@/shared/ui/button";
 import { ErrorState } from "@/shared/ui/error-state";
 import { Reveal } from "@/shared/ui/motion";
@@ -50,8 +56,15 @@ const loadHome = cache(async (brand: Brand): Promise<HomeData> => {
 
 /** A buildkor renderelt hibaállapot (ISR, legfeljebb a `revalidate` idejéig) ne kerüljön indexbe. */
 export async function generateHomeMetadata({ params }: HomePageProps): Promise<Metadata> {
-  const data = await loadHome(getBrandOrNotFound((await params).brand));
-  return data.ok ? {} : { robots: { index: false } };
+  const brand = getBrandOrNotFound((await params).brand);
+  const data = await loadHome(brand);
+  if (!data.ok) {
+    return { robots: { index: false } };
+  }
+  return buildPageMetadata({
+    brand,
+    canonicalPath: routes.home,
+  });
 }
 
 async function HomeCatalogSections({ brand }: { brand: Brand }) {
@@ -107,6 +120,8 @@ export async function HomePage({ params }: HomePageProps) {
 
   return (
     <>
+      <JsonLd data={buildOrganizationJsonLd(brand)} />
+      <JsonLd data={buildWebSiteJsonLd(brand)} />
       <section className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 sm:pt-12">
         <Reveal
           fade={false}

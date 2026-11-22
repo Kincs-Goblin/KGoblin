@@ -1,9 +1,10 @@
-import { brandIds } from "@kg/brand-config";
+import { brandIds, getBrandCanonicalOrigin } from "@kg/brand-config";
 import type { Metadata } from "next";
 
 import { getCategories } from "@/entities/category/index.server";
 import { routes } from "@/shared/config";
 import { getBrandOrNotFound } from "@/shared/config/index.server";
+import { isIndexableEnv } from "@/shared/lib/seo";
 import { CartDrawer } from "@/widgets/cart-drawer";
 import { Footer } from "@/widgets/footer";
 import { Header, type HeaderNavItem } from "@/widgets/header";
@@ -25,9 +26,30 @@ export async function generateBrandMetadata({
   params,
 }: Pick<BrandLayoutProps, "params">): Promise<Metadata> {
   const brand = getBrandOrNotFound((await params).brand);
+  const origin = getBrandCanonicalOrigin(brand);
+  const indexable = isIndexableEnv();
+
   return {
-    title: { default: `${brand.name} - ${brand.texts.tagline}`, template: `%s | ${brand.name}` },
-    description: brand.texts.heroSubtitle,
+    metadataBase: new URL(origin),
+    title: {
+      default: `${brand.name} - ${brand.texts.tagline}`,
+      template: brand.texts.titleTemplate,
+    },
+    description: brand.texts.defaultDescription,
+    robots: indexable ? { index: true, follow: true } : { index: false, follow: false },
+    openGraph: {
+      type: "website",
+      locale: brand.locale.replace("-", "_"),
+      siteName: brand.name,
+      title: `${brand.name} - ${brand.texts.tagline}`,
+      description: brand.texts.defaultDescription,
+      url: `${origin}/`,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${brand.name} - ${brand.texts.tagline}`,
+      description: brand.texts.defaultDescription,
+    },
   };
 }
 

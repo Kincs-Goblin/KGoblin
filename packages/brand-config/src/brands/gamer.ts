@@ -60,6 +60,9 @@ export const gamer = {
   },
   texts: {
     tagline: "Kincsek kalandoroknak",
+    titleTemplate: "%s | KincsGoblin",
+    defaultDescription:
+      "Kártyák, kockák, figurák és gamer felszerelés - válogatott zsákmány, gyors szállítással.",
     heroTitle: "Lépj be a Goblin kocsmájába",
     heroSubtitle:
       "Kártyák, kockák, figurák és gamer felszerelés - válogatott zsákmány, gyors szállítással.",

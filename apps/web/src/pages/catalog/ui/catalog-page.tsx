@@ -25,6 +25,12 @@ import { CatalogPagination } from "./catalog-pagination";
 import { routes } from "@/shared/config";
 import { getBrandOrNotFound } from "@/shared/config/index.server";
 import { getCurrencyLabel } from "@/shared/lib/format";
+import {
+  JsonLd,
+  buildBreadcrumbJsonLd,
+  buildCanonicalUrl,
+  buildPageMetadata,
+} from "@/shared/lib/seo";
 import { buttonVariants } from "@/shared/ui/button";
 import { ErrorState } from "@/shared/ui/error-state";
 import { ProductGrid } from "@/widgets/product-grid";
@@ -85,20 +91,58 @@ const loadCatalogOnce = cache((brandId: string, slug: string | undefined, queryK
   loadCatalog(brandId, slug, JSON.parse(queryKey) as CatalogSearchParams),
 );
 
+function hasSearchQueryParam(searchParams: CatalogSearchParams): boolean {
+  const raw = searchParams.q ?? searchParams.kereses;
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return Boolean(value?.trim());
+}
+
 export async function generateCatalogMetadata({
   params,
   searchParams,
 }: CatalogPageProps): Promise<Metadata> {
   const { brand: brandId, slug } = await params;
+  const brand = getBrandOrNotFound(brandId);
+  const rawSearchParams = await searchParams;
   // Ugyanaz a betöltés, mint az oldalé: bármelyik Woo-hívás hibájánál a 200-as hibaállapot
   // `noindex`-et kap a `<head>`-ben.
-  const data = await loadCatalogOnce(brandId, slug, JSON.stringify(await searchParams));
-  if (!data.ok) return { title: catalogTexts.allTitle, robots: { index: false } };
-  return { title: data.category?.name ?? catalogTexts.allTitle };
+  const data = await loadCatalogOnce(brandId, slug, JSON.stringify(rawSearchParams));
+  if (!data.ok) {
+    return { title: catalogTexts.allTitle, robots: { index: false } };
+  }
+
+  const isOutOfRange =
+    data.page.products.length === 0 &&
+    data.page.totalPages > 0 &&
+    data.query.page > data.page.totalPages;
+  const noIndex = hasSearchQueryParam(rawSearchParams) || isOutOfRange;
+  if (!data.category) {
+    return buildPageMetadata({
+      brand,
+      title: catalogTexts.allTitle,
+      description: catalogTexts.allIntro,
+      canonicalPath: routes.products,
+      noIndex,
+    });
+  }
+
+  const categoryPath = routes.category(data.category.slug);
+  return buildPageMetadata({
+    brand,
+    title: data.category.name,
+    description: data.category.description || catalogTexts.allIntro,
+    canonicalPath: categoryPath,
+    ogImage: {
+      url: buildCanonicalUrl(brand, `${categoryPath}/opengraph-image`),
+      alt: data.category.name,
+    },
+    noIndex,
+  });
 }
 
 export async function CatalogPage({ params, searchParams }: CatalogPageProps) {
   const { brand: brandId, slug } = await params;
+  const brand = getBrandOrNotFound(brandId);
   const data = await loadCatalogOnce(brandId, slug, JSON.stringify(await searchParams));
 
   if (!data.ok) {
@@ -120,6 +164,12 @@ export async function CatalogPage({ params, searchParams }: CatalogPageProps) {
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+      <JsonLd
+        data={buildBreadcrumbJsonLd(brand, [
+          { name: catalogTexts.breadcrumbHome, path: routes.home },
+          { name: title, path: basePath },
+        ])}
+      />
       <nav aria-label={catalogTexts.breadcrumbLabel} className="text-sm text-muted-foreground">
         <Link href={routes.home} className="hover:text-gold">
           {catalogTexts.breadcrumbHome}

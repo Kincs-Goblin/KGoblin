@@ -32,6 +32,7 @@ export type CatalogQueryState = {
   inStockOnly: boolean;
   minPrice?: number;
   maxPrice?: number;
+  search?: string;
   attributes: CatalogAttributeSelection[];
   page: number;
 };
@@ -67,6 +68,8 @@ export function parseCatalogQuery(
   }
 
   const page = parsePositiveInt(first(searchParams.oldal)) ?? 1;
+  const rawSearch = (first(searchParams.q) ?? first(searchParams.kereses))?.trim();
+  const search = rawSearch ? rawSearch.slice(0, 120) : undefined;
 
   const attrMap = new Map<string, string>();
   for (const [key, rawValue] of Object.entries(searchParams)) {
@@ -95,6 +98,7 @@ export function parseCatalogQuery(
     inStockOnly,
     ...(minPrice !== undefined ? { minPrice } : {}),
     ...(maxPrice !== undefined ? { maxPrice } : {}),
+    ...(search !== undefined ? { search } : {}),
     attributes,
     page,
   };
@@ -109,11 +113,13 @@ export function catalogHref(
     inStockOnly?: boolean;
     minPrice?: number;
     maxPrice?: number;
+    search?: string;
     attributes?: CatalogAttributeSelection[];
     page?: number;
   },
 ): string {
   const params = new URLSearchParams();
+  if (state.search) params.set("q", state.search);
   if (state.sort !== "ajanlott") params.set("rendezes", state.sort);
   if (state.onSale) params.set("akcios", "1");
   if (state.inStockOnly) params.set("raktaron", "1");
@@ -157,6 +163,7 @@ export function toProductQuery(
   const scale = 10 ** Math.max(0, minorUnit);
   return {
     category: categoryId ? String(categoryId) : undefined,
+    search: state.search,
     onSale: state.onSale || undefined,
     stockStatus: state.inStockOnly ? "instock" : undefined,
     minPrice: state.minPrice !== undefined ? state.minPrice * scale : undefined,

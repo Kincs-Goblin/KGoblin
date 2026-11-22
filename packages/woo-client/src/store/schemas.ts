@@ -83,8 +83,20 @@ export const kgHeadlessExtensionSchema = z
     currency_minor_unit: z.number().int().min(0).optional(),
     delivery_time: z.string().nullable().optional(),
     variations: z.array(kgHeadlessVariationSchema).default([]),
+    gtin: z.string().nullable().optional(),
+    date_modified_gmt: z.string().nullable().optional(),
   })
   .partial();
+
+export const slugRedirectSchema = z.object({
+  found: z.boolean(),
+  type: z.enum(["product"]),
+  from: z.string(),
+  to: z.string().nullable(),
+  status: z.literal(301).nullable(),
+});
+
+export type SlugRedirectResult = z.infer<typeof slugRedirectSchema>;
 
 export const stockAvailabilitySchema = z.object({
   text: z.string().default(""),
@@ -110,6 +122,8 @@ export const productSchema = z.object({
   is_on_backorder: z.boolean().default(false),
   low_stock_remaining: z.number().int().nullable(),
   stock_availability: stockAvailabilitySchema.optional(),
+  average_rating: z.string().default("0"),
+  review_count: z.number().int().nonnegative().default(0),
   extensions: z
     .object({
       kg_headless: kgHeadlessExtensionSchema.optional(),
