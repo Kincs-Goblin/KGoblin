@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { brands, resolveBrandByHost, themeSchema, themeToCssVars, validateBrands } from "./index";
+import {
+  brands,
+  getBrandCanonicalOrigin,
+  resolveBrandByHost,
+  themeSchema,
+  themeToCssVars,
+  validateBrands,
+} from "./index";
 
 describe("resolveBrandByHost", () => {
   it("a brand domainjét portszámmal és www. előtaggal is felismeri", () => {
@@ -61,5 +68,23 @@ describe("validateBrands", () => {
     second.domains = ["masik.localhost"];
 
     expect(() => validateBrands([first, second])).toThrow(/Duplikált brand azonosító/);
+  });
+});
+
+describe("getBrandCanonicalOrigin", () => {
+  it("az első nem-localhost domaint adja https sémával", () => {
+    expect(getBrandCanonicalOrigin(brands[0]!)).toBe("https://kincsgoblin.devdemos.workers.dev");
+  });
+
+  it("kifejezett canonicalDomain esetén azt használja", () => {
+    const custom = structuredClone(brands[0]!);
+    custom.canonicalDomain = "kincsgoblin.hu";
+    expect(getBrandCanonicalOrigin(custom)).toBe("https://kincsgoblin.hu");
+  });
+
+  it("csak localhost domain esetén http sémával tér vissza", () => {
+    const localOnly = structuredClone(brands[0]!);
+    localOnly.domains = ["gamer.localhost"];
+    expect(getBrandCanonicalOrigin(localOnly)).toBe("http://gamer.localhost");
   });
 });

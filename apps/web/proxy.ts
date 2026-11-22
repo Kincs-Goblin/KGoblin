@@ -22,10 +22,17 @@ export function proxy(request: NextRequest) {
 
   const url = request.nextUrl.clone();
   url.pathname = `/${brand.id}${url.pathname === "/" ? "" : url.pathname}`;
-  return NextResponse.rewrite(url);
+  const response = NextResponse.rewrite(url);
+
+  if (process.env.NEXT_PUBLIC_APP_ENV !== "production") {
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  }
+
+  return response;
 }
 
 // A kizárás perjelre vagy pontos fájlnévre illeszkedik, így pl. a `/apiary` slug is brand-rewrite-ot kap.
+// A `/robots.txt`, `/sitemap.xml` és `/sitemap/*.xml` kérések a brand útvonalára íródnak át.
 export const config = {
-  matcher: ["/((?!api/|_next/static/|_next/image|favicon\\.ico$|robots\\.txt$|sitemap\\.xml$).*)"],
+  matcher: ["/((?!api/|_next/static/|_next/image|favicon\\.ico$).*)"],
 };

@@ -70,13 +70,45 @@ describe("proxy", () => {
     expect(matches("/termekek")).toBe(true);
     expect(matches("/apiary")).toBe(true);
     expect(matches("/kategoria/api-kiegeszitok")).toBe(true);
+    expect(matches("/robots.txt")).toBe(true);
     expect(matches("/robots.txt.bak")).toBe(true);
+    expect(matches("/sitemap.xml")).toBe(true);
+    expect(matches("/sitemap/1.xml")).toBe(true);
 
     expect(matches("/api/webhooks/woo/gamer")).toBe(false);
     expect(matches("/_next/static/chunks/main.js")).toBe(false);
     expect(matches("/_next/image")).toBe(false);
     expect(matches("/favicon.ico")).toBe(false);
-    expect(matches("/robots.txt")).toBe(false);
-    expect(matches("/sitemap.xml")).toBe(false);
+  });
+
+  it("átírja a /robots.txt és /sitemap.xml kéréseket a brand útvonalára", () => {
+    for (const pathname of ["/robots.txt", "/sitemap.xml", "/sitemap/1.xml"]) {
+      const req = new NextRequest(`http://gamer.localhost:3000${pathname}`, {
+        headers: { host: "gamer.localhost:3000" },
+      });
+      const res = proxy(req);
+      expect(res.status).toBe(200);
+      expect(res.headers.get("x-middleware-rewrite")).toBe(
+        `http://gamer.localhost:3000/gamer${pathname}`,
+      );
+    }
+  });
+
+  it("nem éles környezetben X-Robots-Tag: noindex, nofollow fejlécet ad, élesben nem", () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "demo");
+    const demoRes = proxy(
+      new NextRequest("http://gamer.localhost:3000/", {
+        headers: { host: "gamer.localhost:3000" },
+      }),
+    );
+    expect(demoRes.headers.get("x-robots-tag")).toBe("noindex, nofollow");
+
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "production");
+    const prodRes = proxy(
+      new NextRequest("http://gamer.localhost:3000/", {
+        headers: { host: "gamer.localhost:3000" },
+      }),
+    );
+    expect(prodRes.headers.get("x-robots-tag")).toBeNull();
   });
 });

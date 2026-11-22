@@ -58,6 +58,37 @@ export async function getProduct(brand: Brand, slug: string): Promise<Product | 
   return product ? mapProduct(product, brand) : null;
 }
 
+export async function resolveProductSlugRedirect(
+  brand: Brand,
+  slug: string,
+): Promise<string | null> {
+  return getStoreClient(brand).resolveSlugRedirect("product", slug, {
+    revalidate: REVALIDATE_SECONDS,
+    tags: [cacheTags.catalog(brand.id), cacheTags.productSlug(brand.id, slug)],
+  });
+}
+
+const SITEMAP_PAGE_CONCURRENCY = 4;
+
+/** Sitemap-generáláshoz végiglapozza a brand publikált termékeit (100-as oldalanként, korlátozott párhuzamossággal). */
+export async function getAllProductsForSitemap(brand: Brand): Promise<Product[]> {
+  const first = await getProductsPage(brand, { page: 1, perPage: 100 });
+  if (first.totalPages <= 1) return first.products;
+
+  const products = [...first.products];
+  for (let start = 2; start <= first.totalPages; start += SITEMAP_PAGE_CONCURRENCY) {
+    const end = Math.min(start + SITEMAP_PAGE_CONCURRENCY - 1, first.totalPages);
+    const batchPages = Array.from({ length: end - start + 1 }, (_, i) => start + i);
+    const batch = await Promise.all(
+      batchPages.map((page) => getProductsPage(brand, { page, perPage: 100 })),
+    );
+    for (const result of batch) {
+      products.push(...result.products);
+    }
+  }
+  return products;
+}
+
 export async function getCatalogAttributes(brand: Brand): Promise<CatalogFilterAttribute[]> {
   const client = getStoreClient(brand);
   const cache = {

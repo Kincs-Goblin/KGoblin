@@ -63,6 +63,9 @@ export type Product = {
   type: string;
   name: string;
   sku: string;
+  gtin: string | null;
+  updatedAt: string | null;
+  rating: { value: number; count: number } | null;
   summary: string[];
   description: string[];
   image: ProductImage | null;

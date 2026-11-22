@@ -446,4 +446,51 @@ describe("createWooClient(brand) + MSW Store API", () => {
       ),
     ).rejects.toMatchObject({ code: "CHECKOUT.VALIDATION_FAILED" });
   });
+
+  it("resolveSlugRedirect feloldja a régi termék-slugot, hibánál pedig fail-open null-t ad", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      const slug = url.searchParams.get("slug");
+      if (slug === "regi-slug") {
+        return jsonResponse({
+          found: true,
+          type: "product",
+          from: "regi-slug",
+          to: "uj-slug",
+          status: 301,
+        });
+      }
+      if (slug === "loop-slug") {
+        return jsonResponse({
+          found: true,
+          type: "product",
+          from: "loop-slug",
+          to: "loop-slug",
+          status: 301,
+        });
+      }
+      if (slug === "not-found") {
+        return jsonResponse({
+          found: false,
+          type: "product",
+          from: "not-found",
+          to: null,
+          status: null,
+        });
+      }
+      if (slug === "server-error") {
+        return jsonResponse({ code: "error" }, 500);
+      }
+      throw new TypeError("network down");
+    });
+
+    const client = createStoreClient({ baseUrl: "https://woo.example.test", fetch: fetchMock });
+
+    expect(await client.resolveSlugRedirect("product", "regi-slug")).toBe("uj-slug");
+    expect(await client.resolveSlugRedirect("product", "loop-slug")).toBeNull();
+    expect(await client.resolveSlugRedirect("product", "not-found")).toBeNull();
+    expect(await client.resolveSlugRedirect("product", "server-error")).toBeNull();
+    expect(await client.resolveSlugRedirect("product", "offline")).toBeNull();
+    expect(await client.resolveSlugRedirect("product", "   ")).toBeNull();
+  });
 });

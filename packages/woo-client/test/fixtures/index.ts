@@ -30,6 +30,11 @@ export const fixtureAttributeTerms: Record<string, StoreAttributeTerm[]> = Objec
 );
 export const fixtureCart = cartSchema.parse(cartJson);
 
+/** Fixture módú `_wp_old_slug` példa a 301 átirányítás e2e és unit teszteléséhez. */
+export const fixtureProductSlugRedirects: Record<string, string> = {
+  "runakard-tkl-regi": "runakard-tkl-pro-vezetek-nelkuli-billentyuzet",
+};
+
 export function filterAndPaginateFixtureProducts(
   source: readonly StoreProduct[],
   query: ProductQuery = {},
@@ -136,6 +141,10 @@ export function createFixtureStoreClient(): StoreClient {
     },
     async getProductBySlug(slug) {
       return fixtureProducts.find((p) => p.slug === slug) ?? null;
+    },
+    async resolveSlugRedirect(type, slug) {
+      if (type !== "product") return null;
+      return fixtureProductSlugRedirects[slug] ?? null;
     },
     async getCategories() {
       return fixtureCategories;
