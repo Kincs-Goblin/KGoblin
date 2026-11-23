@@ -43,7 +43,6 @@ export function ProductGrid({ products, className }: ProductGridProps) {
                       id: product.id,
                       slug: product.slug,
                       name: product.name,
-                      price: product.price.current,
                     }}
                     disabled={!product.inStock || !product.purchasable}
                   />

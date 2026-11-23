@@ -1,5 +1,5 @@
 import type { Brand } from "@kg/brand-config";
-import type { z } from "zod";
+import { z } from "zod";
 
 import { resolveBrandBaseUrl } from "../brand-url";
 import { mapWooErrorCode, WooError, type WooErrorContext } from "../errors";
@@ -109,6 +109,13 @@ export type SelectShippingRateInput = {
   rateId: string;
 };
 
+export type UpdateCustomerAddressInput = Partial<CheckoutAddressInput>;
+
+export type UpdateCustomerInput = {
+  billing_address?: UpdateCustomerAddressInput;
+  shipping_address?: UpdateCustomerAddressInput;
+};
+
 export type CheckoutAddressInput = {
   first_name: string;
   last_name: string;
@@ -157,12 +164,14 @@ export type StoreClient = {
   addCartItem(input: AddCartItemInput, session?: CartSession): Promise<StoreCartResult>;
   updateCartItem(input: UpdateCartItemInput, session?: CartSession): Promise<StoreCartResult>;
   removeCartItem(input: RemoveCartItemInput, session?: CartSession): Promise<StoreCartResult>;
+  clearCart(session?: CartSession): Promise<StoreCartResult>;
   applyCoupon(input: CouponInput, session?: CartSession): Promise<StoreCartResult>;
   removeCoupon(input: CouponInput, session?: CartSession): Promise<StoreCartResult>;
   selectShippingRate(
     input: SelectShippingRateInput,
     session?: CartSession,
   ): Promise<StoreCartResult>;
+  updateCustomer(input: UpdateCustomerInput, session?: CartSession): Promise<StoreCartResult>;
   getCheckout(session: CartSession): Promise<StoreCheckoutResult>;
   submitCheckout(input: SubmitCheckoutInput, session: CartSession): Promise<StoreCheckoutResult>;
 };
@@ -173,8 +182,8 @@ export type WooStoreClient = StoreClient & {
 
 function readSessionHeaders(response: Response, fallback?: CartSession): CartSession {
   return {
-    cartToken: response.headers.get("Cart-Token") ?? fallback?.cartToken,
-    nonce: response.headers.get("Nonce") ?? fallback?.nonce,
+    cartToken: response.headers.get("Cart-Token") || fallback?.cartToken,
+    nonce: response.headers.get("Nonce") || fallback?.nonce,
   };
 }
 
@@ -192,7 +201,7 @@ export function createStoreClient({
   const root = `${normalizedBase}/wp-json/wc/store/v1`;
 
   async function rawRequest<T extends z.ZodType>(options: {
-    method: "GET" | "POST";
+    method: "GET" | "POST" | "DELETE";
     path: string;
     params?: Record<string, string | number | boolean | undefined> | Array<[string, string]>;
     body?: unknown;
@@ -230,7 +239,7 @@ export function createStoreClient({
         ? { cache: "no-store" }
         : options.cache
           ? { next: options.cache }
-          : options.method === "POST" || options.session
+          : options.method !== "GET" || options.session
             ? { cache: "no-store" }
             : {}),
     };
@@ -503,6 +512,18 @@ export function createStoreClient({
     removeCartItem(input, session) {
       return requestCart("POST", "/cart/remove-item", session, input);
     },
+    async clearCart(session) {
+      const deleted = await rawRequest({
+        method: "DELETE",
+        path: "/cart/items",
+        session,
+        schema: z.unknown(),
+        noStore: true,
+        errorContext: "cart",
+      });
+      const nextSession = readSessionHeaders(deleted!.response, session);
+      return requestCart("GET", "/cart", nextSession);
+    },
     applyCoupon(input, session) {
       return requestCart("POST", "/cart/apply-coupon", session, input);
     },
@@ -514,6 +535,9 @@ export function createStoreClient({
         package_id: input.packageId ?? 0,
         rate_id: input.rateId,
       });
+    },
+    updateCustomer(input, session) {
+      return requestCart("POST", "/cart/update-customer", session, input);
     },
     getCheckout(session) {
       return requestCheckout("GET", session);

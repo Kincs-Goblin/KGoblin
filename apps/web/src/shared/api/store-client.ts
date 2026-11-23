@@ -11,6 +11,8 @@ import { serverEnv } from "../config/env";
  * egyébként `createWooClient(brand)` oldja fel a brandhez tartozó Woo-címet (hiányzónál `WOO.UNAVAILABLE`).
  */
 export function getStoreClient(brand: Brand): StoreClient {
-  if (serverEnv.KG_STORE_FIXTURES === "1") return createFixtureStoreClient();
+  if (serverEnv.KG_STORE_FIXTURES === "1") {
+    return createFixtureStoreClient({ brandId: brand.id });
+  }
   return createWooClient(brand);
 }

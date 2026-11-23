@@ -1,12 +1,11 @@
 "use client";
 
-import { CheckIcon, ShoppingBagIcon } from "lucide-react";
+import { CheckIcon, Loader2Icon, ShoppingBagIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { useCart } from "@/entities/cart";
-import type { MoneyParts } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { duration, spring } from "@/shared/ui/motion";
@@ -18,9 +17,9 @@ type AddToCartButtonProps = {
     id: number;
     variationId?: number;
     variantLabel?: string;
+    variation?: Array<{ attribute: string; value: string }>;
     slug: string;
     name: string;
-    price: MoneyParts;
   };
   disabled?: boolean;
   size?: "default" | "lg";
@@ -33,8 +32,9 @@ export function AddToCartButton({
   size = "default",
   className,
 }: AddToCartButtonProps) {
-  const { dispatch } = useCart();
+  const { addItem } = useCart();
   const [added, setAdded] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!added) return;
@@ -42,32 +42,36 @@ export function AddToCartButton({
     return () => clearTimeout(timer);
   }, [added]);
 
-  function handleClick() {
-    dispatch({
-      type: "add",
-      line: {
-        productId: product.id,
-        ...(product.variationId ? { variationId: product.variationId } : {}),
-        ...(product.variantLabel ? { variantLabel: product.variantLabel } : {}),
-        slug: product.slug,
-        name: product.name,
-        unitPrice: product.price,
-      },
+  async function handleClick() {
+    if (submitting || disabled) return;
+    setSubmitting(true);
+    const result = await addItem({
+      id: product.variationId ?? product.id,
+      quantity: 1,
+      ...(product.variation?.length ? { variation: product.variation } : {}),
     });
-    setAdded(true);
-    toast.success(
-      addToCartTexts.toast(
-        product.variantLabel ? `${product.name} (${product.variantLabel})` : product.name,
-      ),
-    );
+    setSubmitting(false);
+
+    if (result.ok) {
+      setAdded(true);
+      toast.success(
+        addToCartTexts.toast(
+          product.variantLabel ? `${product.name} (${product.variantLabel})` : product.name,
+        ),
+      );
+    } else {
+      toast.error(result.message);
+    }
   }
 
+  const isDisabled = Boolean(disabled) || submitting;
+
   return (
-    <motion.div whileTap={disabled ? undefined : { scale: 0.96 }} transition={spring.snappy}>
+    <motion.div whileTap={isDisabled ? undefined : { scale: 0.96 }} transition={spring.snappy}>
       <Button
         type="button"
         size={size}
-        disabled={disabled}
+        disabled={isDisabled}
         onClick={handleClick}
         aria-label={disabled ? addToCartTexts.unavailable : addToCartTexts.labelFor(product.name)}
         className={cn(
@@ -78,14 +82,20 @@ export function AddToCartButton({
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.span
-            key={added ? "added" : "idle"}
+            key={submitting ? "submitting" : added ? "added" : "idle"}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: duration.fast }}
             className="flex items-center gap-2"
           >
-            {added ? <CheckIcon aria-hidden="true" /> : <ShoppingBagIcon aria-hidden="true" />}
+            {submitting ? (
+              <Loader2Icon className="animate-spin" aria-hidden="true" />
+            ) : added ? (
+              <CheckIcon aria-hidden="true" />
+            ) : (
+              <ShoppingBagIcon aria-hidden="true" />
+            )}
             {disabled
               ? addToCartTexts.unavailable
               : added

@@ -228,6 +228,22 @@ export function ProductDetails({ product }: { product: Product }) {
   const activePurchasable = isVariable
     ? Boolean(activeVariation && activeVariation.inStock && activeVariation.purchasable)
     : product.inStock && product.purchasable;
+  const selectedVariationEntries = activeVariation
+    ? variationAttributes
+        .map((attr) => {
+          const key = getAttributeKey(attr);
+          const selectedSlug = selected[key];
+          const selectedTerm = attr.terms.find((term) => term.slug === selectedSlug);
+          if (selectedTerm) {
+            return { attribute: attr.taxonomy || attr.name, value: selectedTerm.slug };
+          }
+          const entry = activeVariation.attributes.find((vAttr) =>
+            variationAttrMatchesProductAttr(vAttr, attr),
+          );
+          return entry?.slug ? { attribute: attr.taxonomy || attr.name, value: entry.slug } : null;
+        })
+        .filter((item): item is { attribute: string; value: string } => item !== null)
+    : [];
   const variantLabel = activeVariation
     ? variationAttributes
         .map((attr) => {
@@ -329,9 +345,11 @@ export function ProductDetails({ product }: { product: Product }) {
                 id: product.id,
                 ...(activeVariation ? { variationId: activeVariation.id } : {}),
                 ...(variantLabel ? { variantLabel } : {}),
+                ...(selectedVariationEntries.length > 0
+                  ? { variation: selectedVariationEntries }
+                  : {}),
                 slug: product.slug,
                 name: product.name,
-                price: activePrice.current,
               }}
               disabled={!activePurchasable}
             />
