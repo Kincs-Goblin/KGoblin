@@ -53,6 +53,26 @@ export const jobErrorCatalog = {
     retryable: false,
     message: "Nem támogatott webhook topic.",
   },
+  "SEARCH.UNAVAILABLE": {
+    status: 503,
+    retryable: true,
+    message: "A Meilisearch kereső átmenetileg nem érhető el.",
+  },
+  "SEARCH.INVALID_RESPONSE": {
+    status: 502,
+    retryable: true,
+    message: "Érvénytelen válasz érkezett a Meilisearch szervertől.",
+  },
+  "SEARCH.CONFIG_MISSING": {
+    status: 500,
+    retryable: false,
+    message: "Hiányzó vagy érvénytelen Meilisearch konfiguráció a háttérjobban.",
+  },
+  "SEARCH.TASK_FAILED": {
+    status: 502,
+    retryable: true,
+    message: "A Meilisearch indexelési feladat hibával zárult.",
+  },
   "APP.UNEXPECTED": {
     status: 500,
     retryable: true,

@@ -33,6 +33,24 @@ services:
       timeout: 3s
       retries: 10
 
+  meilisearch:
+    image: getmeili/meilisearch:v1.13.3
+    container_name: kg_meilisearch
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${MEILISEARCH_PORT:-7700}:7700"
+    environment:
+      MEILI_MASTER_KEY: ${MEILISEARCH_MASTER_KEY:-kg_local_meili_master_key_change_me}
+      MEILI_ENV: development
+      MEILI_NO_ANALYTICS: "true"
+    volumes:
+      - kg_meili_data:/meili_data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:7700/health | grep -q available"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
   # ============================================================================
   # 1. BRAND: GAMER (Headless WordPress + WooCommerce)
   # ============================================================================
@@ -163,4 +181,5 @@ services:
 volumes:
   kg_db_data:
   kg_wp_gamer_core:
+  kg_meili_data:
   # kg_wp_brand2_core:

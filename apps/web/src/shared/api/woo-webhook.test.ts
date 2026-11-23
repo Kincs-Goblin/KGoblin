@@ -207,4 +207,34 @@ describe("handleWooWebhookRequest", () => {
     expect((await send("local")).status).toBe(200);
     errorSpy.mockRestore();
   });
+
+  it("termék-webhooknál meghívja az onProductChange hookot, hibánál fail-open marad", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const revalidate = vi.fn();
+    const onProductChange = vi.fn().mockRejectedValue(new Error("trigger down"));
+    const body = JSON.stringify({ id: 42, slug: "billentyuzet", categories: [] });
+    const secret = "whsec_gamer";
+    const signature = await computeWooWebhookSignature(body, secret);
+
+    const res = await handleWooWebhookRequest(
+      new Request("http://localhost:3000/api/webhooks/woo/gamer", {
+        method: "POST",
+        headers: { "X-WC-Webhook-Topic": "product.updated", "X-WC-Webhook-Signature": signature },
+        body,
+      }),
+      "gamer",
+      {
+        revalidate,
+        onProductChange,
+        resolveBrand,
+        env: { WOO_GAMER_WEBHOOK_SECRET: secret },
+      },
+    );
+
+    expect(res.status).toBe(200);
+    expect(revalidate).toHaveBeenCalled();
+    expect(onProductChange).toHaveBeenCalledWith("gamer", 42);
+    expect(warnSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
 });

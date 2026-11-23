@@ -17,6 +17,11 @@ export type BrandWooCredentials = {
   consumerSecret: string;
 };
 
+export type MeilisearchAdminConfig = {
+  host: string;
+  masterKey: string;
+};
+
 /**
  * A háttérjobok globális környezeti változóinak validálása.
  * Értéket (titkot) soha nem ír ki a hibaüzenetbe, csak a változó nevét.
@@ -85,5 +90,38 @@ export function getBrandWooCredentials(
     baseUrl,
     consumerKey,
     consumerSecret,
+  };
+}
+
+/**
+ * Meilisearch admin konfiguráció (`MEILISEARCH_URL` + `MEILISEARCH_MASTER_KEY`).
+ * Az admin/master kulcs kizárólag a háttérjobokban (`apps/jobs`) élhet (ADR-0012).
+ */
+export function getMeilisearchAdminConfig(
+  raw: NodeJS.ProcessEnv = process.env,
+): MeilisearchAdminConfig {
+  const rawHost = raw.MEILISEARCH_URL?.trim();
+  if (!rawHost) {
+    throw new AppError("SEARCH.CONFIG_MISSING", {
+      internalReason: "Hiányzó kötelező környezeti változó: MEILISEARCH_URL",
+    });
+  }
+  const hostParsed = z.string().url().safeParse(rawHost);
+  if (!hostParsed.success) {
+    throw new AppError("SEARCH.CONFIG_MISSING", {
+      internalReason: "Érvénytelen URL a MEILISEARCH_URL környezeti változóban.",
+    });
+  }
+
+  const masterKey = raw.MEILISEARCH_MASTER_KEY?.trim();
+  if (!masterKey) {
+    throw new AppError("SEARCH.CONFIG_MISSING", {
+      internalReason: "Hiányzó kötelező környezeti változó: MEILISEARCH_MASTER_KEY",
+    });
+  }
+
+  return {
+    host: hostParsed.data.replace(/\/+$/, ""),
+    masterKey,
   };
 }

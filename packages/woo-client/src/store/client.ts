@@ -58,6 +58,7 @@ export type ProductQuery = {
   onSale?: boolean;
   featured?: boolean;
   tag?: string;
+  include?: number[];
   attributes?: ProductAttributeFilter[];
 };
 
@@ -362,6 +363,7 @@ export function createStoreClient({
     if (query.onSale !== undefined) entries.push(["on_sale", String(query.onSale)]);
     if (query.featured !== undefined) entries.push(["featured", String(query.featured)]);
     if (query.tag !== undefined) entries.push(["tag", query.tag]);
+    if (query.include?.length) entries.push(["include", query.include.join(",")]);
     if (query.attributes?.length) {
       query.attributes.forEach((filter, index) => {
         entries.push([`attributes[${index}][attribute]`, filter.attribute]);

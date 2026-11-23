@@ -84,6 +84,10 @@ export function filterAndPaginateFixtureProducts(
       ),
     );
   }
+  if (query.include?.length) {
+    const allowed = new Set(query.include);
+    products = products.filter((p) => allowed.has(p.id));
+  }
   if (query.search) {
     const needle = query.search.toLowerCase();
     products = products.filter(

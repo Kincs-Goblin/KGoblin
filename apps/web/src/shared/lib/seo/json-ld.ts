@@ -43,7 +43,7 @@ export function buildWebSiteJsonLd(brand: Brand): Record<string, unknown> {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: `${origin}/termekek?q={search_term_string}`,
+        urlTemplate: `${origin}/kereses?q={search_term_string}`,
       },
       "query-input": "required name=search_term_string",
     },

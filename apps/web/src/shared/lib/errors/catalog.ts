@@ -83,6 +83,21 @@ export const errorCatalog = {
     retryable: false,
     message: "Webhook konfigurációs hiba.",
   },
+  "SEARCH.UNAVAILABLE": {
+    status: 503,
+    retryable: true,
+    message: "A keresés átmenetileg nem érhető el. Próbáld újra pár perc múlva.",
+  },
+  "SEARCH.INVALID_RESPONSE": {
+    status: 502,
+    retryable: true,
+    message: "A keresési találatok most nem tölthetők be. Már dolgozunk rajta.",
+  },
+  "SEARCH.CONFIG_MISSING": {
+    status: 500,
+    retryable: false,
+    message: "A kereső szolgáltatás jelenleg nincs konfigurálva.",
+  },
   "APP.UNEXPECTED": {
     status: 500,
     retryable: true,

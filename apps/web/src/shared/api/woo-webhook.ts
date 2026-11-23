@@ -11,6 +11,8 @@ import { cacheTags } from "./cache-tags";
 
 export type WooWebhookDependencies = {
   revalidate: (tag: string) => void;
+  /** Opcionális inkrementális kereső-újraindexelés termékváltozásra (KG-49); fail-open. */
+  onProductChange?: (brandId: string, productId: number) => Promise<void>;
   env?: Record<string, string | undefined>;
   resolveBrand?: (brandId: string) => Brand | undefined;
   /** Alapból a buildkor beégetett `NEXT_PUBLIC_APP_ENV`. */
@@ -159,6 +161,25 @@ export async function handleWooWebhookRequest(
   const revalidated = collectWebhookCacheTags(brand.id, verified.event);
   for (const tag of revalidated) {
     deps.revalidate(tag);
+  }
+
+  if (
+    deps.onProductChange &&
+    (verified.event.topic === "product.created" ||
+      verified.event.topic === "product.updated" ||
+      verified.event.topic === "product.deleted" ||
+      verified.event.topic === "product.restored")
+  ) {
+    try {
+      await deps.onProductChange(brand.id, verified.event.payload.id);
+    } catch (error) {
+      // Fail-open: a háttérjob-indítás hibája nem ronthatja el a már sikeres cache-revalidálást.
+      console.warn("[woo-webhook] reindex-search indítása sikertelen", {
+        brandId: brand.id,
+        productId: verified.event.payload.id,
+        message: error instanceof Error ? error.message : "Ismeretlen hiba",
+      });
+    }
   }
 
   return NextResponse.json({
