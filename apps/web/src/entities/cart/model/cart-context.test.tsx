@@ -1,63 +1,136 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { StrictMode } from "react";
+import { toast } from "sonner";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { EMPTY_CART_DTO, type CartDto } from "@/shared/api";
 
 import { CartProvider, useCart } from "./cart-context";
-import { MAX_QUANTITY_PER_LINE } from "./cart-reducer";
 
-const stored = {
-  lines: [
+vi.mock("sonner", () => ({
+  toast: {
+    error: vi.fn(),
+    success: vi.fn(),
+  },
+}));
+
+const sampleCart: CartDto = {
+  ...EMPTY_CART_DTO,
+  items: [
     {
-      productId: 1,
-      slug: "apexstrike",
-      name: "ApexStrike",
-      unitPrice: { amount: "27990", currency: "HUF", minorUnit: 0 },
-      quantity: 2,
+      key: "item-1",
+      productId: 24,
+      quantity: 1,
+      name: "LumiBar Pro",
+      slug: "lumibar-pro",
+      sku: "KG-GMR-LT-008",
+      image: null,
+      variation: [],
+      unitPrice: { amount: "16990", currency: "HUF", minorUnit: 0 },
+      regularPrice: { amount: "21990", currency: "HUF", minorUnit: 0 },
+      lineSubtotal: { amount: "16990", currency: "HUF", minorUnit: 0 },
+      lineTotal: { amount: "16990", currency: "HUF", minorUnit: 0 },
     },
   ],
+  itemsCount: 1,
+  totals: {
+    ...EMPTY_CART_DTO.totals,
+    items: { amount: "16990", currency: "HUF", minorUnit: 0 },
+    total: { amount: "16990", currency: "HUF", minorUnit: 0 },
+  },
 };
 
-function Count() {
-  return <span data-testid="count">{useCart().itemCount}</span>;
+function Harness() {
+  const { cart, itemCount, updateItemQuantity } = useCart();
+  return (
+    <div>
+      <span data-testid="count">{itemCount}</span>
+      <span data-testid="qty">{cart.items[0]?.quantity ?? 0}</span>
+      <button type="button" onClick={() => void updateItemQuantity("item-1", 3)}>
+        növel
+      </button>
+    </div>
+  );
 }
 
-describe("CartProvider", () => {
-  beforeEach(() => localStorage.clear());
+describe("CartProvider (BFF)", () => {
+  const originalFetch = globalThis.fetch;
 
-  it("a plafon feletti tárolt darabszámot soronként levágja, a kosarat nem dobja el", async () => {
-    const oversized = { lines: [{ ...stored.lines[0], quantity: 999 }] };
-    localStorage.setItem("kg-cart:gamer", JSON.stringify(oversized));
-    render(
-      <CartProvider brandId="gamer">
-        <Count />
-      </CartProvider>,
-    );
-
-    expect(await screen.findByText(String(MAX_QUANTITY_PER_LINE))).toBeInTheDocument();
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it("StrictMode dupla effect-futása mellett sem üríti ki a tárolt kosarat", async () => {
-    localStorage.setItem("kg-cart:gamer", JSON.stringify(stored));
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  it("betölti a kosarat a GET /api/cart végpontról StrictMode mellett is", async () => {
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ ok: true, cart: sampleCart }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    ) as typeof fetch;
+
     render(
       <StrictMode>
         <CartProvider brandId="gamer">
-          <Count />
+          <Harness />
         </CartProvider>
       </StrictMode>,
     );
 
-    expect(await screen.findByText("2")).toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem("kg-cart:gamer") ?? "null")).toEqual(stored);
+    expect(await screen.findByTestId("count")).toHaveTextContent("1");
+    expect(screen.getByTestId("qty")).toHaveTextContent("1");
   });
 
-  it("a brandek kosara külön kulcson van", async () => {
-    localStorage.setItem("kg-cart:gamer", JSON.stringify(stored));
+  it("optimistán frissíti a mennyiséget, majd hiba esetén visszaállítja és toastot mutat", async () => {
+    const user = userEvent.setup();
+    let resolvePatch!: (res: Response) => void;
+
+    globalThis.fetch = vi.fn(async (_url, init) => {
+      if (init?.method === "PATCH") {
+        return new Promise<Response>((resolve) => {
+          resolvePatch = resolve;
+        });
+      }
+      return new Response(JSON.stringify({ ok: true, cart: sampleCart }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    }) as typeof fetch;
+
     render(
-      <CartProvider brandId="masik">
-        <Count />
+      <CartProvider brandId="gamer">
+        <Harness />
       </CartProvider>,
     );
 
-    expect(await screen.findByTestId("count")).toHaveTextContent("0");
-    expect(localStorage.getItem("kg-cart:gamer")).toBe(JSON.stringify(stored));
+    expect(await screen.findByTestId("qty")).toHaveTextContent("1");
+
+    await user.click(screen.getByRole("button", { name: "növel" }));
+    // Optimista frissítés azonnal látszik
+    expect(screen.getByTestId("qty")).toHaveTextContent("3");
+    expect(screen.getByTestId("count")).toHaveTextContent("3");
+
+    // Szerver 409 készlethiánnyal visszautasítja -> visszaáll 1-re + toast.error
+    resolvePatch(
+      new Response(
+        JSON.stringify({
+          ok: false,
+          code: "CART.OUT_OF_STOCK",
+          message: "A választott zsákmány időközben elfogyott.",
+        }),
+        { status: 409, headers: { "content-type": "application/json" } },
+      ),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("qty")).toHaveTextContent("1");
+    });
+    expect(screen.getByTestId("count")).toHaveTextContent("1");
+    expect(toast.error).toHaveBeenCalledWith("A választott zsákmány időközben elfogyott.");
   });
 });

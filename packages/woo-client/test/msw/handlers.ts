@@ -195,6 +195,35 @@ export function createStoreApiHandlers(baseUrlPattern = "*") {
       });
     }),
 
+    http.delete(`${prefix}/wp-json/wc/store/v1/cart/items`, () =>
+      HttpResponse.json([], {
+        headers: { "Cart-Token": "msw-cart-token-cleared", Nonce: "msw-nonce-cleared" },
+      }),
+    ),
+
+    http.post(`${prefix}/wp-json/wc/store/v1/cart/update-customer`, async ({ request }) => {
+      const body = (await request.json().catch(() => ({}))) as {
+        shipping_address?: Partial<typeof fixtureCart.shipping_address>;
+        billing_address?: Partial<typeof fixtureCart.billing_address>;
+      };
+      const updated = structuredClone(fixtureCart);
+      if (body.shipping_address) {
+        updated.shipping_address = {
+          ...updated.shipping_address!,
+          ...body.shipping_address,
+        };
+      }
+      if (body.billing_address) {
+        updated.billing_address = {
+          ...updated.billing_address!,
+          ...body.billing_address,
+        };
+      }
+      return HttpResponse.json(updated, {
+        headers: { "Cart-Token": "msw-cart-token", Nonce: "msw-nonce-customer" },
+      });
+    }),
+
     http.post(`${prefix}/wp-json/wc/store/v1/cart/apply-coupon`, async ({ request }) => {
       const body = (await request.json().catch(() => ({}))) as { code?: string };
       if (!body.code || body.code.toUpperCase() === "INVALID") {

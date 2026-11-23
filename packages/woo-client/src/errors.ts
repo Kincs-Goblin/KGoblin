@@ -5,6 +5,7 @@ export type WooErrorCode =
   | "CART.OUT_OF_STOCK"
   | "CART.INVALID_QUANTITY"
   | "CART.COUPON_INVALID"
+  | "CART.SHIPPING_UNAVAILABLE"
   | "CART.SESSION_INVALID"
   | "CHECKOUT.VALIDATION_FAILED"
   | "CHECKOUT.PAYMENT_DECLINED";
@@ -83,6 +84,9 @@ export function mapWooErrorCode(
   }
   if ((context === "cart" || context === "checkout") && normalized.includes("coupon")) {
     return "CART.COUPON_INVALID";
+  }
+  if ((context === "cart" || context === "checkout") && normalized.includes("shipping")) {
+    return "CART.SHIPPING_UNAVAILABLE";
   }
   if (context === "checkout" && normalized.startsWith("kg_")) {
     return "CHECKOUT.VALIDATION_FAILED";

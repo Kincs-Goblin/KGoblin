@@ -1,10 +1,6 @@
-export { CartProvider, useCart } from "./model/cart-context";
+export { CartProvider, useCart, type CartMutationResult } from "./model/cart-context";
 export {
-  cartReducer,
-  countItems,
-  getCartLineId,
+  applyOptimisticQuantity,
+  applyOptimisticRemove,
   MAX_QUANTITY_PER_LINE,
-  type CartAction,
-  type CartLine,
-  type CartState,
-} from "./model/cart-reducer";
+} from "./model/cart-optimistic";

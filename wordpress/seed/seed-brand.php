@@ -111,14 +111,105 @@ $cod_settings['instructions']       = 'Készpénzzel és bankkártyával is fize
 $cod_settings['enable_for_virtual'] = 'yes';
 update_option( 'woocommerce_cod_settings', $cod_settings );
 
-// 4. Szállítási zóna biztosítása (hogy a Store API checkout találjon szállítási módot)
+// 4. Szállítási zóna és módok biztosítása (Magyarország: házhozszállítás, csomagautomata, ingyenes szállítás 25 000 Ft felett)
 if ( class_exists( 'WC_Shipping_Zones' ) ) {
-	$default_zone = new \WC_Shipping_Zone( 0 );
-	$methods      = $default_zone->get_shipping_methods();
-	if ( empty( $methods ) ) {
-		$default_zone->add_shipping_method( 'free_shipping' );
-		echo "Alapértelmezett ingyenes szállítási mód hozzáadva.\n";
+	$hu_zone_name = 'Magyarország';
+	$hu_zone      = null;
+	foreach ( \WC_Shipping_Zones::get_zones() as $zone_data ) {
+		if ( isset( $zone_data['zone_name'] ) && $hu_zone_name === $zone_data['zone_name'] ) {
+			$hu_zone = new \WC_Shipping_Zone( (int) $zone_data['id'] );
+			break;
+		}
 	}
+
+	if ( ! $hu_zone ) {
+		$hu_zone = new \WC_Shipping_Zone();
+		$hu_zone->set_zone_name( $hu_zone_name );
+		$hu_zone->set_zone_order( 0 );
+		$hu_zone->add_location( 'HU', 'country' );
+		$hu_zone->save();
+		echo "Magyarország szállítási zóna létrehozva (#{$hu_zone->get_id()}).\n";
+	}
+
+	$existing_hu_methods = array();
+	foreach ( $hu_zone->get_shipping_methods( false ) as $method ) {
+		$existing_hu_methods[ $method->id ] = $method;
+	}
+
+	$flat_instance_id = isset( $existing_hu_methods['flat_rate'] )
+		? (int) $existing_hu_methods['flat_rate']->instance_id
+		: (int) $hu_zone->add_shipping_method( 'flat_rate' );
+	update_option(
+		"woocommerce_flat_rate_{$flat_instance_id}_settings",
+		array(
+			'title'      => 'Házhozszállítás (GLS)',
+			'tax_status' => 'none',
+			'cost'       => '1490',
+		)
+	);
+	echo "Szállítási mód szinkronizálva: Házhozszállítás (GLS) 1 490 Ft (#{$flat_instance_id}).\n";
+
+	$pickup_instance_id = isset( $existing_hu_methods['local_pickup'] )
+		? (int) $existing_hu_methods['local_pickup']->instance_id
+		: (int) $hu_zone->add_shipping_method( 'local_pickup' );
+	update_option(
+		"woocommerce_local_pickup_{$pickup_instance_id}_settings",
+		array(
+			'title'      => 'Csomagautomata',
+			'tax_status' => 'none',
+			'cost'       => '990',
+		)
+	);
+	echo "Szállítási mód szinkronizálva: Csomagautomata 990 Ft (#{$pickup_instance_id}).\n";
+
+	$free_instance_id = isset( $existing_hu_methods['free_shipping'] )
+		? (int) $existing_hu_methods['free_shipping']->instance_id
+		: (int) $hu_zone->add_shipping_method( 'free_shipping' );
+	update_option(
+		"woocommerce_free_shipping_{$free_instance_id}_settings",
+		array(
+			'title'            => 'Ingyenes szállítás',
+			'requires'         => 'min_amount',
+			'min_amount'       => '25000',
+			'ignore_discounts' => 'no',
+		)
+	);
+	echo "Szállítási mód szinkronizálva: Ingyenes szállítás 25 000 Ft felett (#{$free_instance_id}).\n";
+
+	// Fallback zóna (0): külföldi (EU) kosarakhoz egységes futárdíj, egyezve a fixture-rel.
+	$default_zone         = new \WC_Shipping_Zone( 0 );
+	$existing_def_methods = array();
+	foreach ( $default_zone->get_shipping_methods( false ) as $method ) {
+		$existing_def_methods[ $method->id ] = $method;
+	}
+	$eu_flat_instance_id = isset( $existing_def_methods['flat_rate'] )
+		? (int) $existing_def_methods['flat_rate']->instance_id
+		: (int) $default_zone->add_shipping_method( 'flat_rate' );
+	update_option(
+		"woocommerce_flat_rate_{$eu_flat_instance_id}_settings",
+		array(
+			'title'      => 'Nemzetközi futárszolgálat (EU)',
+			'tax_status' => 'none',
+			'cost'       => '3990',
+		)
+	);
+	echo "Fallback szállítási mód szinkronizálva: Nemzetközi futárszolgálat (EU) 3 990 Ft (#{$eu_flat_instance_id}).\n";
+}
+
+// 4b. Kuponok engedélyezése és teszt kupon (GOBLIN10, 10% kedvezmény) idempotens létrehozása (KG-12)
+update_option( 'woocommerce_enable_coupons', 'yes' );
+if ( class_exists( 'WC_Coupon' ) && function_exists( 'wc_get_coupon_id_by_code' ) ) {
+	$coupon_code = 'GOBLIN10';
+	$coupon_id   = wc_get_coupon_id_by_code( $coupon_code );
+	$coupon      = $coupon_id ? new \WC_Coupon( $coupon_id ) : new \WC_Coupon();
+	$coupon->set_code( $coupon_code );
+	$coupon->set_discount_type( 'percent' );
+	$coupon->set_amount( 10 );
+	$coupon->set_description( 'KGoblin teszt kupon: 10% kedvezmény a kosárra.' );
+	$coupon->set_individual_use( false );
+	$coupon->set_free_shipping( false );
+	$saved_coupon_id = $coupon->save();
+	echo "Teszt kupon kész: {$coupon_code} (10%, #{$saved_coupon_id}).\n";
 }
 
 // 5. Jogi és WooCommerce alapoldalak létrehozása (idempotensen)

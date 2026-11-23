@@ -43,10 +43,26 @@ export const errorCatalog = {
     retryable: false,
     message: "A megadott kuponkód nem érvényes vagy már lejárt.",
   },
+  "CART.SHIPPING_UNAVAILABLE": {
+    status: 409,
+    retryable: false,
+    message: "A választott szállítási mód jelenleg nem érhető el ehhez a címhez.",
+  },
+  "CART.INVALID_INPUT": {
+    status: 400,
+    retryable: false,
+    message: "Érvénytelen kosáradatok. Kérjük, ellenőrizd a megadott értékeket.",
+  },
+  "CART.RATE_LIMITED": {
+    status: 429,
+    retryable: true,
+    message: "Túl sok kosárművelet rövid idő alatt. Próbáld újra pár másodperc múlva.",
+  },
   "CART.SESSION_INVALID": {
     status: 401,
     retryable: false,
-    message: "A kosár munkamenete lejárt. Frissítsd az oldalt és próbáld újra.",
+    message:
+      "A kosár munkamenete lejárt, új kosarat indítottunk. Kérjük, próbáld újra a műveletet.",
   },
   "CHECKOUT.VALIDATION_FAILED": {
     status: 400,

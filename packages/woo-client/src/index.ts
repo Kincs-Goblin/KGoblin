@@ -26,6 +26,8 @@ export {
   type StoreClientOptions,
   type SubmitCheckoutInput,
   type UpdateCartItemInput,
+  type UpdateCustomerAddressInput,
+  type UpdateCustomerInput,
   type WooClientOptions,
   type WooStoreClient,
 } from "./store/client";

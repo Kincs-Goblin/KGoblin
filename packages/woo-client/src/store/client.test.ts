@@ -301,6 +301,19 @@ describe("createWooClient(brand) + MSW Store API", () => {
         ?.selected,
     ).toBe(true);
 
+    const customerUpdated = await client.updateCustomer(
+      { shipping_address: { country: "HU", postcode: "1053", city: "Budapest" } },
+      { cartToken: shipped.cartToken, nonce: shipped.nonce },
+    );
+    expect(customerUpdated.cart.shipping_address?.postcode).toBe("1053");
+    expect(customerUpdated.nonce).toBe("msw-nonce-customer");
+
+    const cleared = await client.clearCart({
+      cartToken: customerUpdated.cartToken,
+      nonce: customerUpdated.nonce,
+    });
+    expect(cleared.cartToken).toBe("msw-cart-token");
+
     const checkoutDraft = await client.getCheckout({
       cartToken: updated.cartToken,
       nonce: updated.nonce,
