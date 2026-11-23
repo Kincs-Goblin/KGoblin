@@ -1,6 +1,6 @@
 import { getBrandById } from "@kg/brand-config";
 
-import { buildBrandSitemapEntries } from "@/app";
+import { buildBrandSitemapEntries } from "@/app/index.server";
 import { MAX_URLS_PER_SITEMAP, isIndexableEnv, renderUrlSetXml } from "@/shared/lib/seo";
 
 type RouteContext = {
