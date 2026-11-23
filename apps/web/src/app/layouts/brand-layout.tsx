@@ -84,6 +84,7 @@ export async function BrandLayout({ children, params }: BrandLayoutProps) {
           <Header
             brandName={brand.name}
             tagline={brand.texts.tagline}
+            locale={brand.locale}
             nav={nav}
             cart={<CartDrawer locale={brand.locale} />}
           />

@@ -2,6 +2,7 @@
 export const routes = {
   home: "/",
   products: "/termekek",
+  search: "/kereses",
   category: (slug: string) => `/kategoria/${slug}`,
   product: (slug: string) => `/termek/${slug}`,
 } as const;

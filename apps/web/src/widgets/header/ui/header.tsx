@@ -1,9 +1,8 @@
-import { SearchIcon } from "lucide-react";
 import Link from "next/link";
 
+import { SearchAutocomplete } from "@/features/search";
 import { routes } from "@/shared/config";
 import { BrandMark } from "@/shared/ui/brand-mark";
-import { Input } from "@/shared/ui/input";
 
 import { headerTexts } from "../config/texts";
 
@@ -12,12 +11,13 @@ export type HeaderNavItem = { href: string; label: string };
 type HeaderProps = {
   brandName: string;
   tagline: string;
+  locale: string;
   nav: HeaderNavItem[];
   /** A kosár-gomb helye; az app-réteg tölti ki (a widgetek nem importálják egymást). */
   cart: React.ReactNode;
 };
 
-export function Header({ brandName, tagline, nav, cart }: HeaderProps) {
+export function Header({ brandName, tagline, locale, nav, cart }: HeaderProps) {
   const items = [{ href: routes.products, label: headerTexts.allProducts }, ...nav];
 
   return (
@@ -37,22 +37,13 @@ export function Header({ brandName, tagline, nav, cart }: HeaderProps) {
           </span>
         </Link>
 
-        {/* A keresés a Meilisearch-ticketben jön; addig csak a helye látszik. */}
-        <div className="relative ml-auto hidden w-full max-w-xs lg:block">
-          <SearchIcon
-            aria-hidden="true"
-            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-          />
-          <Input
-            type="search"
-            disabled
-            aria-label={headerTexts.searchLabel}
-            placeholder={headerTexts.searchPlaceholder}
-            className="h-10 bg-surface-wood-dark/70 pl-9"
-          />
-        </div>
+        <SearchAutocomplete locale={locale} className="ml-auto hidden w-full max-w-sm lg:block" />
 
         <div className="ml-auto lg:ml-0">{cart}</div>
+      </div>
+
+      <div className="border-t border-bronze/30 px-4 py-2 lg:hidden">
+        <SearchAutocomplete locale={locale} className="w-full" />
       </div>
 
       <nav

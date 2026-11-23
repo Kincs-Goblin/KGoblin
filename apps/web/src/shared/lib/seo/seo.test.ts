@@ -96,7 +96,7 @@ describe("SEO segédfüggvények", () => {
     expect(site.potentialAction).toMatchObject({
       "@type": "SearchAction",
       target: {
-        urlTemplate: `${gamerOrigin}/termekek?q={search_term_string}`,
+        urlTemplate: `${gamerOrigin}/kereses?q={search_term_string}`,
       },
     });
 
