@@ -63,7 +63,7 @@ a git a `kg-git-workflow`-ban vannak; itt nincsenek megismételve.
 - **Frontendbe nem kerül titok.** Ami a kliens bundle-ben van, az nyilvános.
 - **Webhook:** aláírás-ellenőrzés a nyers bodyn, időzítésbiztos összehasonlítással; érvénytelennél 401.
 - **Token, jelszó, kártyaadat, teljes cím soha nem kerül logba** vagy Sentrybe (Sentry `beforeSend` szűrés).
-- **Rate limit** a login, regisztráció, kupon és checkout server actionökön.
+- **Rate limit** a kosár/kupon és checkout BFF route handlereken (`CART_RATE_LIMITER` Workers binding, ADR-0018), valamint a leendő login/regisztráció végpontokon (`KG-15`).
 - **Admin felület:** a WP-admin külön aldomainen, erős jelszóval, 2FA-val; a REST v3 kulcsok minimális joggal.
 - Teszt miatti ideiglenes lazítás (pl. kikapcsolt aláírás-ellenőrzés DEV-en) külön commitban, és vissza is vonod.
 

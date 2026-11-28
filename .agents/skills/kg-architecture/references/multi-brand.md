@@ -25,8 +25,9 @@ Brandenként egy típusos objektum (Zod-dal validálva build időben):
 | `domains` | `["<gamer-domain>.hu", "www.<gamer-domain>.hu"]` | production és demo domainek |
 | `woo.baseUrlEnv` | `WOO_GAMER_URL` (az env-változó neve, nem az értéke) | a titkok (`WOO_GAMER_CONSUMER_KEY/SECRET`, `WOO_GAMER_WEBHOOK_SECRET`) csak env-ben |
 | `locale`, `currency` | `hu-HU`, `HUF` | |
-| `theme` | tokenek: szín, tipográfia, radius, árnyék | CSS-változókká alakul, a Tailwind ezekre hivatkozik |
-| `texts` | brandhang, SEO-alapszövegek | a slice-szövegek felülírhatók brandenként |
+| `theme` | tokenek: szín, tipográfia, radius, árnyék | CSS-változókká alakul, a Tailwind ezekre hivatkozik (a ritkaság/felület kiegészítő tokenek a 2. brandnél, az M6-ban általánosulnak) |
+| `texts` | brandhang, SEO-alapszövegek | a slice `config/texts.ts` szövegeinek brandenkénti felülírása a 2. brand bevezetésekor (M6) épül ki |
+| `merchandising` | `rarityThresholds`, opcionális `freeShippingThresholdMinor` | megjelenítési szabályok és belföldi ingyenes szállítási sáv küszöbe minor unitban |
 | `payments` | `["stripe", "barion", "simplepay"]` | csak megjelenítési sorrend és engedélyezés; a forrás a Woo |
 | `analytics` | Meta pixel ID, PostHog projekt, GA/Merchant ID | publikus ID-k; a CAPI-token env-ben. Még nincs a sémában: a mérés bekötésekor kerül be |
 | `search` | Meilisearch index neve | `products_<brand>` |

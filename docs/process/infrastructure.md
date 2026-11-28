@@ -9,7 +9,7 @@ Ez a dokumentum a `KG-6` (0. mérföldkő) infrastruktúra-beállításait és a
 - **Mikor fut:** minden `main` és `demo` célú Pull Requesten (`KG-<n>` → `demo`, `version/*` → `demo`, `demo` → `main` kiadás, `KG-<n>` hotfix → `main`), a `main` és a `demo` pushán, valamint kézi indítással (`workflow_dispatch`); ADR-0011.
 - **A `demo` PR-ok kapuja:** a zöld CI, mellette a helyi release-teszt (`kg-release` 1-3. lépés), amelynek eredményét a PR leírásának „Ellenőrzés” blokkjában rögzítjük.
 - **Jobok:**
-  1. `Quality gate`: `pnpm install --frozen-lockfile` (pnpm store cache-sel), `pnpm format:check`, majd `pnpm turbo run typecheck lint test build` (benne az ESLint, a Steiger FSD-ellenőrzés és a Vitest unit-tesztek minden csomagra, beleértve a `@kg/web` és `@kg/jobs` alkalmazásokat).
+  1. `Quality gate`: `pnpm install --frozen-lockfile` (pnpm store cache-sel), `pnpm format:check`, `pnpm turbo run typecheck lint test build` (benne az ESLint, a Steiger FSD-ellenőrzés és a Vitest unit-tesztek minden csomagra, beleértve a `@kg/web` és `@kg/jobs` alkalmazásokat), majd a `.next` artifact feltöltése után `NEXT_PUBLIC_APP_ENV=demo pnpm --filter @kg/web build:cf` (OpenNext Cloudflare Workers csomagolás ellenőrzése).
   2. `PHP (kg-headless)`: verziótaggel rögzített `php:8.2-cli` Docker-image-ben (a plugin minimum PHP-ja, nem a runner változó PHP-ja) `php -l` minden verziókezelt `wordpress/**/*.php` fájlra, majd a WordPress nélküli unit-tesztek: `wordpress/seed/test-omnibus.php` (Omnibus, adószám) és `wordpress/seed/test-headless-guards.php` (frontend URL és lokális webhook-kapu fail-closed őrei). Helyben ugyanez: `docker run --rm -v "$PWD:/repo" -w /repo php:8.2-cli php wordpress/seed/<teszt>.php`.
   3. `E2E (Playwright)`: a `Quality gate` által épített `.next` artifactból futtatja a Chromium smoke teszteket (desktop + mobil), két `next start` szerverrel: a fixture-össel a smoke-tesztek, a Woo és fixture nélküliével az `e2e/outage.spec.ts` (a hibaállapot `noindex` a `<head>`-ben, a főoldal a buildkori jó oldalt adja). Hibánál a `playwright-report` és `test-results` 7 napig artifactként elérhető.
 
@@ -30,7 +30,7 @@ Az ADR-0007 és a `kg-git-workflow` szerinti szabályok; 2026-11-21 óta mindké
 
 ### Konfiguráció
 - **A repóban:** `apps/web/wrangler.jsonc` (Worker, bindingok, futásidejű nem titkos változók) és `apps/web/open-next.config.ts` (OpenNext: KV incremental cache, D1 tag cache, Durable Object revalidálási sor).
-- **Bindingok:** `NEXT_INC_CACHE_KV` (KV), `NEXT_TAG_CACHE_D1` (D1, `revalidations` tábla), `NEXT_CACHE_DO_QUEUE` (Durable Object), `IMAGES` (Cloudflare Images a `next/image`-hez), `WORKER_SELF_REFERENCE`, `ASSETS`.
+- **Bindingok:** `NEXT_INC_CACHE_KV` (KV), `NEXT_TAG_CACHE_D1` (D1, `revalidations` tábla), `NEXT_CACHE_DO_QUEUE` (Durable Object), `IMAGES` (Cloudflare Images a `next/image`-hez), `CART_RATE_LIMITER` (`ratelimits`, 60 kérés / 60 mp, ADR-0018), `WORKER_SELF_REFERENCE`, `ASSETS`.
 - **Scriptek:** `pnpm --filter @kg/web build:cf` (OpenNext build), `preview:cf` (helyi workerd), `deploy:cf`. Windowson az OpenNext build symlinkek miatt csak Developer Mode-dal vagy WSL-ben fut; a napi fejlesztés (`pnpm dev`) nem érintett.
 
 ### Workers Builds (Cloudflare dashboard → Worker → Settings → Build)

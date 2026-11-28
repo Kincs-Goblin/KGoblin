@@ -5,8 +5,8 @@
 | Feladat | API | Hol fut | Hitelesítés |
 |---|---|---|---|
 | Termék, kategória, attribútum, keresés listázása | Store API `/wp-json/wc/store/v1/products…` | RSC, ISR-rel | nincs |
-| Kosár olvasása és módosítása | Store API `/cart`, `/cart/add-item`, `/cart/update-item`, `/cart/apply-coupon` | server action | `Cart-Token` header (httpOnly cookie-ból) |
-| Checkout | Store API `/checkout` | server action | `Cart-Token` |
+| Kosár olvasása és módosítása | Store API `/cart`, `/cart/add-item`, `/cart/update-item`, `/cart/apply-coupon` | route handler BFF (`/api/cart*` → `entities/cart/index.server`) | `Cart-Token` + `Nonce` header (`httpOnly` cookie-ból) |
+| Checkout | Store API `/checkout` | route handler BFF (`/api/checkout*`, tervezett: `KG-13`) | `Cart-Token` + `Nonce` |
 | Bejelentkezett vásárló adatai, rendelései | `kg-headless` `/wp-json/kg/v1/auth/*` (tervezett: `KG-15`) és REST v3 | server | vásárlói Access/Refresh JWT (httpOnly cookie) |
 | Termék-upsert, készlet, rendelés-státusz, rendelés-megjegyzés | REST v3 `/wp-json/wc/v3/…` | csak `apps/jobs` vagy server | consumer key/secret |
 | Változásértesítés | Woo webhook → `app/api/webhooks/woo/[brand]` | route handler | HMAC-aláírás |
@@ -35,14 +35,14 @@ külön belépési pontban, a REST v3 `server-only`.
   - **Stripe** (`woocommerce-gateway-stripe`): UPE deferred intent - a böngészőben a Stripe.js (`@stripe/stripe-js`, `NEXT_PUBLIC_*` publishable key) hozza létre a `PaymentMethod` (`pm_...`) vagy `ConfirmationToken` (`ctoken_...`) azonosítót, és `payment_data`-ként küldjük be (`wc-stripe-payment-method`, `wc_stripe_selected_upe_payment_type`). 3DS `requires_action` esetén a `payment_intent_secret`-re a böngészőben `stripe.handleNextAction` fut, a tartós státuszt a `?wc-api=wc_stripe` webhook adja.
   - **Visszatérés, újrapróba és `kg-headless` (`KG-13`):** a `wp-json` és `/?wc-api=...` végpontok bypassolják a `kg-headless` 302 átirányítását, viszont a Stripe és SimplePay visszatéréskor `wp_safe_redirect($this->get_return_url($order))`-t hív, amihez a `kg-headless`-ben (tervezett: `KG-13`) fel kell venni az `allowed_redirect_hosts` filtert a `KG_FRONTEND_URL` hostjával. Sikertelen visszatéréskor a `wc_add_notice` üzeneteket (pl. SimplePay `transactionId`) query paraméterrel kell továbbítani a Next.js-nek; a WP `order-pay` oldal helyett a Next.js a Store API `GET /wc/store/v1/order/{id}?key=...&billing_email=...` és `POST /wc/store/v1/checkout/{id}` végpontokat fogja használni (a státuszt mindig a Woo-tól kérdezzük le). Mivel a `kg-headless.php` visszatérési URL-je nem tartalmaz és adatvédelmi okból nem is tartalmazhat `billing_email` query paramétert, a vendég `billing_email` kontextusát a Next.js checkout BFF rövid élettartamú, brand-előtagos `httpOnly` cookie-ban tárolja (fallbackkel).
 - **Fizetés idempotenciája:** dupla kattintás és újrapróba nem indíthat két checkoutot. A gomb tiltása
-  kevés: a server action is ellenőrzi, hogy fut-e már checkout az adott kosárra.
+  kevés: a checkout BFF is ellenőrzi, hogy fut-e már checkout az adott kosárra.
 - **Jogi elemek** (Omnibus 30 napos legalacsonyabb ár, ÁSZF-elfogadás, cégadat-validálás) a Woo oldalon
   számolódnak, és Store API-kiterjesztésként (`ExtendSchema`) jönnek a saját `kg-headless` pluginból.
   A frontend nem számolja őket.
 
 ## Cache és revalidálás
 
-- Cache-tagek **brand-előtaggal**: `<brand>:catalog`, `<brand>:product-slug:<slug>`, `<brand>:category:<id>`. A tagképzés egy helyen van (`shared/api/cache-tags.ts`). Jelenleg minden termék- vagy kategória-webhook a `<brand>:catalog`-ot is érvényteleníti; egyedi termék-ID szerinti célzott invalidálás és webhook-debounce a KG-14 tömeges feed-szinkron előtt készül el.
+- Cache-tagek **brand-előtaggal**: `<brand>:catalog`, `<brand>:product-slug:<slug>`, `<brand>:category:<id>`. A tagképzés egy helyen van (`shared/api/cache-tags.ts`). Jelenleg minden termék- vagy kategória-webhook a `<brand>:catalog`-ot is érvényteleníti; a Meilisearch indexet M1/M2-ben az éjszakai teljes reindex (`apps/jobs`) frissíti, az egyedi termék-ID szerinti célzott ISR-invalidálás, a webhookból indított inkrementális Meilisearch-frissítés, a webhook-debounce és az `order.*` `delivery-id` deduplikáció a 3. mérföldkőben (`KG-14` feed-szinkron és rendelés-továbbítás) készül el.
 - Katalógusoldal: ISR, alapból hosszú revalidate, a frissítést a webhook adja.
 - Webhook-route lépései: nyers body beolvasása → `X-WC-Webhook-Signature` ellenőrzése (base64 HMAC-SHA256 a
   brand webhook-titkával, időzítésbiztos összehasonlítással) → Zod → `revalidateTag` → nehéz munkánál

@@ -9,9 +9,11 @@ apps/web/
   app/                    Next App Router - CSAK routing
     [brand]/              a proxy a domainből ide írja át a kérést
       page.tsx            export { HomePage as default } from "@/pages/home"
-      termekek/  termek/[slug]/  kategoria/[slug]/
-      kosar/  penztar/  fiok/  kereses/  rendeles/[id]/   (tervezett)
+      termekek/  termek/[slug]/  kategoria/[slug]/  kosar/  kereses/
+      penztar/  fiok/  rendeles/[id]/                       (tervezett)
     api/
+      cart/**/route.ts                vékony BFF kosár → `entities/cart/index.server`
+      search/route.ts                 vékony BFF keresés → `shared/api/index.server`
       webhooks/woo/[brand]/route.ts   vékony: aláírás, Zod, revalidateTag, task indítása
                                       (kézi revalidáló végpont nincs, ADR-0014)
   pages/README.md         üres mappa: megakadályozza, hogy a Next a src/pages-t Pages Routernek vegye
@@ -33,7 +35,7 @@ apps/web/
 | `widgets` | több oldalon visszatérő nagy blokk | `header`, `footer`, `mega-menu`, `product-grid`, `product-gallery`, `cart-drawer`, `checkout-summary`, `filter-panel` |
 | `features` | felhasználói művelet (űrlap, gomb + mutáció) | `add-to-cart`, `update-cart-item`, `apply-coupon`, `filter-products`, `search-products`, `select-shipping`, `select-payment`, `submit-checkout`, `auth-login`, `auth-register`, `auth-logout` |
 | `entities` | üzleti entitás: típus, lekérés, megjelenítés | `product`, `category`, `cart`, `order`, `customer`, `brand` |
-| `shared` | brand- és üzletfüggetlen alap | `ui` (shadcn), `lib` (pénzformázás, hibakódok, analytics-segéd), `api` (Woo-kontextus, cache-tagek), `config` (env-séma, útvonalak) |
+| `shared` | brand- és üzletfüggetlen alap | `ui` (shadcn), `lib` (pénzformázás, hibakódok, analytics-segéd), `api` (Woo-kontextus, cache-tagek, közös BFF-őrök: Origin, IP, Workers rate limit binding, méretkorlátos JSON), `config` (env-séma, útvonalak, host → brand feloldás) |
 
 Szeletet akkor hozz létre, amikor az első valódi kód megjelenik; üres szeletet ne commitolj.
 
@@ -44,8 +46,9 @@ Szeletet akkor hozz létre, amikor az első valódi kód megjelenik; üres szele
 | Útvonal / oldal | `app/[brand]/…/page.tsx` → re-export a `src/pages/<oldal>/ui/<Oldal>Page.tsx`-ből |
 | Termék lekérése (RSC) | `entities/product/api/get-product.ts` (`server-only`), export az `index.server.ts`-ből |
 | Termékkártya | `entities/product/ui/ProductCard.tsx` |
-| Kosárba tétel | `features/add-to-cart/api/add-to-cart.action.ts` (`"use server"`) + `ui/AddToCartButton.tsx` |
-| Checkout beküldése | `features/submit-checkout/` (Zod-űrlapséma a `model/`-ben, action az `api/`-ban) |
+| Kosár BFF és állapot | `app/api/cart/**/route.ts` (vékony) → `entities/cart/index.server` + kliens FIFO `CartProvider` (`entities/cart`) |
+| Kosárba tétel | `features/add-to-cart/ui/add-to-cart-button.tsx` (`useCart().addItem` a kosár BFF felé) |
+| Checkout beküldése | `app/api/checkout/**/route.ts` (vékony BFF, a `shared/api` közös BFF-őreivel) + `features/submit-checkout/` (Zod-űrlapséma a `model/`-ben, UI a `ui/`-ban) |
 | Kosár-drawer | `widgets/cart-drawer/` (összerakja a `cart` entitást és a cart-featureöket) |
 | Webhook | `app/api/webhooks/woo/[brand]/route.ts` (vékony) → `packages/woo-client` aláírás + séma |
 | Woo HTTP-kliens, Zod-sémák | `packages/woo-client` (nem az appban) |

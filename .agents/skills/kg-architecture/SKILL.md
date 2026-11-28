@@ -50,12 +50,12 @@ Rétegek felülről lefelé: `app → pages → widgets → features → entitie
 ## 3. Új kód tervezése - kimenet kódolás előtt
 
 ```
-Hely: src/features/add-to-cart/ (api/add-to-cart.action.ts, ui/AddToCartButton.tsx, model/) + index.ts
-Függ: entities/cart, entities/product, shared/api/woo
-Adat: Store API POST /cart/add-item, Cart-Token a httpOnly cookie-ból; a kosár nem cache-elt (no-store)
-Hibakódok: CART.OUT_OF_STOCK (új), WOO.UNAVAILABLE (meglévő)
-Brand: minden brandre azonos; a gomb szövege a brand texts-ből
-Teszt: action unit teszt MSW-vel (siker, készlethiány, Woo 5xx), e2e a kosárba tételre
+Hely: app/api/cart/items/route.ts (vékony) → src/entities/cart/index.server.ts + src/features/add-to-cart/ (ui/add-to-cart-button.tsx, config/texts.ts) + index.ts
+Függ: entities/cart, entities/product, shared/api (bff-guard, store-client)
+Adat: BFF POST /api/cart/items → Store API POST /cart/add-item, Cart-Token + Nonce httpOnly cookie-ból; no-store
+Hibakódok: CART.OUT_OF_STOCK, CART.INVALID_INPUT, CART.RATE_LIMITED, WOO.UNAVAILABLE
+Brand: Host fejlécből feloldva (resolveRequestBrand), brandenként külön kg_<brand>_cart cookie
+Teszt: cart-bff unit teszt fixture/mock StoreClienttel (siker, készlethiány, Origin/rate-limit, Woo 5xx), Playwright e2e
 ```
 
 Ha egy kód két rétegbe is illene, az alacsonyabbat válaszd, ha nincs benne felsőbb rétegre utaló tudás.
