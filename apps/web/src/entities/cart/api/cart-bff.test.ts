@@ -2,6 +2,7 @@ import { getBrandById, type Brand } from "@kg/brand-config";
 import { WooError, type CartSession, type StoreClient } from "@kg/woo-client";
 import {
   createFixtureStoreClient,
+  fixtureCart,
   fixtureProducts,
   resetFixtureCartSessions,
 } from "@kg/woo-client/fixtures";
@@ -42,6 +43,7 @@ const secondBrand: Brand = {
   name: "Másik Shop",
   domains: ["masik.localhost"],
   woo: { baseUrlEnv: "WOO_MASIK_URL" },
+  search: { index: "products_masik" },
 };
 
 function makeRequest(
@@ -333,13 +335,30 @@ describe("Cart BFF route handlerek", () => {
     expect(r4.status).toBe(200);
   });
 
-  it("lejárt/érvénytelen tokennél új kosarat inicializál, frissíti a cookie-t és CART.SESSION_INVALID választ ad", async () => {
+  it("lejárt tokennél mutációkor új kosarat inicializál (401 CART.SESSION_INVALID), olvasó GET-nél viszont törli a cookie-t új Woo-session nyitása nélkül", async () => {
     const fixture = createFixtureStoreClient({ brandId: "gamer" });
+    const getCartSpy = vi.fn(fixture.getCart);
     const expiredCookie = Buffer.from(
       JSON.stringify({ cartToken: "expired-token", nonce: "old-nonce" }),
       "utf8",
     ).toString("base64url");
 
+    // 1. Olvasó GET lejárt cookie-val: 1 db getCart hívás elbukik, 200 üres kosár + törölt cookie (nincs 2. getCart!)
+    const getExpiredRes = await handleCartGet(
+      makeRequest("/api/cart", {
+        host: "gamer.localhost",
+        cookies: { [getCartCookieName("gamer")]: expiredCookie },
+      }),
+      {
+        getStoreClient: () => ({ ...fixture, getCart: getCartSpy }),
+      },
+    );
+    expect(getExpiredRes.status).toBe(200);
+    expect((await getExpiredRes.json()).cart.itemsCount).toBe(0);
+    expect(getCartSpy).toHaveBeenCalledTimes(1);
+    expect(getExpiredRes.cookies.get(getCartCookieName("gamer"))?.maxAge).toBe(0);
+
+    // 2. Mutáció lejárt cookie-val: új kosár inicializálva, 401 CART.SESSION_INVALID + új cookie
     const deps: CartBffDeps = {
       getStoreClient: () => ({
         ...fixture,
@@ -455,7 +474,7 @@ describe("Cart BFF route handlerek", () => {
     expect(receivedByBrand.masik[1]?.cartToken).toMatch(/^fixture-cart-masik-/);
   });
 
-  it("első mutáló kérés cookie nélkül automatikusan inicializálja a kosár-sessiont, és külföldi országra nincs ingyenes szállítási sáv", async () => {
+  it("első mutáló kérés cookie nélkül inicializálja a kosár-sessiont; az ingyenes szállítás a brand küszöbét és a free_shipping metódust nézi", async () => {
     const base = createFixtureStoreClient({ brandId: "gamer" });
     const getCartSpy = vi.fn(base.getCart);
     const deps: CartBffDeps = {
@@ -487,6 +506,76 @@ describe("Cart BFF route handlerek", () => {
     const foreignJson = await foreignRes.json();
     expect(foreignRes.status).toBe(200);
     expect(foreignJson.cart.freeShippingProgress).toBeNull();
+
+    // 0 Ft-os local_pickup nem számít free_shipping jogosultságnak
+    const freePickupCart = structuredClone(fixtureCart);
+    freePickupCart.items_count = 1;
+    freePickupCart.totals.total_items = "8990";
+    freePickupCart.totals.total_discount = "0";
+    freePickupCart.shipping_rates = [
+      {
+        package_id: 0,
+        name: "Szállítás",
+        shipping_rates: [
+          {
+            rate_id: "local_pickup:1",
+            name: "Személyes átvétel",
+            description: "",
+            delivery_time: "",
+            price: "0",
+            taxes: "0",
+            method_id: "local_pickup",
+            instance_id: 1,
+            selected: true,
+            currency_code: "HUF",
+            currency_minor_unit: 0,
+          },
+        ],
+      },
+    ];
+    const pickupRes = await handleCartAddItem(
+      makeRequest("/api/cart/items", {
+        method: "POST",
+        host: "gamer.localhost",
+        body: { id: pad.id, quantity: 1 },
+      }),
+      {
+        getStoreClient: () => ({
+          ...base,
+          getCart: async () => ({ cart: freePickupCart, cartToken: "t1", nonce: "n1" }),
+          addCartItem: async () => ({ cart: freePickupCart, cartToken: "t1", nonce: "n2" }),
+        }),
+      },
+    );
+    expect((await pickupRes.json()).cart.freeShippingProgress).toMatchObject({
+      eligible: false,
+      threshold: { amount: "25000", currency: "HUF", minorUnit: 0 },
+      remaining: { amount: "16010", currency: "HUF", minorUnit: 0 },
+    });
+
+    // Küszöb nélküli brandre freeShippingProgress === null
+    const noThresholdBrand: Brand = {
+      ...structuredClone(secondBrand),
+      merchandising: {
+        rarityThresholds: secondBrand.merchandising.rarityThresholds,
+      },
+    };
+    const noThresholdRes = await handleCartAddItem(
+      makeRequest("/api/cart/items", {
+        method: "POST",
+        host: "masik.localhost",
+        body: { id: pad.id, quantity: 1 },
+      }),
+      {
+        resolveBrand: () => noThresholdBrand,
+        getStoreClient: () => ({
+          ...base,
+          getCart: async () => ({ cart: freePickupCart, cartToken: "t2", nonce: "n1" }),
+          addCartItem: async () => ({ cart: freePickupCart, cartToken: "t2", nonce: "n2" }),
+        }),
+      },
+    );
+    expect((await noThresholdRes.json()).cart.freeShippingProgress).toBeNull();
   });
 
   it("cookie nélküli GET nem hív Woo-t, nem nyit sessiont és nem ad cookie-t", async () => {
@@ -507,6 +596,21 @@ describe("Cart BFF route handlerek", () => {
     expect(getCartSpy).not.toHaveBeenCalled();
     expect(rateLimiter).not.toHaveBeenCalled();
     expect(res.cookies.get(getCartCookieName("gamer"))).toBeUndefined();
+
+    // Sérült (nem dekódolható base64/JSON) cookie esetén is Woo- és limiter-hívás nélkül tér vissza,
+    // de aktívan törli (maxAge: 0) a hibás cookie-t.
+    const corruptRes = await handleCartGet(
+      makeRequest("/api/cart", {
+        host: "gamer.localhost",
+        cookies: { [getCartCookieName("gamer")]: "nem_ervenyes_base64_json" },
+      }),
+      deps,
+    );
+    expect(corruptRes.status).toBe(200);
+    expect((await corruptRes.json()).cart.itemsCount).toBe(0);
+    expect(getCartSpy).not.toHaveBeenCalled();
+    expect(rateLimiter).not.toHaveBeenCalled();
+    expect(corruptRes.cookies.get(getCartCookieName("gamer"))?.maxAge).toBe(0);
   });
 
   it("a cookie-s GET és a mutáció is a brand + cf-connecting-ip kulcson korlátozott", async () => {
@@ -592,7 +696,7 @@ describe("Cart BFF route handlerek", () => {
     expect((await add()).status).toBe(200);
     expect((await add()).status).toBe(429);
     expect(errorSpy).toHaveBeenCalledWith(
-      "[cart-bff] Hiányzó rate limit binding, memóriabeli tartalék fut",
+      "[bff-guard] Hiányzó rate limit binding, memóriabeli tartalék fut",
       expect.anything(),
     );
 
@@ -609,7 +713,49 @@ describe("Cart BFF route handlerek", () => {
     } as unknown as ReturnType<typeof getCloudflareContext>);
     expect((await add()).status).toBe(200);
     expect((await add()).status).toBe(429);
-    expect(errorSpy).toHaveBeenCalledWith("[cart-bff] Rate limiter hiba, memóriabeli tartalék fut");
+    expect(errorSpy).toHaveBeenCalledWith(
+      "[bff-guard] Rate limiter hiba, memóriabeli tartalék fut",
+    );
+  });
+
+  it("a 16 KiB feletti streamelt JSON-törzset azonnal megszakítja a teljes stream memóriába olvasása nélkül", async () => {
+    let cancelled = false;
+    let chunkIndex = 0;
+    const totalChunks = 64; // 640 KiB lenne teljes olvasásnál
+    const tenKbChunk = new Uint8Array(10 * 1024).fill(97);
+    const stream = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        chunkIndex += 1;
+        if (chunkIndex <= totalChunks) {
+          controller.enqueue(tenKbChunk);
+          return;
+        }
+        controller.close();
+      },
+      cancel() {
+        cancelled = true;
+      },
+    });
+
+    const req = new NextRequest("http://gamer.localhost/api/cart/items", {
+      method: "POST",
+      headers: {
+        host: "gamer.localhost",
+        origin: "http://gamer.localhost",
+        "content-type": "application/json",
+      },
+      body: stream,
+      duplex: "half",
+    });
+
+    const res = await handleCartAddItem(req, {
+      getStoreClient: (brand) => createFixtureStoreClient({ brandId: brand.id }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({ ok: false, code: "CART.INVALID_INPUT" });
+    expect(cancelled).toBe(true);
+    expect(chunkIndex).toBeLessThanOrEqual(4);
   });
 
   it("a wrangler.jsonc deklarálja a rate limit bindingot a kódéval egyező ablakkal", () => {

@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 
 import { serverEnv } from "../config/env";
 import type { ErrorCode } from "../lib/errors";
+import { readBoundedRequestBody } from "./bff-guard";
 import { cacheTags } from "./cache-tags";
 
 export type WooWebhookDependencies = {
@@ -59,47 +60,6 @@ export function collectWebhookCacheTags(brandId: string, event: VerifiedWooWebho
 
 const MAX_WEBHOOK_BODY_BYTES = 1024 * 1024; // 1 MiB
 
-async function readBoundedBody(
-  request: Request,
-  maxBytes: number,
-): Promise<{ ok: true; text: string } | { ok: false }> {
-  const contentLength = request.headers.get("content-length");
-  if (contentLength) {
-    const declared = Number(contentLength);
-    if (Number.isFinite(declared) && declared > maxBytes) {
-      return { ok: false };
-    }
-  }
-
-  if (!request.body) {
-    return { ok: true, text: "" };
-  }
-
-  const reader = request.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.byteLength;
-    if (total > maxBytes) {
-      await reader.cancel().catch(() => {});
-      return { ok: false };
-    }
-    chunks.push(value);
-  }
-
-  const merged = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    merged.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-
-  return { ok: true, text: new TextDecoder().decode(merged) };
-}
-
 export async function handleWooWebhookRequest(
   request: Request,
   brandId: string,
@@ -124,7 +84,7 @@ export async function handleWooWebhookRequest(
     return webhookError("WEBHOOK.CONFIG_ERROR", 500, "Webhook konfigurációs hiba.");
   }
 
-  const bodyResult = await readBoundedBody(request, MAX_WEBHOOK_BODY_BYTES);
+  const bodyResult = await readBoundedRequestBody(request, MAX_WEBHOOK_BODY_BYTES);
   if (!bodyResult.ok) {
     return webhookError("WEBHOOK.PAYLOAD_TOO_LARGE", 413, "Túl nagy webhook kérés.");
   }

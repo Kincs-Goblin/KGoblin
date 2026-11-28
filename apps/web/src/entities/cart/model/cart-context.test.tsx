@@ -4,9 +4,8 @@ import { StrictMode } from "react";
 import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { EMPTY_CART_DTO, type CartDto } from "@/shared/api";
-
 import { CartProvider, useCart } from "./cart-context";
+import { EMPTY_CART_DTO, type CartDto } from "./types";
 
 vi.mock("sonner", () => ({
   toast: {

@@ -1,5 +1,6 @@
-import type { CartDto } from "@/shared/api";
-import type { ErrorCode } from "@/shared/lib/errors";
+import { errorCatalog, type ErrorCode } from "@/shared/lib/errors";
+
+import type { CartDto } from "../model/types";
 
 export type CartApiResponse =
   { ok: true; cart: CartDto } | { ok: false; code: ErrorCode; message: string; cart?: CartDto };
@@ -41,7 +42,7 @@ async function requestCartApi(url: string, init?: RequestInit): Promise<CartApiR
     return {
       ok: false,
       code: "WOO.UNAVAILABLE",
-      message: "A kincstár most nem elérhető. Próbáld újra pár perc múlva.",
+      message: errorCatalog["WOO.UNAVAILABLE"].message,
     };
   }
 }

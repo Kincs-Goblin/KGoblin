@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import {
   handleCartSelectShipping,
   handleCartUpdateShippingAddress,
-} from "@/shared/api/index.server";
+} from "@/entities/cart/index.server";
 
 export function POST(request: NextRequest) {
   return handleCartSelectShipping(request);

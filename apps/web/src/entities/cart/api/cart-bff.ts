@@ -1,7 +1,6 @@
 import "server-only";
 
-import { getBrandById, resolveBrandByHost, type Brand } from "@kg/brand-config";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import type { Brand } from "@kg/brand-config";
 import {
   isWooError,
   type CartSession,
@@ -12,21 +11,32 @@ import {
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
-import { errorCatalog, type ErrorCode } from "../lib/errors";
-import { EMPTY_CART_DTO, type CartDto, type CartFreeShippingProgressDto } from "./cart-types";
-import { getStoreClient } from "./store-client";
+import {
+  bffNoStoreHeaders,
+  CART_RATE_LIMIT_BINDING,
+  CART_RATE_LIMIT_PERIOD_SECONDS,
+  checkBffRateLimit,
+  getBffClientIp,
+  getStoreClient,
+  isMutatingOriginAllowed,
+  isSecureBffCookie,
+  parseBoundedJsonBody,
+  resetBffRateLimiter,
+  type BffRateLimitDecision,
+  type BffRateLimiter,
+} from "@/shared/api/index.server";
+import { resolveRequestBrand } from "@/shared/config";
+import { errorCatalog, type ErrorCode } from "@/shared/lib/errors";
+
+import { MAX_QUANTITY_PER_LINE } from "../model/cart-optimistic";
+import { createEmptyCartDto, type CartDto, type CartFreeShippingProgressDto } from "../model/types";
+
+export { CART_RATE_LIMIT_BINDING, CART_RATE_LIMIT_PERIOD_SECONDS };
+export type CartRateLimitDecision = BffRateLimitDecision;
+export type CartRateLimiter = BffRateLimiter;
 
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 14; // 14 nap
-/** A `wrangler.jsonc` `ratelimits` bindingjának neve és ablaka (ADR-0018); a kettőnek egyeznie kell. */
-export const CART_RATE_LIMIT_BINDING = "CART_RATE_LIMITER";
-export const CART_RATE_LIMIT_PERIOD_SECONDS = 60;
-const DEFAULT_RATE_LIMIT_MAX = 60;
-const DEFAULT_RATE_LIMIT_WINDOW_MS = CART_RATE_LIMIT_PERIOD_SECONDS * 1000;
-const MAX_RATE_LIMIT_KEYS = 2000;
 const MAX_JSON_BODY_BYTES = 16 * 1024;
-const MAX_QUANTITY_PER_LINE = 30;
-/** Magyarországi ingyenes szállítási küszöb HUF-ban (minor unit, egyezik a Woo seeddel). */
-const FREE_SHIPPING_THRESHOLD_HUF_MINOR = 25_000;
 
 const cookiePayloadSchema = z.object({
   cartToken: z.string().min(1).max(2048),
@@ -76,12 +86,6 @@ const updateShippingAddressBodySchema = z.object({
   city: z.string().trim().max(120).optional(),
 });
 
-export type CartRateLimitDecision =
-  { allowed: true } | { allowed: false; retryAfterSeconds: number };
-
-/** Kulcsonkénti (brand + kliens-IP) rate limit döntés. */
-export type CartRateLimiter = (key: string) => Promise<CartRateLimitDecision>;
-
 export type CartBffDeps = {
   resolveBrand?: (request: NextRequest) => Brand | undefined;
   getStoreClient?: (brand: Brand) => StoreClient;
@@ -96,48 +100,8 @@ export type CartBffDeps = {
   };
 };
 
-/** A Workers Rate Limiting binding felülete (`ratelimits` a `wrangler.jsonc`-ben). */
-type RateLimitBinding = {
-  limit(options: { key: string }): Promise<{ success: boolean }>;
-};
-
-function isRateLimitBinding(value: unknown): value is RateLimitBinding {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    typeof (value as { limit?: unknown }).limit === "function"
-  );
-}
-
-/**
- * A Workers Rate Limiting binding, ha a kérés Cloudflare Workersen fut. Máshol (`next dev`,
- * `next start`, Vitest) nincs Cloudflare-kontextus, ilyenkor csendben `undefined`. Ha van
- * Cloudflare-kontextus, de hiányzik a binding, az konfigurációs hiba: naplózzuk, és a tartalék fut.
- */
-function getRateLimitBinding(): RateLimitBinding | undefined {
-  let env: Record<string, unknown>;
-  try {
-    env = getCloudflareContext().env as unknown as Record<string, unknown>;
-  } catch {
-    return undefined;
-  }
-  const binding = env[CART_RATE_LIMIT_BINDING];
-  if (isRateLimitBinding(binding)) return binding;
-  console.error("[cart-bff] Hiányzó rate limit binding, memóriabeli tartalék fut", {
-    binding: CART_RATE_LIMIT_BINDING,
-  });
-  return undefined;
-}
-
-/**
- * Memóriabeli csúszóablakos tartalék limiter. Csak ott fut, ahol nincs Workers binding (helyi
- * fejlesztés, teszt, `next start` e2e); Workersen az izolátumok miatt nem korlátozna érdemben.
- * Felső kulcsszámmal védett a memória-kimerítés ellen.
- */
-const rateLimitStore = new Map<string, number[]>();
-
 export function resetCartRateLimiter(): void {
-  rateLimitStore.clear();
+  resetBffRateLimiter();
 }
 
 export function getCartCookieName(brandId: string): string {
@@ -166,134 +130,14 @@ function decodeCartCookie(raw: string | undefined): CartSession | undefined {
   }
 }
 
-function defaultResolveBrand(request: NextRequest): Brand | undefined {
-  if (process.env.NODE_ENV === "development" && request.nextUrl.searchParams.has("brand")) {
-    const queryBrand = request.nextUrl.searchParams.get("brand");
-    return queryBrand ? getBrandById(queryBrand) : undefined;
-  }
-  return resolveBrandByHost(request.headers.get("host"));
-}
-
-function isSecureCookie(request: NextRequest, deps?: CartBffDeps): boolean {
-  if (deps?.isSecure !== undefined) return deps.isSecure;
-  const appEnv = process.env.NEXT_PUBLIC_APP_ENV;
-  if (appEnv === "production" || appEnv === "demo") return true;
-  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
-  return forwardedProto === "https" || request.nextUrl.protocol === "https:";
-}
-
-/**
- * A rate limit kulcsához használt kliens-IP. Élesben csak a Cloudflare által beállított
- * `cf-connecting-ip` hiteles; a hamisítható `x-forwarded-for` és a közös `local` vödör kizárólag
- * helyi környezetben használható. Hiányzó IP-nél a kérések egy közös `unknown` vödörbe esnek
- * (fail-closed: inkább korlátozunk, mint hogy kulcs nélkül átengedjünk).
- */
-function getClientIp(request: NextRequest): string {
-  const cfIp = request.headers.get("cf-connecting-ip")?.trim();
-  if (cfIp) return cfIp;
-  if (process.env.NEXT_PUBLIC_APP_ENV !== "local") return "unknown";
-  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  if (forwarded) return forwarded;
-  return "local";
-}
-
-function createMemoryRateLimiter(deps?: CartBffDeps): CartRateLimiter {
-  const maxRequests = deps?.rateLimit?.maxRequests ?? DEFAULT_RATE_LIMIT_MAX;
-  const windowMs = deps?.rateLimit?.windowMs ?? DEFAULT_RATE_LIMIT_WINDOW_MS;
-  return async (key) =>
-    checkMemoryRateLimit(key, deps?.now?.() ?? Date.now(), maxRequests, windowMs);
-}
-
-function createBindingRateLimiter(binding: RateLimitBinding): CartRateLimiter {
-  return async (key) => {
-    const { success } = await binding.limit({ key });
-    // A binding nem adja meg a hátralévő időt; az ablak hossza felső becslés.
-    return success
-      ? { allowed: true }
-      : { allowed: false, retryAfterSeconds: CART_RATE_LIMIT_PERIOD_SECONDS };
-  };
-}
-
-function resolveRateLimiter(deps?: CartBffDeps): CartRateLimiter {
-  if (deps?.rateLimiter) return deps.rateLimiter;
-  const binding = getRateLimitBinding();
-  return binding ? createBindingRateLimiter(binding) : createMemoryRateLimiter(deps);
-}
-
-/**
- * Fail-open: ha maga a limiter hibázik (pl. a binding kivételt dob), naplózunk és a memóriabeli
- * tartalékra esünk vissza. Egy limiter-kiesés így nem állítja le a teljes kosarat; az ár, a készlet
- * és a kupon érvényessége ettől függetlenül a Woo-ban ellenőrzött.
- */
-async function checkRateLimit(key: string, deps?: CartBffDeps): Promise<CartRateLimitDecision> {
-  try {
-    return await resolveRateLimiter(deps)(key);
-  } catch {
-    // A kulcs kliens-IP-t tartalmaz, ezért nem naplózzuk.
-    console.error("[cart-bff] Rate limiter hiba, memóriabeli tartalék fut");
-    return createMemoryRateLimiter(deps)(key);
-  }
-}
-
-function checkMemoryRateLimit(
-  key: string,
-  nowMs: number,
-  maxRequests: number,
-  windowMs: number,
-): CartRateLimitDecision {
-  const cutoff = nowMs - windowMs;
-  const existing = (rateLimitStore.get(key) ?? []).filter((ts) => ts > cutoff);
-
-  if (existing.length >= maxRequests) {
-    const oldest = existing[0] ?? nowMs;
-    const retryAfterSeconds = Math.max(1, Math.ceil((oldest + windowMs - nowMs) / 1000));
-    rateLimitStore.set(key, existing);
-    return { allowed: false, retryAfterSeconds };
-  }
-
-  existing.push(nowMs);
-  rateLimitStore.delete(key);
-  rateLimitStore.set(key, existing);
-
-  if (rateLimitStore.size > MAX_RATE_LIMIT_KEYS) {
-    for (const [entryKey, timestamps] of rateLimitStore.entries()) {
-      const fresh = timestamps.filter((ts) => ts > cutoff);
-      if (fresh.length === 0) {
-        rateLimitStore.delete(entryKey);
-      } else {
-        rateLimitStore.set(entryKey, fresh);
-      }
-    }
-    while (rateLimitStore.size > MAX_RATE_LIMIT_KEYS) {
-      const oldestKey = rateLimitStore.keys().next().value;
-      if (oldestKey === undefined) break;
-      rateLimitStore.delete(oldestKey);
-    }
-  }
-
-  return { allowed: true };
-}
-
-/**
- * CSRF-védelem a mutáló kérésekre: az `Origin` kötelező, és a kérés hostjával kell egyeznie. A modern
- * böngészők same-origin POST/PATCH/DELETE `fetch`-nél is küldik; hiánya nem böngészős vagy hamisított
- * kérésre utal.
- */
-function isOriginAllowed(request: NextRequest): boolean {
-  const origin = request.headers.get("origin");
-  if (!origin) return false;
-  const host = request.headers.get("host")?.trim().toLowerCase();
-  if (!host) return false;
-  try {
-    return new URL(origin).host.toLowerCase() === host;
-  } catch {
-    return false;
-  }
-}
-
-function computeFreeShippingProgress(cart: StoreCart): CartFreeShippingProgressDto | null {
+function computeFreeShippingProgress(
+  cart: StoreCart,
+  brand: Brand,
+): CartFreeShippingProgressDto | null {
+  const threshold = brand.merchandising.freeShippingThresholdMinor;
+  if (!threshold) return null;
   if (cart.items_count === 0) return null;
-  if (cart.totals.currency_code !== "HUF" || cart.totals.currency_minor_unit !== 0) {
+  if (cart.totals.currency_code !== brand.currency) {
     return null;
   }
 
@@ -302,15 +146,17 @@ function computeFreeShippingProgress(cart: StoreCart): CartFreeShippingProgressD
     return null;
   }
 
+  // Kizárólag a Woo `free_shipping` metódusa jelent ingyenes kiszállítási jogosultságot
+  // (egy 0 Ft-os személyes átvételi mód nem).
   const hasFreeRate = cart.shipping_rates.some((pkg) =>
-    pkg.shipping_rates.some((rate) => rate.method_id === "free_shipping" || rate.price === "0"),
+    pkg.shipping_rates.some((rate) => rate.method_id === "free_shipping"),
   );
-  const threshold = FREE_SHIPPING_THRESHOLD_HUF_MINOR;
   const itemsMinor = Number.parseInt(cart.totals.total_items, 10) || 0;
   const discountMinor = Number.parseInt(cart.totals.total_discount, 10) || 0;
   const netItemsMinor = Math.max(0, itemsMinor - discountMinor);
+  const minorUnit = cart.totals.currency_minor_unit;
+  const currency = cart.totals.currency_code;
 
-  // A jogosultság egyetlen forrása a Woo által ténylegesen felajánlott ingyenes szállítási mód.
   const eligible = hasFreeRate;
   const remainingMinor = eligible ? 0 : Math.max(0, threshold - netItemsMinor);
   const progressPercent = eligible
@@ -318,14 +164,14 @@ function computeFreeShippingProgress(cart: StoreCart): CartFreeShippingProgressD
     : Math.min(99, Math.max(0, Math.round((netItemsMinor / threshold) * 100)));
 
   return {
-    threshold: { amount: String(threshold), currency: "HUF", minorUnit: 0 },
-    remaining: { amount: String(remainingMinor), currency: "HUF", minorUnit: 0 },
+    threshold: { amount: String(threshold), currency, minorUnit },
+    remaining: { amount: String(remainingMinor), currency, minorUnit },
     eligible,
     progressPercent,
   };
 }
 
-export function mapStoreCartToDto(cart: StoreCart): CartDto {
+export function mapStoreCartToDto(cart: StoreCart, brand?: Brand): CartDto {
   const currency = cart.totals.currency_code;
   const minorUnit = cart.totals.currency_minor_unit;
 
@@ -404,15 +250,7 @@ export function mapStoreCartToDto(cart: StoreCart): CartDto {
     itemsCount: cart.items_count,
     needsShipping: cart.needs_shipping,
     needsPayment: cart.needs_payment,
-    freeShippingProgress: computeFreeShippingProgress(cart),
-  };
-}
-
-function baseHeaders(extra?: Record<string, string>): Record<string, string> {
-  return {
-    "Cache-Control": "no-store",
-    Vary: "Host, Cookie",
-    ...extra,
+    freeShippingProgress: brand ? computeFreeShippingProgress(cart, brand) : null,
   };
 }
 
@@ -431,7 +269,7 @@ function jsonError(
       message: entry.message,
       ...(options?.cart ? { cart: options.cart } : {}),
     },
-    { status: entry.status, headers: baseHeaders(options?.headers) },
+    { status: entry.status, headers: bffNoStoreHeaders(options?.headers) },
   );
 }
 
@@ -468,37 +306,6 @@ function clearCartCookie(response: NextResponse, brandId: string, secure: boolea
   });
 }
 
-async function parseBoundedJsonBody<T extends z.ZodType>(
-  request: NextRequest,
-  schema: T,
-): Promise<{ ok: true; data: z.infer<T> } | { ok: false }> {
-  // Pontos médiatípus-egyezés: a CORS-safelisted `text/plain; application/json` forma nem mehet át.
-  const mediaType = request.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase();
-  if (mediaType !== "application/json") {
-    return { ok: false };
-  }
-
-  let text: string;
-  try {
-    text = await request.text();
-  } catch {
-    return { ok: false };
-  }
-  if (Buffer.byteLength(text, "utf8") > MAX_JSON_BODY_BYTES) {
-    return { ok: false };
-  }
-
-  let raw: unknown;
-  try {
-    raw = JSON.parse(text);
-  } catch {
-    return { ok: false };
-  }
-  const parsed = schema.safeParse(raw);
-  if (!parsed.success) return { ok: false };
-  return { ok: true, data: parsed.data };
-}
-
 function mapWooCodeToErrorCode(code: string): ErrorCode {
   if (code in errorCatalog) {
     return code as ErrorCode;
@@ -519,31 +326,35 @@ async function executeCartOperation<TBody = undefined>(
     deps?: CartBffDeps;
   },
 ): Promise<NextResponse> {
-  const resolveBrand = options.deps?.resolveBrand ?? defaultResolveBrand;
+  const resolveBrand = options.deps?.resolveBrand ?? resolveRequestBrand;
   const brand = resolveBrand(request);
   if (!brand) {
     return jsonError("BRAND.UNKNOWN_HOST");
   }
 
-  if (options.mutating && !isOriginAllowed(request)) {
+  if (options.mutating && !isMutatingOriginAllowed(request)) {
     return jsonError("CART.INVALID_INPUT");
   }
 
+  const secure = isSecureBffCookie(request, options.deps?.isSecure);
   // Kizárólag a feloldott brand saját cookie-ját olvassuk (brand-elkülönítés).
   const cookieRaw = request.cookies.get(getCartCookieName(brand.id))?.value;
   let session = decodeCartCookie(cookieRaw);
 
-  // Cookie nélküli lekérés: nincs kosár, nem hívjuk a Woo-t és nem nyitunk sessiont. Így egy anonim
-  // oldalbetöltés nem terheli a Woo-t; a session az első mutációnál jön létre.
+  // Cookie nélküli vagy sérült cookie-jú lekérés: nincs kosár, nem hívjuk a Woo-t és nem nyitunk sessiont.
   if (!options.mutating && !session?.cartToken) {
-    return NextResponse.json(
-      { ok: true, cart: EMPTY_CART_DTO },
-      { status: 200, headers: baseHeaders() },
+    const response = NextResponse.json(
+      { ok: true, cart: createEmptyCartDto(brand.currency) },
+      { status: 200, headers: bffNoStoreHeaders() },
     );
+    if (cookieRaw) {
+      clearCartCookie(response, brand.id, secure);
+    }
+    return response;
   }
 
-  // Minden Woo-t érő kérés (mutáció és cookie-s lekérés) a brand + kliens-IP kulcson korlátozott.
-  const rateCheck = await checkRateLimit(`${brand.id}:${getClientIp(request)}`, options.deps);
+  // Minden Woo-t érő kérés (mutáció és cookie-s lekérés) a brand + kliens-IP kulcson korlátozott (ADR-0018).
+  const rateCheck = await checkBffRateLimit(`${brand.id}:${getBffClientIp(request)}`, options.deps);
   if (!rateCheck.allowed) {
     return jsonError("CART.RATE_LIMITED", {
       headers: { "Retry-After": String(rateCheck.retryAfterSeconds) },
@@ -552,12 +363,11 @@ async function executeCartOperation<TBody = undefined>(
 
   let parsedBody = undefined as TBody;
   if (options.bodySchema) {
-    const parsed = await parseBoundedJsonBody(request, options.bodySchema);
+    const parsed = await parseBoundedJsonBody(request, options.bodySchema, MAX_JSON_BODY_BYTES);
     if (!parsed.ok) return jsonError("CART.INVALID_INPUT");
     parsedBody = parsed.data;
   }
 
-  const secure = isSecureCookie(request, options.deps);
   const storeClient = (options.deps?.getStoreClient ?? getStoreClient)(brand);
 
   try {
@@ -573,19 +383,30 @@ async function executeCartOperation<TBody = undefined>(
 
     const result = await options.run(storeClient, session, parsedBody);
     const response = NextResponse.json(
-      { ok: true, cart: mapStoreCartToDto(result.cart) },
-      { status: 200, headers: baseHeaders() },
+      { ok: true, cart: mapStoreCartToDto(result.cart, brand) },
+      { status: 200, headers: bffNoStoreHeaders() },
     );
     applyCartCookie(response, brand.id, result, secure);
     return response;
   } catch (error) {
     if (isWooError(error)) {
       if (error.code === "CART.SESSION_INVALID") {
-        // Lejárt vagy érvénytelen token: friss kosarat inicializálunk és frissítjük (vagy töröljük) a cookie-t.
+        // Olvasó GET-nél lejárt cookie esetén csendben töröljük a cookie-t és üres kosárral térünk vissza,
+        // új Woo-session felesleges létrehozása nélkül.
+        if (!options.mutating) {
+          const response = NextResponse.json(
+            { ok: true, cart: createEmptyCartDto(brand.currency) },
+            { status: 200, headers: bffNoStoreHeaders() },
+          );
+          clearCartCookie(response, brand.id, secure);
+          return response;
+        }
+
+        // Mutáló kérésnél friss kosarat inicializálunk és frissítjük (vagy töröljük) a cookie-t.
         try {
           const fresh = await storeClient.getCart();
           const response = jsonError("CART.SESSION_INVALID", {
-            cart: mapStoreCartToDto(fresh.cart),
+            cart: mapStoreCartToDto(fresh.cart, brand),
           });
           if (fresh.cartToken) {
             applyCartCookie(response, brand.id, fresh, secure);

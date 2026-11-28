@@ -4,7 +4,7 @@ import {
   handleCartAddItem,
   handleCartRemoveItem,
   handleCartUpdateItem,
-} from "@/shared/api/index.server";
+} from "@/entities/cart/index.server";
 
 export function POST(request: NextRequest) {
   return handleCartAddItem(request);
