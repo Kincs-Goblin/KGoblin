@@ -104,4 +104,90 @@ describe("createFixtureStoreClient kosár-életciklus", () => {
     const fresh = await client.getCart();
     expect(fresh.cartToken).not.toBe("fixture-cart-gamer-999");
   });
+
+  it("izolátumváltáskor (resetFixtureCartSessions után) az érvényes snapshot-tokenből visszaállítja a kosár állapotát", async () => {
+    const client = createFixtureStoreClient({ brandId: "gamer" });
+    const pad = fixtureProducts.find((p) => p.slug.includes("titanweave"))!;
+
+    const added = await client.addCartItem({ id: pad.id, quantity: 2 });
+    const couponed = await client.applyCoupon(
+      { code: "GOBLIN10" },
+      { cartToken: added.cartToken, nonce: added.nonce },
+    );
+    const addressed = await client.updateCustomer(
+      { shipping_address: { country: "HU", postcode: "1053", city: "Budapest" } },
+      { cartToken: couponed.cartToken, nonce: couponed.nonce },
+    );
+    const shipped = await client.selectShippingRate(
+      { rateId: "local_pickup:2" },
+      { cartToken: addressed.cartToken, nonce: addressed.nonce },
+    );
+
+    resetFixtureCartSessions();
+
+    const restored = await client.getCart({
+      cartToken: shipped.cartToken,
+      nonce: shipped.nonce,
+    });
+    expect(restored.cart.items_count).toBe(2);
+    expect(restored.cart.coupons[0]?.code).toBe("goblin10");
+    expect(restored.cart.shipping_address?.postcode).toBe("1053");
+    expect(
+      restored.cart.shipping_rates[0]?.shipping_rates.find((r) => r.rate_id === "local_pickup:2")
+        ?.selected,
+    ).toBe(true);
+  });
+
+  it("meleg izolátumra visszatérve a frissebb cookie-snapshot felülírja az elavult memóriabeli állapotot, és a sessionId nem szekvenciális", async () => {
+    const client = createFixtureStoreClient({ brandId: "retro-gamer" });
+    const pad = fixtureProducts.find((p) => p.slug.includes("titanweave"))!;
+
+    // 1. izolátum: 1 db termék bekerül (nonce = 2), véletlen hex sessionId-val
+    const step1 = await client.addCartItem({ id: pad.id, quantity: 1 });
+    expect(step1.cartToken).toMatch(/^fixture-cart-retro-gamer-[a-f0-9]{32}\./);
+
+    // 2. izolátum (reset után): ugyanahhoz a kosárhoz még 2 db-ot adunk (összesen 3 db, nonce = 3)
+    resetFixtureCartSessions();
+    const step2 = await client.addCartItem(
+      { id: pad.id, quantity: 2 },
+      { cartToken: step1.cartToken, nonce: step1.nonce },
+    );
+    expect(step2.cart.items_count).toBe(3);
+
+    // Visszaállítjuk az 1. izolátum elavult (nonce = 2, 1 db) memóriabeli állapotát...
+    resetFixtureCartSessions();
+    const staleWarm = await client.getCart({ cartToken: step1.cartToken, nonce: step1.nonce });
+    expect(staleWarm.cart.items_count).toBe(1);
+
+    // ...majd reset NÉLKÜL beérkezik a 2. izolátumról származó frissebb (nonce = 3) cookie:
+    const converged = await client.getCart({ cartToken: step2.cartToken, nonce: step2.nonce });
+    expect(converged.cart.items_count).toBe(3);
+  });
+
+  it("különböző variációs attribútum-választások azonos termék/variáció ID mellett külön kosársort kapnak", async () => {
+    const client = createFixtureStoreClient({ brandId: "gamer" });
+    const variable = fixtureProducts.find((p) => p.type === "variable")!;
+
+    const first = await client.addCartItem({
+      id: variable.id,
+      quantity: 1,
+      variation: [{ attribute: "pa_kapcsolo", value: "linearis-red" }],
+    });
+    const second = await client.addCartItem(
+      {
+        id: variable.id,
+        quantity: 1,
+        variation: [{ attribute: "pa_kapcsolo", value: "taktilis-brown" }],
+      },
+      { cartToken: first.cartToken, nonce: first.nonce },
+    );
+
+    expect(second.cart.items).toHaveLength(2);
+    expect(second.cart.items[0]?.key).not.toBe(second.cart.items[1]?.key);
+
+    resetFixtureCartSessions();
+    const restored = await client.getCart({ cartToken: second.cartToken, nonce: second.nonce });
+    expect(restored.cart.items).toHaveLength(2);
+    expect(restored.cart.items[0]?.key).not.toBe(restored.cart.items[1]?.key);
+  });
 });

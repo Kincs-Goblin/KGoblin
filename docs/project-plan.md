@@ -1,11 +1,14 @@
 # KGoblin - projektterv
 
-- Állapot: a 0. mérföldkő kiadva (v0.1.0), az 1. folyamatban. Kész: élő Woo-katalógus Store API-val és
-  REST v3 klienssel (KG-8), webhook-revalidálás (KG-9), `kg-headless` plugin (Omnibus, checkout-validáció),
-  Docker-Woo seeddel, Cloudflare Workers demo-konfiguráció (ADR-0009), az ADR-0008-0017 döntések.
-  Még nincs: keresés, SEO, Store API kosár és checkout, fizetés, Trigger.dev integrációk. A branch
+- Állapot: a 0. mérföldkő kiadva (v0.1.0), az 1. mérföldkő (katalógus) és a kosár-BFF a `demo` ágon kész:
+  élő Woo-katalógus Store API-val és REST v3 klienssel (KG-8), webhook-revalidálás (KG-9), Meilisearch
+  keresés és autocomplete (KG-10), brand SEO, sitemap, JSON-LD, OG-kártyák és slug-átirányítások (KG-11),
+  Store API kosár-BFF, kupon, szállítás és Workers rate limit keményítés (KG-12, KG-127), env/seed/webhook
+  őrök és PHP CI (KG-126), `kg-headless` plugin (Omnibus, checkout-validáció), Docker-Woo seeddel,
+  Cloudflare Workers demo-konfiguráció (ADR-0009), az ADR-0008-0018 döntések. Még nincs: checkout és fizetési
+  gateway-bekötés (KG-13), auth (KG-15), Trigger.dev beszállítói és számlázási integrációk. A branch
   protection 2026-11-21 óta él a `main`-en és a `demo`-n (`kg-git-workflow`).
-- Utolsó módosítás: 2026-11-21
+- Utolsó módosítás: 2026-11-28
 - Csapat: SMark2256, ricsmond12 (+ AI agentek: Claude Code, Antigravity)
 
 ## Cél

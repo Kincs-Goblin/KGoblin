@@ -1,21 +1,21 @@
 import "server-only";
 
-export { cacheTags } from "./cache-tags";
 export {
-  getCartCookieName,
-  handleCartAddItem,
-  handleCartApplyCoupon,
-  handleCartClear,
-  handleCartGet,
-  handleCartRemoveCoupon,
-  handleCartRemoveItem,
-  handleCartSelectShipping,
-  handleCartUpdateItem,
-  handleCartUpdateShippingAddress,
-  mapStoreCartToDto,
-  resetCartRateLimiter,
-  type CartBffDeps,
-} from "./cart-bff";
+  bffNoStoreHeaders,
+  CART_RATE_LIMIT_BINDING,
+  CART_RATE_LIMIT_PERIOD_SECONDS,
+  checkBffRateLimit,
+  getBffClientIp,
+  isMutatingOriginAllowed,
+  isSecureBffCookie,
+  parseBoundedJsonBody,
+  readBoundedRequestBody,
+  resetBffRateLimiter,
+  type BffRateLimitDecision,
+  type BffRateLimiter,
+  type BffRateLimitOptions,
+} from "./bff-guard";
+export { cacheTags } from "./cache-tags";
 export {
   getBrandSearchConfig,
   searchProducts,

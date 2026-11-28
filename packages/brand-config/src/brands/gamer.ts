@@ -73,6 +73,7 @@ export const gamer = {
   merchandising: {
     // HUF, minor unit = Ft.
     rarityThresholds: { rare: 20000, epic: 35000, legendary: 50000 },
+    freeShippingThresholdMinor: 25000,
   },
   search: {
     index: "products_gamer",

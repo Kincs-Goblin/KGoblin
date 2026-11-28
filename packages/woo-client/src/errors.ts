@@ -4,6 +4,7 @@ export type WooErrorCode =
   | "WOO.INVALID_RESPONSE"
   | "CART.OUT_OF_STOCK"
   | "CART.INVALID_QUANTITY"
+  | "CART.INVALID_INPUT"
   | "CART.COUPON_INVALID"
   | "CART.SHIPPING_UNAVAILABLE"
   | "CART.SESSION_INVALID"
@@ -46,7 +47,7 @@ export function mapWooErrorCode(
   status: number,
   context: WooErrorContext = "catalog",
 ): WooErrorCode {
-  if (status >= 500) {
+  if (status >= 500 || status === 429) {
     return "WOO.UNAVAILABLE";
   }
 
@@ -110,6 +111,13 @@ export function mapWooErrorCode(
       normalized.includes("missing_param"))
   ) {
     return "CHECKOUT.VALIDATION_FAILED";
+  }
+
+  // Ismeretlen 4xx (érvényes Woo hibakóddal) kosár/checkout kontextusban kliensoldali/üzleti
+  // elutasítás, nem újrapróbálható 502-es szerverhiba.
+  if (status >= 400 && status < 500) {
+    if (context === "cart") return "CART.INVALID_INPUT";
+    if (context === "checkout") return "CHECKOUT.VALIDATION_FAILED";
   }
 
   return "WOO.INVALID_RESPONSE";

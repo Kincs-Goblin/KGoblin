@@ -25,8 +25,9 @@ webhook-aláírás ellenőrzés (`@kg/woo-client/webhooks`), fixture-ök (`@kg/w
   `ping` kérését (`webhook_id=<szám>`, topic header nélkül, mellékhatás nélkül), valamint a `product.*`
   és `order.created`/`order.updated` Zod-sémákat (rossz aláírásnál `401`, payload naplózása nélkül).
 - **Hibák:** `WooError` stabil `DOMAIN.REASON` kóddal (`WOO.UNAVAILABLE`, `WOO.INVALID_RESPONSE`,
-  `WOO.CONTRACT_MISMATCH`, `CART.OUT_OF_STOCK`, `CART.INVALID_QUANTITY`, `CART.COUPON_INVALID`,
-  `CART.SESSION_INVALID`, `CHECKOUT.VALIDATION_FAILED`, `CHECKOUT.PAYMENT_DECLINED`). A `WooError.message`
+  `WOO.CONTRACT_MISMATCH`, `CART.OUT_OF_STOCK`, `CART.INVALID_QUANTITY`, `CART.INVALID_INPUT`,
+  `CART.COUPON_INVALID`, `CART.SHIPPING_UNAVAILABLE`, `CART.SESSION_INVALID`, `CHECKOUT.VALIDATION_FAILED`,
+  `CHECKOUT.PAYMENT_DECLINED`). A `WooError.message`
   belső diagnosztikára való; a felhasználó mindig a hibakatalógus szövegét kapja.
 - **`@kg/woo-client/fixtures` és `@kg/woo-client/msw`:** valódi, a lokális KG-4 Woo-ból mentett válaszok
   és MSW handlerek Woo nélküli tesztekhez. Lokális Docker-Woo contract-teszt:

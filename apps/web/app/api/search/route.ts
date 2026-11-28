@@ -1,7 +1,7 @@
-import { getBrandById, resolveBrandByHost, type Brand } from "@kg/brand-config";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { searchProducts, type SearchSortKey } from "@/shared/api/index.server";
+import { resolveRequestBrand } from "@/shared/config";
 import { isAppError } from "@/shared/lib/errors";
 
 const VALID_SORTS = new Set<SearchSortKey>([
@@ -11,14 +11,6 @@ const VALID_SORTS = new Set<SearchSortKey>([
   "popularity",
   "name",
 ]);
-
-function resolveRequestBrand(request: NextRequest): Brand | undefined {
-  if (process.env.NODE_ENV === "development" && request.nextUrl.searchParams.has("brand")) {
-    const queryBrand = request.nextUrl.searchParams.get("brand");
-    return queryBrand ? getBrandById(queryBrand) : undefined;
-  }
-  return resolveBrandByHost(request.headers.get("host"));
-}
 
 function parseOptionalNonNegInt(raw: string | null): number | undefined {
   if (!raw || !/^\d+$/.test(raw.trim())) return undefined;

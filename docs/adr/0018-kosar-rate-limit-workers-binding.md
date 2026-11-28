@@ -17,7 +17,7 @@
 
 ## Döntés
 
-- A kosár-BFF minden Woo-t érő kérése (mutáció és cookie-s `GET /api/cart`) a `CART_RATE_LIMITER` Workers
+- A kosár-BFF minden Woo-t érő kérése (mutáció és cookie-s `GET /api/cart`, az `apps/web/src/entities/cart/api/cart-bff.ts`-ben) a közös BFF-őr (`apps/web/src/shared/api/bff-guard.ts`) által kezelt `CART_RATE_LIMITER` Workers
   Rate Limiting bindingon megy át, `<brandId>:<cf-connecting-ip>` kulccsal, 60 kérés / 60 másodperc
   ablakkal (`apps/web/wrangler.jsonc`, `simple: { limit: 60, period: 60 }`, `namespace_id: "1001"`).
 - A bindingot a kód a `getCloudflareContext()` (`@opennextjs/cloudflare`) környezetéből olvassa. Ahol nincs

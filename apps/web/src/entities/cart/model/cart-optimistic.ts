@@ -1,4 +1,4 @@
-import type { CartDto } from "@/shared/api";
+import type { CartDto } from "./types";
 
 export const MAX_QUANTITY_PER_LINE = 30;
 

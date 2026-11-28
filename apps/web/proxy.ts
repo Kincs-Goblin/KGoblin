@@ -1,5 +1,6 @@
-import { getBrandById, resolveBrandByHost, type Brand } from "@kg/brand-config";
 import { NextResponse, type NextRequest } from "next/server";
+
+import { resolveRequestBrand } from "@/shared/config";
 
 /**
  * Domain → brand: a kérést a `/<brand>/…` útvonalra írja át. Ismeretlen hostra 404
@@ -7,14 +8,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * A `?brand=` query paraméter kizárólag `development` módban használható.
  */
 export function proxy(request: NextRequest) {
-  let brand: Brand | undefined;
-
-  if (process.env.NODE_ENV === "development" && request.nextUrl.searchParams.has("brand")) {
-    const queryBrand = request.nextUrl.searchParams.get("brand");
-    brand = queryBrand ? getBrandById(queryBrand) : undefined;
-  } else {
-    brand = resolveBrandByHost(request.headers.get("host"));
-  }
+  const brand = resolveRequestBrand(request);
 
   if (!brand) {
     return new NextResponse("BRAND.UNKNOWN_HOST", { status: 404 });

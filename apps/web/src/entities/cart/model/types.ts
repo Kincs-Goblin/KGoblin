@@ -1,4 +1,4 @@
-import type { MoneyParts } from "../lib/format";
+import { getCurrencyMinorUnit, type MoneyParts } from "@/shared/lib/format";
 
 export type CartItemVariationDto = {
   attribute: string;
@@ -75,20 +75,26 @@ export type CartDto = {
   freeShippingProgress: CartFreeShippingProgressDto | null;
 };
 
-export const EMPTY_CART_DTO: CartDto = {
-  items: [],
-  coupons: [],
-  shippingPackages: [],
-  shippingAddress: { country: "HU", postcode: "", city: "" },
-  totals: {
-    items: { amount: "0", currency: "HUF", minorUnit: 0 },
-    discount: { amount: "0", currency: "HUF", minorUnit: 0 },
-    shipping: null,
-    tax: { amount: "0", currency: "HUF", minorUnit: 0 },
-    total: { amount: "0", currency: "HUF", minorUnit: 0 },
-  },
-  itemsCount: 0,
-  needsShipping: false,
-  needsPayment: false,
-  freeShippingProgress: null,
-};
+export function createEmptyCartDto(currency = "HUF"): CartDto {
+  const minorUnit = getCurrencyMinorUnit(currency);
+  const zero: MoneyParts = { amount: "0", currency, minorUnit };
+  return {
+    items: [],
+    coupons: [],
+    shippingPackages: [],
+    shippingAddress: { country: "HU", postcode: "", city: "" },
+    totals: {
+      items: zero,
+      discount: zero,
+      shipping: null,
+      tax: zero,
+      total: zero,
+    },
+    itemsCount: 0,
+    needsShipping: false,
+    needsPayment: false,
+    freeShippingProgress: null,
+  };
+}
+
+export const EMPTY_CART_DTO: CartDto = createEmptyCartDto("HUF");

@@ -11,7 +11,6 @@ import {
 } from "react";
 import { toast } from "sonner";
 
-import { EMPTY_CART_DTO, type CartDto } from "@/shared/api";
 import type { ErrorCode } from "@/shared/lib/errors";
 
 import {
@@ -29,6 +28,7 @@ import {
   type UpdateShippingAddressPayload,
 } from "../api/cart-client";
 import { applyOptimisticQuantity, applyOptimisticRemove } from "./cart-optimistic";
+import { EMPTY_CART_DTO, type CartDto } from "./types";
 
 export type CartMutationResult =
   { ok: true; cart: CartDto } | { ok: false; code: ErrorCode; message: string };

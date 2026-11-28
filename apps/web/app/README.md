@@ -22,6 +22,8 @@ Tervezett szerkezet:
   belepes/  regisztracio/ → src/pages/auth
   [legal]/                → src/pages/legal (ÁSZF, adatkezelés, szállítás)
 api/
+  cart/                   kosár BFF route handlerek → `src/entities/cart/index.server`
+  search/                 kereső BFF route handler → `src/shared/api/index.server`
   webhooks/woo/[brand]/   Woo webhook: aláírás, Zod, revalidateTag, Trigger.dev task
                           (kézi revalidáló végpont nincs, ADR-0014)
 ```
