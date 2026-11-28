@@ -23,6 +23,15 @@
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DOQueueHandler"] }],
   "images": { "binding": "IMAGES" },
+  // Kosár-BFF rate limit (ADR-0018): brand + cf-connecting-ip kulcson. A namespace_id fiókon belül
+  // egyedi; a period egyezzen a cart-bff.ts CART_RATE_LIMIT_PERIOD_SECONDS értékével (10 vagy 60).
+  "ratelimits": [
+    {
+      "name": "CART_RATE_LIMITER",
+      "namespace_id": "1001",
+      "simple": { "limit": 60, "period": 60 },
+    },
+  ],
   "vars": { "KG_STORE_FIXTURES": "1", "NEXT_PUBLIC_APP_ENV": "demo" },
   "observability": { "enabled": true },
 }

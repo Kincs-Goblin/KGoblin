@@ -405,6 +405,47 @@ describe("createWooClient(brand) + MSW Store API", () => {
     });
   });
 
+  it("csak a Woo token- és nonce-hibakódja CART.SESSION_INVALID; más 401/403 (pl. WAF-blokk) WOO.UNAVAILABLE", async () => {
+    const responses: Record<string, Response> = {
+      "/cart/add-item": jsonResponse(
+        { code: "woocommerce_rest_missing_nonce", message: "Hiányzó nonce" },
+        401,
+      ),
+      "/cart/update-item": jsonResponse(
+        { code: "woocommerce_rest_invalid_nonce", message: "Érvénytelen nonce" },
+        403,
+      ),
+      // Cloudflare WAF-blokk: HTML-oldal, Woo-hibakód nélkül
+      "/cart/remove-item": new Response("<html>Access denied</html>", {
+        status: 403,
+        headers: { "content-type": "text/html" },
+      }),
+      "/cart/apply-coupon": jsonResponse({ code: "rest_forbidden", message: "Tiltott." }, 401),
+    };
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      const match = Object.keys(responses).find((path) => url.pathname.endsWith(path));
+      return match ? responses[match]! : jsonResponse(cartJson);
+    });
+    const client = createStoreClient({ baseUrl: "https://woo.example.test", fetch: fetchMock });
+    const session = { cartToken: "tok", nonce: "n" };
+
+    await expect(client.addCartItem({ id: 1, quantity: 1 }, session)).rejects.toMatchObject({
+      code: "CART.SESSION_INVALID",
+    });
+    await expect(client.updateCartItem({ key: "k", quantity: 2 }, session)).rejects.toMatchObject({
+      code: "CART.SESSION_INVALID",
+    });
+    await expect(client.removeCartItem({ key: "k" }, session)).rejects.toMatchObject({
+      code: "WOO.UNAVAILABLE",
+      status: 403,
+    });
+    await expect(client.applyCoupon({ code: "X" }, session)).rejects.toMatchObject({
+      code: "WOO.UNAVAILABLE",
+      status: 401,
+    });
+  });
+
   it("checkout fizetési hiba CHECKOUT.PAYMENT_DECLINED, míg a kg_payment_obligation_not_accepted CHECKOUT.VALIDATION_FAILED marad", async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = new URL(String(input));

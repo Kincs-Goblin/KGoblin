@@ -5,10 +5,15 @@ import {
   fixtureProducts,
   resetFixtureCartSessions,
 } from "@kg/woo-client/fixtures";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { NextRequest } from "next/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  CART_RATE_LIMIT_BINDING,
+  CART_RATE_LIMIT_PERIOD_SECONDS,
   getCartCookieName,
   handleCartAddItem,
   handleCartApplyCoupon,
@@ -22,6 +27,13 @@ import {
   resetCartRateLimiter,
   type CartBffDeps,
 } from "./cart-bff";
+
+// Workersen kívül (Vitest) nincs Cloudflare-kontextus: alapból dob, a binding-teszt felülírja.
+vi.mock("@opennextjs/cloudflare", () => ({
+  getCloudflareContext: vi.fn(() => {
+    throw new Error("nincs Cloudflare-kontextus");
+  }),
+}));
 
 const gamerBrand = getBrandById("gamer")!;
 const secondBrand: Brand = {
@@ -39,12 +51,24 @@ function makeRequest(
     host?: string;
     body?: unknown;
     cookies?: Record<string, string>;
+    /** `cf-connecting-ip` */
     ip?: string;
+    forwardedFor?: string;
+    /** Alapból mutáló kérésnél a host saját originje; `null` = nincs Origin fejléc. */
+    origin?: string | null;
+    contentType?: string;
   },
 ): NextRequest {
   const headers = new Headers();
+  const method = options?.method ?? "GET";
   if (options?.host) headers.set("host", options.host);
-  if (options?.ip) headers.set("x-forwarded-for", options.ip);
+  if (options?.ip) headers.set("cf-connecting-ip", options.ip);
+  if (options?.forwardedFor) headers.set("x-forwarded-for", options.forwardedFor);
+  const origin =
+    options?.origin === undefined && method !== "GET"
+      ? `http://${options?.host ?? "gamer.localhost"}`
+      : options?.origin;
+  if (origin) headers.set("origin", origin);
   if (options?.cookies) {
     headers.set(
       "cookie",
@@ -54,10 +78,10 @@ function makeRequest(
     );
   }
   if (options?.body !== undefined) {
-    headers.set("content-type", "application/json");
+    headers.set("content-type", options.contentType ?? "application/json");
   }
   return new NextRequest(`http://${options?.host ?? "gamer.localhost"}${path}`, {
-    method: options?.method ?? "GET",
+    method,
     headers,
     ...(options?.body !== undefined ? { body: JSON.stringify(options.body) } : {}),
   });
@@ -67,6 +91,15 @@ describe("Cart BFF route handlerek", () => {
   beforeEach(() => {
     resetCartRateLimiter();
     resetFixtureCartSessions();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+    // A Cloudflare-kontextus mockját minden teszt után visszaállítjuk (elbukó assertion esetén is).
+    vi.mocked(getCloudflareContext).mockImplementation(() => {
+      throw new Error("nincs Cloudflare-kontextus");
+    });
   });
 
   it("ismeretlen hostra fail-closed 404 BRAND.UNKNOWN_HOST választ ad no-store fejléccel", async () => {
@@ -85,22 +118,29 @@ describe("Cart BFF route handlerek", () => {
       isSecure: true,
     };
 
-    const getRes = await handleCartGet(makeRequest("/api/cart", { host: "gamer.localhost" }), deps);
-    expect(getRes.status).toBe(200);
-    expect(getRes.headers.get("cache-control")).toBe("no-store");
+    const pad = fixtureProducts.find((p) => p.slug.includes("titanweave"))!;
+    const firstAddRes = await handleCartAddItem(
+      makeRequest("/api/cart/items", {
+        method: "POST",
+        host: "gamer.localhost",
+        body: { id: pad.id, quantity: 1 },
+      }),
+      deps,
+    );
+    expect(firstAddRes.status).toBe(200);
+    expect(firstAddRes.headers.get("cache-control")).toBe("no-store");
 
-    const cookie = getRes.cookies.get(getCartCookieName("gamer"));
+    const cookie = firstAddRes.cookies.get(getCartCookieName("gamer"));
     expect(cookie).toBeDefined();
     expect(cookie?.httpOnly).toBe(true);
     expect(cookie?.sameSite).toBe("lax");
     expect(cookie?.secure).toBe(true);
 
-    const pad = fixtureProducts.find((p) => p.slug.includes("titanweave"))!;
     const addRes = await handleCartAddItem(
       makeRequest("/api/cart/items", {
         method: "POST",
         host: "gamer.localhost",
-        body: { id: pad.id, quantity: 2 },
+        body: { id: pad.id, quantity: 1 },
         cookies: { [getCartCookieName("gamer")]: cookie!.value },
       }),
       deps,
@@ -112,6 +152,16 @@ describe("Cart BFF route handlerek", () => {
 
     const updatedCookie = addRes.cookies.get(getCartCookieName("gamer"))!.value;
     expect(updatedCookie).not.toBe(cookie!.value); // Nonce frissült
+
+    const getRes = await handleCartGet(
+      makeRequest("/api/cart", {
+        host: "gamer.localhost",
+        cookies: { [getCartCookieName("gamer")]: updatedCookie },
+      }),
+      deps,
+    );
+    expect(getRes.status).toBe(200);
+    expect((await getRes.json()).cart.itemsCount).toBe(2);
 
     const itemKey = addJson.cart.items[0].key as string;
     const patchRes = await handleCartUpdateItem(
@@ -355,18 +405,26 @@ describe("Cart BFF route handlerek", () => {
       getStoreClient: (brand) => clients[brand.id]!,
     };
 
-    // 1. Gamer host lekéri a saját kosarát -> kg_gamer_cart cookie
-    const gamerRes = await handleCartGet(
-      makeRequest("/api/cart", { host: "gamer.localhost" }),
+    const pad = fixtureProducts.find((p) => p.slug.includes("titanweave"))!;
+
+    // 1. Gamer host kosárba tesz -> kg_gamer_cart cookie
+    const gamerRes = await handleCartAddItem(
+      makeRequest("/api/cart/items", {
+        method: "POST",
+        host: "gamer.localhost",
+        body: { id: pad.id, quantity: 1 },
+      }),
       deps,
     );
     const gamerCookie = gamerRes.cookies.get("kg_gamer_cart")!.value;
     expect(gamerRes.cookies.get("kg_masik_cart")).toBeUndefined();
 
     // 2. Másik hostra elküldjük a gamer cookie-t is -> a masik Woo kliens NE kapja meg a gamer tokenjét!
-    const masikRes = await handleCartGet(
-      makeRequest("/api/cart", {
+    const masikRes = await handleCartAddItem(
+      makeRequest("/api/cart/items", {
+        method: "POST",
         host: "masik.localhost",
+        body: { id: pad.id, quantity: 1 },
         cookies: { kg_gamer_cart: gamerCookie },
       }),
       deps,
@@ -429,5 +487,245 @@ describe("Cart BFF route handlerek", () => {
     const foreignJson = await foreignRes.json();
     expect(foreignRes.status).toBe(200);
     expect(foreignJson.cart.freeShippingProgress).toBeNull();
+  });
+
+  it("cookie nélküli GET nem hív Woo-t, nem nyit sessiont és nem ad cookie-t", async () => {
+    const base = createFixtureStoreClient({ brandId: "gamer" });
+    const getCartSpy = vi.fn(base.getCart);
+    const rateLimiter = vi.fn(async () => ({ allowed: true as const }));
+    const deps: CartBffDeps = {
+      getStoreClient: () => ({ ...base, getCart: getCartSpy }),
+      rateLimiter,
+    };
+
+    const res = await handleCartGet(makeRequest("/api/cart", { host: "gamer.localhost" }), deps);
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    expect(json).toMatchObject({ ok: true, cart: { itemsCount: 0, items: [] } });
+    expect(getCartSpy).not.toHaveBeenCalled();
+    expect(rateLimiter).not.toHaveBeenCalled();
+    expect(res.cookies.get(getCartCookieName("gamer"))).toBeUndefined();
+  });
+
+  it("a cookie-s GET és a mutáció is a brand + cf-connecting-ip kulcson korlátozott", async () => {
+    const keys: string[] = [];
+    const deps: CartBffDeps = {
+      getStoreClient: (brand) => createFixtureStoreClient({ brandId: brand.id }),
+      rateLimiter: async (key) => {
+        keys.push(key);
+        return keys.length > 1 ? { allowed: false, retryAfterSeconds: 42 } : { allowed: true };
+      },
+    };
+    const pad = fixtureProducts.find((p) => p.slug.includes("titanweave"))!;
+
+    const addRes = await handleCartAddItem(
+      makeRequest("/api/cart/items", {
+        method: "POST",
+        host: "gamer.localhost",
+        ip: "203.0.113.7",
+        body: { id: pad.id, quantity: 1 },
+      }),
+      deps,
+    );
+    expect(addRes.status).toBe(200);
+    const cookie = addRes.cookies.get(getCartCookieName("gamer"))!.value;
+
+    const getRes = await handleCartGet(
+      makeRequest("/api/cart", {
+        host: "gamer.localhost",
+        ip: "203.0.113.7",
+        cookies: { [getCartCookieName("gamer")]: cookie },
+      }),
+      deps,
+    );
+    expect(getRes.status).toBe(429);
+    expect(getRes.headers.get("retry-after")).toBe("42");
+    expect(await getRes.json()).toMatchObject({ ok: false, code: "CART.RATE_LIMITED" });
+    expect(keys).toEqual(["gamer:203.0.113.7", "gamer:203.0.113.7"]);
+  });
+
+  it("Workersen a Rate Limiting bindingot használja, elutasításnál 429 és az ablaknyi Retry-After", async () => {
+    const limit = vi.fn(async () => ({ success: false }));
+    vi.mocked(getCloudflareContext).mockReturnValueOnce({
+      env: { [CART_RATE_LIMIT_BINDING]: { limit } },
+    } as unknown as ReturnType<typeof getCloudflareContext>);
+
+    const res = await handleCartAddItem(
+      makeRequest("/api/cart/items", {
+        method: "POST",
+        host: "gamer.localhost",
+        ip: "198.51.100.1",
+        body: { id: 10, quantity: 1 },
+      }),
+      { getStoreClient: (brand) => createFixtureStoreClient({ brandId: brand.id }) },
+    );
+
+    expect(limit).toHaveBeenCalledWith({ key: "gamer:198.51.100.1" });
+    expect(res.status).toBe(429);
+    expect(res.headers.get("retry-after")).toBe(String(CART_RATE_LIMIT_PERIOD_SECONDS));
+  });
+
+  it("fail-open: hiányzó binding vagy dobó limiter esetén naplóz és a memóriabeli tartalékra esik", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const deps: CartBffDeps = {
+      getStoreClient: (brand) => createFixtureStoreClient({ brandId: brand.id }),
+      rateLimit: { maxRequests: 1, windowMs: 60_000 },
+    };
+    const pad = fixtureProducts.find((p) => p.slug.includes("titanweave"))!;
+    const add = () =>
+      handleCartAddItem(
+        makeRequest("/api/cart/items", {
+          method: "POST",
+          host: "gamer.localhost",
+          ip: "192.0.2.10",
+          body: { id: pad.id, quantity: 1 },
+        }),
+        deps,
+      );
+
+    // Van Cloudflare-kontextus, de nincs binding -> a tartalék korlátoz
+    vi.mocked(getCloudflareContext).mockReturnValue({
+      env: {},
+    } as unknown as ReturnType<typeof getCloudflareContext>);
+    expect((await add()).status).toBe(200);
+    expect((await add()).status).toBe(429);
+    expect(errorSpy).toHaveBeenCalledWith(
+      "[cart-bff] Hiányzó rate limit binding, memóriabeli tartalék fut",
+      expect.anything(),
+    );
+
+    // A binding kivételt dob -> nem 500, hanem a tartalék dönt
+    resetCartRateLimiter();
+    vi.mocked(getCloudflareContext).mockReturnValue({
+      env: {
+        [CART_RATE_LIMIT_BINDING]: {
+          limit: async () => {
+            throw new Error("binding hiba");
+          },
+        },
+      },
+    } as unknown as ReturnType<typeof getCloudflareContext>);
+    expect((await add()).status).toBe(200);
+    expect((await add()).status).toBe(429);
+    expect(errorSpy).toHaveBeenCalledWith("[cart-bff] Rate limiter hiba, memóriabeli tartalék fut");
+  });
+
+  it("a wrangler.jsonc deklarálja a rate limit bindingot a kódéval egyező ablakkal", () => {
+    // A Vitest az apps/web gyökeréből fut (jsdom alatt az import.meta.url nem file: séma).
+    const raw = readFileSync(join(process.cwd(), "wrangler.jsonc"), "utf8");
+    const config = JSON.parse(raw.replace(/^\s*\/\/.*$/gm, "").replace(/,(\s*[}\]])/g, "$1")) as {
+      ratelimits?: Array<{ name: string; simple: { limit: number; period: number } }>;
+    };
+
+    const binding = config.ratelimits?.find((r) => r.name === CART_RATE_LIMIT_BINDING);
+    expect(binding).toBeDefined();
+    expect(binding!.simple.period).toBe(CART_RATE_LIMIT_PERIOD_SECONDS);
+  });
+
+  it("helyi környezeten kívül az x-forwarded-for nem rate-limit kulcs (közös unknown vödör)", async () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "demo");
+    const deps: CartBffDeps = {
+      getStoreClient: (brand) => createFixtureStoreClient({ brandId: brand.id }),
+      rateLimit: { maxRequests: 1, windowMs: 60_000 },
+    };
+    const pad = fixtureProducts.find((p) => p.slug.includes("titanweave"))!;
+    const add = (forwardedFor: string) =>
+      handleCartAddItem(
+        makeRequest("/api/cart/items", {
+          method: "POST",
+          host: "gamer.localhost",
+          forwardedFor,
+          body: { id: pad.id, quantity: 1 },
+        }),
+        deps,
+      );
+
+    expect((await add("1.1.1.1")).status).toBe(200);
+    expect((await add("2.2.2.2")).status).toBe(429);
+
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "local");
+    resetCartRateLimiter();
+    expect((await add("1.1.1.1")).status).toBe(200);
+    expect((await add("2.2.2.2")).status).toBe(200);
+  });
+
+  it("hiányzó vagy idegen Origin mutáló kérésen 400 CART.INVALID_INPUT, Woo-hívás nélkül", async () => {
+    const base = createFixtureStoreClient({ brandId: "gamer" });
+    const addSpy = vi.fn(base.addCartItem);
+    const deps: CartBffDeps = { getStoreClient: () => ({ ...base, addCartItem: addSpy }) };
+    const pad = fixtureProducts.find((p) => p.slug.includes("titanweave"))!;
+
+    for (const origin of [null, "https://evil.example.test", "not a url"]) {
+      const res = await handleCartAddItem(
+        makeRequest("/api/cart/items", {
+          method: "POST",
+          host: "gamer.localhost",
+          origin,
+          body: { id: pad.id, quantity: 1 },
+        }),
+        deps,
+      );
+      expect(res.status).toBe(400);
+      expect(await res.json()).toMatchObject({ ok: false, code: "CART.INVALID_INPUT" });
+    }
+    expect(addSpy).not.toHaveBeenCalled();
+  });
+
+  it("csak pontos application/json médiatípust fogad el (a charset paraméter megengedett)", async () => {
+    const deps: CartBffDeps = {
+      getStoreClient: (brand) => createFixtureStoreClient({ brandId: brand.id }),
+    };
+    const pad = fixtureProducts.find((p) => p.slug.includes("titanweave"))!;
+    const add = (contentType: string) =>
+      handleCartAddItem(
+        makeRequest("/api/cart/items", {
+          method: "POST",
+          host: "gamer.localhost",
+          contentType,
+          body: { id: pad.id, quantity: 1 },
+        }),
+        deps,
+      );
+
+    expect((await add("text/plain; application/json")).status).toBe(400);
+    expect((await add("application/jsonp")).status).toBe(400);
+    expect((await add("application/json; charset=utf-8")).status).toBe(200);
+  });
+
+  it("nem session-jellegű upstream 401/403 (pl. WAF) nem törli és nem cseréli a kosár-cookie-t", async () => {
+    const fixture = createFixtureStoreClient({ brandId: "gamer" });
+    const getCartSpy = vi.fn(fixture.getCart);
+    const deps: CartBffDeps = {
+      getStoreClient: () => ({
+        ...fixture,
+        getCart: getCartSpy,
+        removeCartItem: async () => {
+          throw new WooError("WOO.UNAVAILABLE", "WAF-blokk", { status: 403 });
+        },
+      }),
+    };
+    const cookieValue = Buffer.from(
+      JSON.stringify({ cartToken: "tok-1", nonce: "n-1" }),
+      "utf8",
+    ).toString("base64url");
+
+    const res = await handleCartRemoveItem(
+      makeRequest("/api/cart/items", {
+        method: "DELETE",
+        host: "gamer.localhost",
+        body: { key: "line-1" },
+        cookies: { [getCartCookieName("gamer")]: cookieValue },
+      }),
+      deps,
+    );
+    const json = await res.json();
+
+    expect(res.status).toBe(503);
+    expect(json).toMatchObject({ ok: false, code: "WOO.UNAVAILABLE" });
+    expect(json.cart).toBeUndefined();
+    expect(res.cookies.get(getCartCookieName("gamer"))).toBeUndefined();
+    expect(getCartSpy).not.toHaveBeenCalled();
   });
 });

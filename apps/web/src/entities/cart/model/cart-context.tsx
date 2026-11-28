@@ -53,6 +53,14 @@ type CartContextValue = {
 const CartContext = createContext<CartContextValue | null>(null);
 
 /**
+ * Hibás válasz kosarát csak valódi session-hibánál vesszük át (a szerver ilyenkor új, üres kosarat
+ * indított). Minden más hibánál a kliens kosara marad, hogy egy upstream hiba ne ürítse ki a UI-t.
+ */
+function getAdoptableErrorCart(result: CartApiResponse): CartDto | undefined {
+  return !result.ok && result.code === "CART.SESSION_INVALID" ? result.cart : undefined;
+}
+
+/**
  * Kosár-kontextus a Next BFF (`/api/cart*`) fölött. A `Cart-Token` kizárólag szerveroldali
  * `httpOnly` cookie-ban él; a kliens nem tárol tokent és nem számol pénzösszeget.
  */
@@ -81,11 +89,8 @@ export function CartProvider({
     setLoading(true);
     const result = await fetchCart();
     if (mutationEpochRef.current === startEpoch) {
-      if (result.ok) {
-        commitCart(result.cart);
-      } else if (result.cart) {
-        commitCart(result.cart);
-      }
+      const next = result.ok ? result.cart : getAdoptableErrorCart(result);
+      if (next) commitCart(next);
     }
     setLoading(false);
   }, [commitCart]);
@@ -96,11 +101,8 @@ export function CartProvider({
     void fetchCart().then((result) => {
       if (cancelled) return;
       if (mutationEpochRef.current === startEpoch) {
-        if (result.ok) {
-          commitCart(result.cart);
-        } else if (result.cart) {
-          commitCart(result.cart);
-        }
+        const next = result.ok ? result.cart : getAdoptableErrorCart(result);
+        if (next) commitCart(next);
       }
       setLoading(false);
     });
@@ -127,8 +129,9 @@ export function CartProvider({
         commitCart(result.cart);
         return { ok: true, cart: result.cart };
       }
-      if (result.cart) {
-        commitCart(result.cart);
+      const errorCart = getAdoptableErrorCart(result);
+      if (errorCart) {
+        commitCart(errorCart);
       } else if (options?.rollbackTo) {
         commitCart(options.rollbackTo);
       }

@@ -24,6 +24,11 @@ külön belépési pontban, a REST v3 `server-only`.
   cookie-ban tároljuk. A kosár nem cache-elt (`no-store`). A `KG-15` megvalósítása után bejelentkezéskor és
   regisztrációkor a `kg-headless` `/wp-json/kg/v1/auth/*` végpont a kapott vendég `Cart-Token` tételeit
   szerveroldalon egyesíti majd a customer sessionjével (ADR-0016), és visszaadja a customer `Cart-Token`-t.
+- **Kosár-session és védelem (KG-127):** cookie nélküli kosár-lekérés nem hív Woo-t (üres kosár, nincs
+  session). `CART.SESSION_INVALID` csak a Woo token- vagy nonce-hibakódjára keletkezik; más 401/403 (pl.
+  WAF-blokk) `WOO.UNAVAILABLE`, és a kosár-cookie marad. Hibás válasz kosarát a kliens csak
+  `SESSION_INVALID`-nál veszi át. Mutáló kérésnél az `Origin` kötelező és same-origin, a body pontosan
+  `application/json`. Minden Woo-t érő kérés a Workers Rate Limiting bindingon megy át (ADR-0018).
 - **Checkout és fizetés (ADR-0017, tervezett megvalósítás: `KG-13`):** a Store API `/checkout` `payment_method` + `payment_data` mezőkkel fog menni (`KG-62` - `KG-66`):
   - **Barion** (`pay-via-barion-for-woocommerce`): `payment_data` nem kell; külső `payment_result.redirect_url`-re irányít, visszatérés `?wc-api=wc_gateway_barion_return_from_payment` és IPN `?wc-api=wc_gateway_barion`.
   - **SimplePay** (`wpxpert-payment-gateway-for-simplepay`, `simplepay` / `simplepay_wire`): `payment_data` nem kell; külső `payment_result.redirect_url`-re irányít, return `?wc-api=woo_simplepay_return` és IPN `?wc-api=woo_simplepay_ipn`. A `start` hívás szigorúan HTTPS return URL-t követel (lokálisan Cloudflare Tunnel / HTTPS kell), és élesítési előírás a checkouton a SimplePay logó + adattovábbítási nyilatkozat, hiba esetén a `transactionId` megjelenítése.

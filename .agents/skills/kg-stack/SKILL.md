@@ -14,7 +14,7 @@ visszafordíthatatlanul) · **nyitott** (dönteni kell, mielőtt ráépül valam
 
 ## Döntésnapló
 
-Utolsó módosítás: 2026-11-21 (CI sor: PHP-ellenőrző job; a Runtime, Lint, Tesztek és Hibakódok sor elfogadva; korábban ADR-0017 fizetési gateway pluginek: Stripe, Barion, SimplePay + `@stripe/stripe-js`; ADR-0016 headless customer auth a `kg-headless` pluginban; korábban ADR-0015, ADR-0014, ADR-0012, ADR-0013, ADR-0011, ADR-0009, ADR-0008, ADR-0010).
+Utolsó módosítás: 2026-11-28 (ADR-0018: kosár-BFF rate limit Workers Rate Limiting bindinggal; korábban 2026-11-21, CI sor: PHP-ellenőrző job; a Runtime, Lint, Tesztek és Hibakódok sor elfogadva; korábban ADR-0017 fizetési gateway pluginek: Stripe, Barion, SimplePay + `@stripe/stripe-js`; ADR-0016 headless customer auth a `kg-headless` pluginban; korábban ADR-0015, ADR-0014, ADR-0012, ADR-0013, ADR-0011, ADR-0009, ADR-0008, ADR-0010).
 
 ### Architektúra és frontend
 
@@ -31,6 +31,7 @@ Utolsó módosítás: 2026-11-21 (CI sor: PHP-ellenőrző job; a Runtime, Lint, 
 | Frontend hosting | Cloudflare Workers + OpenNext (`@opennextjs/cloudflare`), Workers Builds; demo a `demo` ágról, production a `main`-ről (külön ticket); cache: KV + D1 + Durable Object, képek: Cloudflare Images | elfogadva (2026-11-14) | 0009 |
 | Frontend hosting (régi) | Vercel (preview deploy PR-onként, production a `main`-ről) | felváltva (ADR-0009) | 0001 |
 | Edge, DNS, WAF | Cloudflare: DNS, TLS, WAF a backend előtt, Cloudflare Tunnel a VPS felé | elfogadva | 0008 |
+| Rate limit | Cloudflare Workers Rate Limiting binding (`CART_RATE_LIMITER`, `wrangler.jsonc` `ratelimits`) a kosár-BFF-en, `<brand>:<cf-connecting-ip>` kulccsal; memóriabeli tartalék csak Workersen kívül (helyi, teszt, `next start`) | elfogadva (2026-11-28) | 0018 |
 | Szövegek, i18n | Elsőként magyar; szövegek slice-onként egy helyen, `next-intl` a 2. nyelvnél | javasolt | 0001 |
 | Képek | Woo médiatár (`wp-content/uploads` a VPS-en `api.<brand>` alatt) + Cloudflare CDN és `IMAGES` binding (`next/image`); később R2 offloaddal bővíthető | elfogadva (2026-11-15) | 0009, 0013 |
 

@@ -92,4 +92,16 @@ describe("createFixtureStoreClient kosár-életciklus", () => {
       code: "CART.SESSION_INVALID",
     });
   });
+
+  it("ismeretlen tokenre (pl. másik izolátum) CART.SESSION_INVALID, és nem veszi át a tokent új kosárnak", async () => {
+    const client = createFixtureStoreClient({ brandId: "gamer" });
+
+    await expect(client.getCart({ cartToken: "fixture-cart-gamer-999" })).rejects.toMatchObject({
+      code: "CART.SESSION_INVALID",
+      wooCode: "woocommerce_rest_cart_token_invalid",
+    });
+
+    const fresh = await client.getCart();
+    expect(fresh.cartToken).not.toBe("fixture-cart-gamer-999");
+  });
 });

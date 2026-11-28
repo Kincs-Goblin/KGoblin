@@ -27,7 +27,8 @@ brandeket; minden brand mögött saját WordPress + WooCommerce backend van.
 A teljes, státuszos döntésnapló a `kg-stack` skillben van; ütközésnél az az irányadó.
 
 - **Frontend:** Next.js (App Router) + TypeScript, Tailwind + shadcn/ui Base UI-jal, Motion az animációkhoz,
-  FSD 3. szint (`apps/web`), Cloudflare Workers + OpenNext, Workers Builds (ADR-0009).
+  FSD 3. szint (`apps/web`), Cloudflare Workers + OpenNext, Workers Builds (ADR-0009). A kosár-BFF rate
+  limitje a Workers Rate Limiting binding (ADR-0018).
 - **Commerce:** WooCommerce brandenként külön példányban. Store API a katalógushoz, kosárhoz és
   checkouthoz; REST v3 csak szerveroldalon. Minden Woo-válasz Zod-dal validálva.
 - **Háttérjobok:** Trigger.dev (`apps/jobs`): beszállítói feed-szinkron, rendelés-továbbítás, újrapróba.

@@ -133,4 +133,62 @@ describe("CartProvider (BFF)", () => {
     expect(screen.getByTestId("count")).toHaveTextContent("1");
     expect(toast.error).toHaveBeenCalledWith("A választott zsákmány időközben elfogyott.");
   });
+
+  async function renderAndFailPatch(errorBody: Record<string, unknown>, status: number) {
+    const user = userEvent.setup();
+    globalThis.fetch = vi.fn(async (_url, init) => {
+      if (init?.method === "PATCH") {
+        return new Response(JSON.stringify(errorBody), {
+          status,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ ok: true, cart: sampleCart }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    }) as typeof fetch;
+
+    render(
+      <CartProvider brandId="gamer">
+        <Harness />
+      </CartProvider>,
+    );
+    expect(await screen.findByTestId("qty")).toHaveTextContent("1");
+    await user.click(screen.getByRole("button", { name: "növel" }));
+  }
+
+  it("upstream hibánál a válaszban kapott üres kosár nem írja felül a kliens kosarát", async () => {
+    await renderAndFailPatch(
+      {
+        ok: false,
+        code: "WOO.UNAVAILABLE",
+        message: "A kincstár most nem elérhető. Próbáld újra pár perc múlva.",
+        cart: EMPTY_CART_DTO,
+      },
+      503,
+    );
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalled();
+    });
+    expect(screen.getByTestId("count")).toHaveTextContent("1");
+    expect(screen.getByTestId("qty")).toHaveTextContent("1");
+  });
+
+  it("valódi CART.SESSION_INVALID esetén átveszi a szerver által indított új kosarat", async () => {
+    await renderAndFailPatch(
+      {
+        ok: false,
+        code: "CART.SESSION_INVALID",
+        message: "A kosár munkamenete lejárt, új kosarat indítottunk.",
+        cart: EMPTY_CART_DTO,
+      },
+      401,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("count")).toHaveTextContent("0");
+    });
+  });
 });

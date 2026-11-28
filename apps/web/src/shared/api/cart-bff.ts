@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getBrandById, resolveBrandByHost, type Brand } from "@kg/brand-config";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import {
   isWooError,
   type CartSession,
@@ -12,12 +13,15 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
 import { errorCatalog, type ErrorCode } from "../lib/errors";
-import type { CartDto, CartFreeShippingProgressDto } from "./cart-types";
+import { EMPTY_CART_DTO, type CartDto, type CartFreeShippingProgressDto } from "./cart-types";
 import { getStoreClient } from "./store-client";
 
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 14; // 14 nap
+/** A `wrangler.jsonc` `ratelimits` bindingjának neve és ablaka (ADR-0018); a kettőnek egyeznie kell. */
+export const CART_RATE_LIMIT_BINDING = "CART_RATE_LIMITER";
+export const CART_RATE_LIMIT_PERIOD_SECONDS = 60;
 const DEFAULT_RATE_LIMIT_MAX = 60;
-const DEFAULT_RATE_LIMIT_WINDOW_MS = 60_000;
+const DEFAULT_RATE_LIMIT_WINDOW_MS = CART_RATE_LIMIT_PERIOD_SECONDS * 1000;
 const MAX_RATE_LIMIT_KEYS = 2000;
 const MAX_JSON_BODY_BYTES = 16 * 1024;
 const MAX_QUANTITY_PER_LINE = 30;
@@ -72,20 +76,63 @@ const updateShippingAddressBodySchema = z.object({
   city: z.string().trim().max(120).optional(),
 });
 
+export type CartRateLimitDecision =
+  { allowed: true } | { allowed: false; retryAfterSeconds: number };
+
+/** Kulcsonkénti (brand + kliens-IP) rate limit döntés. */
+export type CartRateLimiter = (key: string) => Promise<CartRateLimitDecision>;
+
 export type CartBffDeps = {
   resolveBrand?: (request: NextRequest) => Brand | undefined;
   getStoreClient?: (brand: Brand) => StoreClient;
   now?: () => number;
   isSecure?: boolean;
+  /** Felülírja a Workers binding / memóriabeli tartalék választását (teszt). */
+  rateLimiter?: CartRateLimiter;
+  /** A memóriabeli tartalék limiter paraméterei. */
   rateLimit?: {
     maxRequests: number;
     windowMs: number;
   };
 };
 
+/** A Workers Rate Limiting binding felülete (`ratelimits` a `wrangler.jsonc`-ben). */
+type RateLimitBinding = {
+  limit(options: { key: string }): Promise<{ success: boolean }>;
+};
+
+function isRateLimitBinding(value: unknown): value is RateLimitBinding {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as { limit?: unknown }).limit === "function"
+  );
+}
+
 /**
- * Izolátum-szintű csúszóablakos rate limiter (Cloudflare Workers alatt élesben Cloudflare WAF /
- * Rate Limiting szabály egészíti ki). Felső kulcsszámmal védett a memória-kimerítés ellen.
+ * A Workers Rate Limiting binding, ha a kérés Cloudflare Workersen fut. Máshol (`next dev`,
+ * `next start`, Vitest) nincs Cloudflare-kontextus, ilyenkor csendben `undefined`. Ha van
+ * Cloudflare-kontextus, de hiányzik a binding, az konfigurációs hiba: naplózzuk, és a tartalék fut.
+ */
+function getRateLimitBinding(): RateLimitBinding | undefined {
+  let env: Record<string, unknown>;
+  try {
+    env = getCloudflareContext().env as unknown as Record<string, unknown>;
+  } catch {
+    return undefined;
+  }
+  const binding = env[CART_RATE_LIMIT_BINDING];
+  if (isRateLimitBinding(binding)) return binding;
+  console.error("[cart-bff] Hiányzó rate limit binding, memóriabeli tartalék fut", {
+    binding: CART_RATE_LIMIT_BINDING,
+  });
+  return undefined;
+}
+
+/**
+ * Memóriabeli csúszóablakos tartalék limiter. Csak ott fut, ahol nincs Workers binding (helyi
+ * fejlesztés, teszt, `next start` e2e); Workersen az izolátumok miatt nem korlátozna érdemben.
+ * Felső kulcsszámmal védett a memória-kimerítés ellen.
  */
 const rateLimitStore = new Map<string, number[]>();
 
@@ -135,22 +182,65 @@ function isSecureCookie(request: NextRequest, deps?: CartBffDeps): boolean {
   return forwardedProto === "https" || request.nextUrl.protocol === "https:";
 }
 
+/**
+ * A rate limit kulcsához használt kliens-IP. Élesben csak a Cloudflare által beállított
+ * `cf-connecting-ip` hiteles; a hamisítható `x-forwarded-for` és a közös `local` vödör kizárólag
+ * helyi környezetben használható. Hiányzó IP-nél a kérések egy közös `unknown` vödörbe esnek
+ * (fail-closed: inkább korlátozunk, mint hogy kulcs nélkül átengedjünk).
+ */
 function getClientIp(request: NextRequest): string {
   const cfIp = request.headers.get("cf-connecting-ip")?.trim();
   if (cfIp) return cfIp;
+  if (process.env.NEXT_PUBLIC_APP_ENV !== "local") return "unknown";
   const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
   if (forwarded) return forwarded;
   return "local";
 }
 
-function checkRateLimit(
-  brandId: string,
-  ip: string,
+function createMemoryRateLimiter(deps?: CartBffDeps): CartRateLimiter {
+  const maxRequests = deps?.rateLimit?.maxRequests ?? DEFAULT_RATE_LIMIT_MAX;
+  const windowMs = deps?.rateLimit?.windowMs ?? DEFAULT_RATE_LIMIT_WINDOW_MS;
+  return async (key) =>
+    checkMemoryRateLimit(key, deps?.now?.() ?? Date.now(), maxRequests, windowMs);
+}
+
+function createBindingRateLimiter(binding: RateLimitBinding): CartRateLimiter {
+  return async (key) => {
+    const { success } = await binding.limit({ key });
+    // A binding nem adja meg a hátralévő időt; az ablak hossza felső becslés.
+    return success
+      ? { allowed: true }
+      : { allowed: false, retryAfterSeconds: CART_RATE_LIMIT_PERIOD_SECONDS };
+  };
+}
+
+function resolveRateLimiter(deps?: CartBffDeps): CartRateLimiter {
+  if (deps?.rateLimiter) return deps.rateLimiter;
+  const binding = getRateLimitBinding();
+  return binding ? createBindingRateLimiter(binding) : createMemoryRateLimiter(deps);
+}
+
+/**
+ * Fail-open: ha maga a limiter hibázik (pl. a binding kivételt dob), naplózunk és a memóriabeli
+ * tartalékra esünk vissza. Egy limiter-kiesés így nem állítja le a teljes kosarat; az ár, a készlet
+ * és a kupon érvényessége ettől függetlenül a Woo-ban ellenőrzött.
+ */
+async function checkRateLimit(key: string, deps?: CartBffDeps): Promise<CartRateLimitDecision> {
+  try {
+    return await resolveRateLimiter(deps)(key);
+  } catch {
+    // A kulcs kliens-IP-t tartalmaz, ezért nem naplózzuk.
+    console.error("[cart-bff] Rate limiter hiba, memóriabeli tartalék fut");
+    return createMemoryRateLimiter(deps)(key);
+  }
+}
+
+function checkMemoryRateLimit(
+  key: string,
   nowMs: number,
   maxRequests: number,
   windowMs: number,
-): { allowed: true } | { allowed: false; retryAfterSeconds: number } {
-  const key = `${brandId}:${ip}`;
+): CartRateLimitDecision {
   const cutoff = nowMs - windowMs;
   const existing = (rateLimitStore.get(key) ?? []).filter((ts) => ts > cutoff);
 
@@ -184,9 +274,14 @@ function checkRateLimit(
   return { allowed: true };
 }
 
+/**
+ * CSRF-védelem a mutáló kérésekre: az `Origin` kötelező, és a kérés hostjával kell egyeznie. A modern
+ * böngészők same-origin POST/PATCH/DELETE `fetch`-nél is küldik; hiánya nem böngészős vagy hamisított
+ * kérésre utal.
+ */
 function isOriginAllowed(request: NextRequest): boolean {
   const origin = request.headers.get("origin");
-  if (!origin) return true;
+  if (!origin) return false;
   const host = request.headers.get("host")?.trim().toLowerCase();
   if (!host) return false;
   try {
@@ -377,8 +472,9 @@ async function parseBoundedJsonBody<T extends z.ZodType>(
   request: NextRequest,
   schema: T,
 ): Promise<{ ok: true; data: z.infer<T> } | { ok: false }> {
-  const contentType = request.headers.get("content-type")?.toLowerCase() ?? "";
-  if (!contentType.includes("application/json")) {
+  // Pontos médiatípus-egyezés: a CORS-safelisted `text/plain; application/json` forma nem mehet át.
+  const mediaType = request.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase();
+  if (mediaType !== "application/json") {
     return { ok: false };
   }
 
@@ -429,20 +525,29 @@ async function executeCartOperation<TBody = undefined>(
     return jsonError("BRAND.UNKNOWN_HOST");
   }
 
-  if (options.mutating) {
-    if (!isOriginAllowed(request)) {
-      return jsonError("CART.INVALID_INPUT");
-    }
+  if (options.mutating && !isOriginAllowed(request)) {
+    return jsonError("CART.INVALID_INPUT");
+  }
 
-    const now = options.deps?.now?.() ?? Date.now();
-    const maxRequests = options.deps?.rateLimit?.maxRequests ?? DEFAULT_RATE_LIMIT_MAX;
-    const windowMs = options.deps?.rateLimit?.windowMs ?? DEFAULT_RATE_LIMIT_WINDOW_MS;
-    const rateCheck = checkRateLimit(brand.id, getClientIp(request), now, maxRequests, windowMs);
-    if (!rateCheck.allowed) {
-      return jsonError("CART.RATE_LIMITED", {
-        headers: { "Retry-After": String(rateCheck.retryAfterSeconds) },
-      });
-    }
+  // Kizárólag a feloldott brand saját cookie-ját olvassuk (brand-elkülönítés).
+  const cookieRaw = request.cookies.get(getCartCookieName(brand.id))?.value;
+  let session = decodeCartCookie(cookieRaw);
+
+  // Cookie nélküli lekérés: nincs kosár, nem hívjuk a Woo-t és nem nyitunk sessiont. Így egy anonim
+  // oldalbetöltés nem terheli a Woo-t; a session az első mutációnál jön létre.
+  if (!options.mutating && !session?.cartToken) {
+    return NextResponse.json(
+      { ok: true, cart: EMPTY_CART_DTO },
+      { status: 200, headers: baseHeaders() },
+    );
+  }
+
+  // Minden Woo-t érő kérés (mutáció és cookie-s lekérés) a brand + kliens-IP kulcson korlátozott.
+  const rateCheck = await checkRateLimit(`${brand.id}:${getClientIp(request)}`, options.deps);
+  if (!rateCheck.allowed) {
+    return jsonError("CART.RATE_LIMITED", {
+      headers: { "Retry-After": String(rateCheck.retryAfterSeconds) },
+    });
   }
 
   let parsedBody = undefined as TBody;
@@ -453,9 +558,6 @@ async function executeCartOperation<TBody = undefined>(
   }
 
   const secure = isSecureCookie(request, options.deps);
-  // Kizárólag a feloldott brand saját cookie-ját olvassuk (brand-elkülönítés).
-  const cookieRaw = request.cookies.get(getCartCookieName(brand.id))?.value;
-  let session = decodeCartCookie(cookieRaw);
   const storeClient = (options.deps?.getStoreClient ?? getStoreClient)(brand);
 
   try {
