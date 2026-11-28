@@ -44,6 +44,12 @@ jobs:
             !apps/web/.next/cache
           include-hidden-files: true
           retention-days: 1
+      # OpenNext + Cloudflare Workers csomagolás ellenőrzése (ADR-0009), hogy a Workers-specifikus
+      # hibák már a PR-on kibukjanak; a már feltöltött e2e `.next` artifactot nem érinti.
+      - name: Cloudflare Workers (OpenNext) build
+        env:
+          NEXT_PUBLIC_APP_ENV: demo
+        run: pnpm --filter @kg/web build:cf
 
   # A kg-headless plugin és a seed WordPress nélkül ellenőrizhető része: szintaxis, a tiszta függvényes
   # unit-tesztek (Omnibus, adószám) és a fail-closed őrök. A plugin minimum PHP-ján fut (`Requires PHP: 8.2`),
