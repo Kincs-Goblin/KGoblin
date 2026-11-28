@@ -52,18 +52,21 @@ export function mapWooErrorCode(
 
   const normalized = wooCode?.toLowerCase() ?? "";
 
+  // Csak a Woo saját token- és nonce-hibája jelent lejárt kosár-sessiont (érvénytelen Cart-Tokennél a
+  // Store API a nonce-ellenőrzésen bukik el: `woocommerce_rest_missing_nonce` / `_invalid_nonce`).
   if (
     (context === "cart" || context === "checkout") &&
-    (status === 401 ||
-      status === 403 ||
-      normalized.includes("cart_token") ||
-      normalized.includes("invalid_nonce") ||
-      normalized.includes("nonce_failure"))
+    (normalized.includes("cart_token") || normalized.includes("nonce"))
   ) {
     return "CART.SESSION_INVALID";
   }
 
-  if (context === "rest" && (status === 401 || status === 403)) {
+  // Minden más 401/403 (pl. WAF-blokk vagy challenge a szerver-szerver hívásra) upstream hiba: a kosár
+  // cookie-ja nem törlődhet miatta.
+  if (
+    (context === "cart" || context === "checkout" || context === "rest") &&
+    (status === 401 || status === 403)
+  ) {
     return "WOO.UNAVAILABLE";
   }
 

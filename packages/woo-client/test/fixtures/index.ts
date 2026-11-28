@@ -440,18 +440,18 @@ export function createFixtureStoreClient(options: FixtureStoreClientOptions = {}
       if (existing && existing.brandId === brandId) {
         return existing;
       }
-      // Ha másik brand tokenje érkezne, elutasítjuk (brand-elkülönítés fixture módban is).
-      if (existing && existing.brandId !== brandId) {
-        throw new WooError("CART.SESSION_INVALID", "Másik brand kosártokenje.", {
-          status: 401,
-          wooCode: "woocommerce_rest_cart_token_invalid",
-        });
-      }
+      // Másik brand tokenje (brand-elkülönítés) vagy ismeretlen token: a valódi Woo-hoz hasonlóan
+      // érvénytelen session. A fixture-kosár izolátumonként él, ezért Workersen egy másik izolátumra
+      // futó kérés is ide jut; ilyenkor a vásárló kimondott „lejárt” hibát kap, nem csendben ürülő kosarat.
+      throw new WooError(
+        "CART.SESSION_INVALID",
+        existing ? "Másik brand kosártokenje." : "Ismeretlen fixture kosártoken.",
+        { status: 401, wooCode: "woocommerce_rest_cart_token_invalid" },
+      );
     }
 
     fixtureTokenSeq += 1;
-    const newToken =
-      token && !fixtureSessions.has(token) ? token : `fixture-cart-${brandId}-${fixtureTokenSeq}`;
+    const newToken = `fixture-cart-${brandId}-${fixtureTokenSeq}`;
     const created: FixtureCartSessionState = {
       brandId,
       cartToken: newToken,
