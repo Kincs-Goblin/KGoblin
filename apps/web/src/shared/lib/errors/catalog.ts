@@ -16,7 +16,7 @@ export const errorCatalog = {
   "WOO.UNAVAILABLE": {
     status: 503,
     retryable: true,
-    message: "A kincstár most nem elérhető. Próbáld újra pár perc múlva.",
+    message: "Az áruház most átmenetileg nem érhető el. Próbáld újra pár perc múlva.",
   },
   "WOO.CONTRACT_MISMATCH": {
     status: 502,
@@ -26,12 +26,12 @@ export const errorCatalog = {
   "WOO.INVALID_RESPONSE": {
     status: 502,
     retryable: true,
-    message: "Érvénytelen válasz érkezett a kincstárból. Már dolgozunk rajta.",
+    message: "Érvénytelen válasz érkezett az áruházból. Már dolgozunk rajta.",
   },
   "CART.OUT_OF_STOCK": {
     status: 409,
     retryable: false,
-    message: "A választott zsákmány időközben elfogyott.",
+    message: "A választott termék időközben elfogyott.",
   },
   "CART.INVALID_QUANTITY": {
     status: 400,

@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import { WooError } from "../../src/errors";
 import type {
   CartSession,
@@ -53,6 +55,8 @@ const FIXTURE_COUPONS: Record<string, { code: string; percent: number }> = {
 };
 
 const MAX_FIXTURE_QUANTITY = 30;
+const MAX_FIXTURE_SESSIONS = 500;
+const FIXTURE_TOKEN_PREFIX = "fixture-cart-";
 
 type FixtureSessionLine = {
   key: string;
@@ -63,6 +67,7 @@ type FixtureSessionLine = {
 
 type FixtureCartSessionState = {
   brandId: string;
+  sessionId: string;
   cartToken: string;
   nonceCounter: number;
   items: FixtureSessionLine[];
@@ -72,12 +77,118 @@ type FixtureCartSessionState = {
   billingAddress: StoreAddress;
 };
 
+const fixtureTokenSnapshotSchema = z.object({
+  n: z.number().int().min(1).max(1_000_000),
+  i: z
+    .array(
+      z.object({
+        id: z.number().int().positive(),
+        q: z.number().int().min(1).max(MAX_FIXTURE_QUANTITY),
+        v: z
+          .array(
+            z.object({
+              attribute: z.string().max(120),
+              value: z.string().max(200),
+            }),
+          )
+          .max(10)
+          .optional(),
+      }),
+    )
+    .max(50),
+  c: z.array(z.string().max(64)).max(10),
+  r: z.string().min(1).max(128),
+  s: z.tuple([z.string().max(8), z.string().max(32), z.string().max(120)]).optional(),
+});
+
 const fixtureSessions = new Map<string, FixtureCartSessionState>();
-let fixtureTokenSeq = 0;
 
 export function resetFixtureCartSessions(): void {
   fixtureSessions.clear();
-  fixtureTokenSeq = 0;
+}
+
+function buildFixtureLineKey(
+  id: number,
+  variation: ReadonlyArray<{ attribute: string; value: string }>,
+): string {
+  if (variation.length === 0) {
+    return `fixture-item-${id}`;
+  }
+  const canonical = [...variation]
+    .map((entry) => ({
+      a: entry.attribute.trim().toLowerCase(),
+      v: entry.value.trim().toLowerCase(),
+    }))
+    .sort((x, y) => x.a.localeCompare(y.a) || x.v.localeCompare(y.v))
+    .map((entry) => `${encodeURIComponent(entry.a)}=${encodeURIComponent(entry.v)}`)
+    .join("&");
+  let hash = 0xcbf29ce484222325n;
+  for (let i = 0; i < canonical.length; i += 1) {
+    hash ^= BigInt(canonical.charCodeAt(i));
+    hash = BigInt.asUintN(64, hash * 0x100000001b3n);
+  }
+  return `fixture-item-${id}-${hash.toString(16).padStart(16, "0")}`;
+}
+
+function setBoundedFixtureSession(key: string, state: FixtureCartSessionState): void {
+  fixtureSessions.delete(key);
+  fixtureSessions.set(key, state);
+  while (fixtureSessions.size > MAX_FIXTURE_SESSIONS) {
+    const oldestKey = fixtureSessions.keys().next().value;
+    if (oldestKey === undefined) break;
+    fixtureSessions.delete(oldestKey);
+  }
+}
+
+function encodeFixtureToken(state: FixtureCartSessionState): string {
+  const addr = state.shippingAddress;
+  const hasCustomAddr = addr.country !== "HU" || addr.postcode !== "" || addr.city !== "";
+  const snapshot: z.infer<typeof fixtureTokenSnapshotSchema> = {
+    n: state.nonceCounter,
+    i: state.items.map((line) => ({
+      id: line.id,
+      q: line.quantity,
+      ...(line.variation.length > 0 ? { v: line.variation } : {}),
+    })),
+    c: state.coupons,
+    r: state.selectedRateId,
+    ...(hasCustomAddr ? { s: [addr.country, addr.postcode, addr.city] } : {}),
+  };
+  const encoded = Buffer.from(JSON.stringify(snapshot), "utf8").toString("base64url");
+  return `${FIXTURE_TOKEN_PREFIX}${state.brandId}-${state.sessionId}.${encoded}`;
+}
+
+function parseFixtureToken(token: string): {
+  tokenBrand: string;
+  sessionId: string;
+  snapshot?: z.infer<typeof fixtureTokenSnapshotSchema>;
+} | null {
+  if (!token.startsWith(FIXTURE_TOKEN_PREFIX)) return null;
+  const rest = token.slice(FIXTURE_TOKEN_PREFIX.length);
+  const dotIdx = rest.indexOf(".");
+  const header = dotIdx === -1 ? rest : rest.slice(0, dotIdx);
+  const encodedPayload = dotIdx === -1 ? undefined : rest.slice(dotIdx + 1);
+
+  const lastDash = header.lastIndexOf("-");
+  if (lastDash <= 0 || lastDash === header.length - 1) return null;
+  const tokenBrand = header.slice(0, lastDash);
+  const sessionId = header.slice(lastDash + 1);
+  if (!/^[a-z0-9-]+$/i.test(tokenBrand) || !/^(?:\d+|[a-f0-9]{32})$/i.test(sessionId)) {
+    return null;
+  }
+
+  if (!encodedPayload) {
+    return { tokenBrand, sessionId };
+  }
+
+  try {
+    const decoded = Buffer.from(encodedPayload, "base64url").toString("utf8");
+    const parsed = fixtureTokenSnapshotSchema.safeParse(JSON.parse(decoded));
+    if (!parsed.success) return { tokenBrand, sessionId };
+    return { tokenBrand, sessionId, snapshot: parsed.data };
+  } catch {
+    return { tokenBrand, sessionId };
+  }
 }
 
 function defaultAddress(): StoreAddress {
@@ -436,25 +547,69 @@ export function createFixtureStoreClient(options: FixtureStoreClientOptions = {}
     }
 
     if (token) {
-      const existing = fixtureSessions.get(token);
-      if (existing && existing.brandId === brandId) {
+      const parsedToken = parseFixtureToken(token);
+      if (!parsedToken || parsedToken.tokenBrand !== brandId) {
+        throw new WooError(
+          "CART.SESSION_INVALID",
+          parsedToken ? "Másik brand kosártokenje." : "Ismeretlen fixture kosártoken.",
+          { status: 401, wooCode: "woocommerce_rest_cart_token_invalid" },
+        );
+      }
+
+      const sessionKey = `${brandId}:${parsedToken.sessionId}`;
+      const existing = fixtureSessions.get(sessionKey);
+      // Csak akkor használjuk a memóriabeli állapotot, ha nem elavultabb a cookie-snapshotnál
+      // (Isolate 1 -> Isolate 2 módosítás -> visszatérés Isolate 1-re esetén a frissebb snapshot győz).
+      if (existing && (!parsedToken.snapshot || existing.nonceCounter >= parsedToken.snapshot.n)) {
+        setBoundedFixtureSession(sessionKey, existing);
         return existing;
       }
-      // Másik brand tokenje (brand-elkülönítés) vagy ismeretlen token: a valódi Woo-hoz hasonlóan
-      // érvénytelen session. A fixture-kosár izolátumonként él, ezért Workersen egy másik izolátumra
-      // futó kérés is ide jut; ilyenkor a vásárló kimondott „lejárt” hibát kap, nem csendben ürülő kosarat.
-      throw new WooError(
-        "CART.SESSION_INVALID",
-        existing ? "Másik brand kosártokenje." : "Ismeretlen fixture kosártoken.",
-        { status: 401, wooCode: "woocommerce_rest_cart_token_invalid" },
-      );
+
+      // Új/hideg vagy elavult Workers izolátumon az érvényes token-snapshotból állítjuk vissza a
+      // fixture-kosarat; ha nincs snapshot (pl. ismeretlen/kézzel írt token), 401-gyel elutasítjuk.
+      if (!parsedToken.snapshot) {
+        throw new WooError("CART.SESSION_INVALID", "Ismeretlen fixture kosártoken.", {
+          status: 401,
+          wooCode: "woocommerce_rest_cart_token_invalid",
+        });
+      }
+
+      const snap = parsedToken.snapshot;
+      const shippingAddress = defaultAddress();
+      if (snap.s) {
+        shippingAddress.country = snap.s[0] || "HU";
+        shippingAddress.postcode = snap.s[1];
+        shippingAddress.city = snap.s[2];
+      }
+      const hydrated: FixtureCartSessionState = {
+        brandId,
+        sessionId: parsedToken.sessionId,
+        cartToken: token,
+        nonceCounter: snap.n,
+        items: snap.i.map((entry) => {
+          const variation = entry.v ?? [];
+          return {
+            key: buildFixtureLineKey(entry.id, variation),
+            id: entry.id,
+            quantity: entry.q,
+            variation,
+          };
+        }),
+        coupons: snap.c.filter((code) => Boolean(FIXTURE_COUPONS[code.toUpperCase()])),
+        selectedRateId: snap.r,
+        shippingAddress,
+        billingAddress: defaultAddress(),
+      };
+      hydrated.cartToken = encodeFixtureToken(hydrated);
+      setBoundedFixtureSession(sessionKey, hydrated);
+      return hydrated;
     }
 
-    fixtureTokenSeq += 1;
-    const newToken = `fixture-cart-${brandId}-${fixtureTokenSeq}`;
+    const sessionId = globalThis.crypto.randomUUID().replace(/-/g, "");
     const created: FixtureCartSessionState = {
       brandId,
-      cartToken: newToken,
+      sessionId,
+      cartToken: "",
       nonceCounter: 1,
       items: [],
       coupons: [],
@@ -462,7 +617,8 @@ export function createFixtureStoreClient(options: FixtureStoreClientOptions = {}
       shippingAddress: defaultAddress(),
       billingAddress: defaultAddress(),
     };
-    fixtureSessions.set(newToken, created);
+    created.cartToken = encodeFixtureToken(created);
+    setBoundedFixtureSession(`${brandId}:${sessionId}`, created);
     return created;
   }
 
@@ -470,8 +626,10 @@ export function createFixtureStoreClient(options: FixtureStoreClientOptions = {}
     if (bumpNonce) {
       state.nonceCounter += 1;
     }
+    const cart = buildFixtureCart(state);
+    state.cartToken = encodeFixtureToken(state);
     return {
-      cart: buildFixtureCart(state),
+      cart,
       cartToken: state.cartToken,
       nonce: `fixture-nonce-${state.nonceCounter}`,
     };
@@ -528,7 +686,8 @@ export function createFixtureStoreClient(options: FixtureStoreClientOptions = {}
         throw new WooError("CART.OUT_OF_STOCK", "A termék elfogyott.", { status: 409 });
       }
 
-      const key = `fixture-item-${input.id}`;
+      const variationEntries = input.variation ?? [];
+      const key = buildFixtureLineKey(input.id, variationEntries);
       const existing = state.items.find((item) => item.key === key);
       const nextQty = (existing?.quantity ?? 0) + input.quantity;
       const maxStock = found.variation?.low_stock_remaining ?? found.product.low_stock_remaining;
@@ -546,7 +705,7 @@ export function createFixtureStoreClient(options: FixtureStoreClientOptions = {}
           key,
           id: input.id,
           quantity: input.quantity,
-          variation: input.variation ?? [],
+          variation: variationEntries,
         });
       }
       return toResult(state, true);
@@ -558,7 +717,10 @@ export function createFixtureStoreClient(options: FixtureStoreClientOptions = {}
       }
       const existing = state.items.find((item) => item.key === input.key);
       if (!existing) {
-        throw new WooError("WOO.INVALID_RESPONSE", "A kosártétel nem található.", { status: 404 });
+        throw new WooError("CART.INVALID_INPUT", "A kosártétel nem található.", {
+          status: 404,
+          wooCode: "woocommerce_rest_cart_invalid_key",
+        });
       }
       if (input.quantity === 0) {
         state.items = state.items.filter((item) => item.key !== input.key);

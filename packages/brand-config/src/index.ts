@@ -14,18 +14,39 @@ function stripWww(hostname: string): string {
 
 /**
  * Validálja és ellenőrzi a brandek regisztrációját: minden brand átmegy a Zod-sémán, és sem
- * az azonosító, sem a domain (beleértve a `www.` változatot) nem fedheti át egymást.
+ * az azonosító, sem a domain (beleértve a `www.` változatot), sem a Woo alap-URL env neve, sem
+ * a Meilisearch index nem fedheti át egymást a brandek között.
  */
 export function validateBrands(rawBrands: readonly Brand[]): readonly Brand[] {
   const parsed = rawBrands.map((brand) => brandSchema.parse(brand));
   const seenIds = new Set<string>();
   const seenDomains = new Map<string, string>();
+  const seenWooEnvs = new Map<string, string>();
+  const seenSearchIndexes = new Map<string, string>();
 
   for (const brand of parsed) {
     if (seenIds.has(brand.id)) {
       throw new Error(`Duplikált brand azonosító: ${brand.id}`);
     }
     seenIds.add(brand.id);
+
+    const wooEnvKey = brand.woo.baseUrlEnv.trim();
+    const wooOwner = seenWooEnvs.get(wooEnvKey);
+    if (wooOwner && wooOwner !== brand.id) {
+      throw new Error(
+        `Duplikált Woo baseUrlEnv a brand-configban (${brand.woo.baseUrlEnv}): már a(z) "${wooOwner}" brandhez tartozik.`,
+      );
+    }
+    seenWooEnvs.set(wooEnvKey, brand.id);
+
+    const searchIndexKey = brand.search.index.trim().toLowerCase();
+    const searchOwner = seenSearchIndexes.get(searchIndexKey);
+    if (searchOwner && searchOwner !== brand.id) {
+      throw new Error(
+        `Duplikált Meilisearch index a brand-configban (${brand.search.index}): már a(z) "${searchOwner}" brandhez tartozik.`,
+      );
+    }
+    seenSearchIndexes.set(searchIndexKey, brand.id);
 
     const brandDomains = brand.canonicalDomain
       ? [...brand.domains, brand.canonicalDomain]

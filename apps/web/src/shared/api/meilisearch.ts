@@ -2,7 +2,6 @@ import "server-only";
 
 import type { Brand } from "@kg/brand-config";
 import type { StoreProduct } from "@kg/woo-client";
-import { createFixtureStoreClient } from "@kg/woo-client/fixtures";
 import { z } from "zod";
 
 import { serverEnv } from "@/shared/config/index.server";
@@ -196,7 +195,10 @@ async function searchWithFixtures(
 ): Promise<SearchProductsResult> {
   const page = Math.max(1, query.page ?? 1);
   const perPage = Math.min(24, Math.max(1, query.perPage ?? 9));
-  const { products } = await createFixtureStoreClient().getProductsPage({ perPage: 100 });
+  const { createFixtureStoreClient } = await import("@kg/woo-client/fixtures");
+  const { products } = await createFixtureStoreClient({ brandId: brand.id }).getProductsPage({
+    perPage: 100,
+  });
   const tokens = normalizeForMatch(query.q).split(/\s+/).filter(Boolean);
 
   const matchedByText = products.filter((product) => {
@@ -304,7 +306,9 @@ export async function searchProducts(
   const config = getBrandSearchConfig(brand, env);
 
   if (!config) {
-    const useFixtures = (env.KG_STORE_FIXTURES ?? serverEnv.KG_STORE_FIXTURES) === "1";
+    const useFixtures =
+      process.env.NEXT_PUBLIC_APP_ENV !== "production" &&
+      (env.KG_STORE_FIXTURES ?? serverEnv.KG_STORE_FIXTURES) === "1";
     if (useFixtures) {
       return searchWithFixtures(brand, query);
     }

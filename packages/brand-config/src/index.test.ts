@@ -57,6 +57,7 @@ describe("validateBrands", () => {
     const second = structuredClone(brands[0]!);
     second.id = "masodik";
     second.woo.baseUrlEnv = "WOO_MASODIK_URL";
+    second.search.index = "products_masodik";
     second.domains = ["www.gamer.localhost"];
 
     expect(() => validateBrands([first, second])).toThrow(/Duplikált domain/);
@@ -68,6 +69,27 @@ describe("validateBrands", () => {
     second.domains = ["masik.localhost"];
 
     expect(() => validateBrands([first, second])).toThrow(/Duplikált brand azonosító/);
+  });
+
+  it("elutasítja a duplikált Woo baseUrlEnv értéket két brand között", () => {
+    const first = structuredClone(brands[0]!);
+    const second = structuredClone(brands[0]!);
+    second.id = "masodik";
+    second.domains = ["masodik.localhost"];
+    second.search.index = "products_masodik";
+
+    expect(() => validateBrands([first, second])).toThrow(/Duplikált Woo baseUrlEnv/);
+  });
+
+  it("elutasítja a duplikált Meilisearch indexet két brand között (kis- és nagybetűtől függetlenül)", () => {
+    const first = structuredClone(brands[0]!);
+    const second = structuredClone(brands[0]!);
+    second.id = "masodik";
+    second.domains = ["masodik.localhost"];
+    second.woo.baseUrlEnv = "WOO_MASODIK_URL";
+    second.search.index = first.search.index.toUpperCase();
+
+    expect(() => validateBrands([first, second])).toThrow(/Duplikált Meilisearch index/);
   });
 });
 

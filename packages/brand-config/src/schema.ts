@@ -9,7 +9,10 @@ const cssValue = z
   .min(1)
   .regex(/^[a-zA-Z0-9\s.,%()#/+\-"']+$/, "Nem biztonságos CSS-érték");
 
-/** shadcn/ui kompatibilis színtokenek, plusz a saját (ritkaság, arany, mana) tokenek. */
+/**
+ * shadcn/ui kompatibilis színtokenek, plusz az 1. (gamer) brand ritkaság/felület tokenjei.
+ * A téma-séma általánosítása a 2. brand érkezésekor (6. mérföldkő) történik.
+ */
 export const colorTokenNames = [
   "background",
   "foreground",
@@ -108,6 +111,8 @@ export const brandSchema = z.object({
         (t) => t.rare < t.epic && t.epic < t.legendary,
         "A ritkasági sávok növekvő sorrendűek",
       ),
+    /** Opcionális belföldi ingyenes szállítási küszöb minor unitban (a Woo szállítási zónájával összhangban). */
+    freeShippingThresholdMinor: z.number().int().positive().optional(),
   }),
   search: z.object({
     index: z.string().min(1),

@@ -395,7 +395,7 @@ describe("createWooClient(brand) + MSW Store API", () => {
     expect(init.cache).toBe("no-store");
 
     await expect(client.addCartItem({ id: 1, quantity: 1 })).rejects.toMatchObject({
-      code: "WOO.INVALID_RESPONSE",
+      code: "CART.INVALID_INPUT",
     });
 
     await expect(
@@ -460,6 +460,15 @@ describe("createWooClient(brand) + MSW Store API", () => {
             400,
           );
         }
+        if (body.payment_method === "rate_limited") {
+          return jsonResponse({ code: "too_many_requests", message: "Túl sok kérés." }, 429);
+        }
+        if (body.payment_method === "custom_422") {
+          return jsonResponse(
+            { code: "gateway_custom_validation_error", message: "Egyedi űrlaphiba." },
+            422,
+          );
+        }
         return jsonResponse(
           {
             code: "kg_payment_obligation_not_accepted",
@@ -499,6 +508,20 @@ describe("createWooClient(brand) + MSW Store API", () => {
         { cartToken: "t", nonce: "n" },
       ),
     ).rejects.toMatchObject({ code: "CHECKOUT.VALIDATION_FAILED" });
+
+    await expect(
+      client.submitCheckout(
+        { ...baseCheckout, payment_method: "rate_limited" },
+        { cartToken: "t", nonce: "n" },
+      ),
+    ).rejects.toMatchObject({ code: "WOO.UNAVAILABLE", status: 429 });
+
+    await expect(
+      client.submitCheckout(
+        { ...baseCheckout, payment_method: "custom_422" },
+        { cartToken: "t", nonce: "n" },
+      ),
+    ).rejects.toMatchObject({ code: "CHECKOUT.VALIDATION_FAILED", status: 422 });
   });
 
   it("resolveSlugRedirect feloldja a régi termék-slugot, hibánál pedig fail-open null-t ad", async () => {
